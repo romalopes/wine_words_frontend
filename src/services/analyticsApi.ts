@@ -98,6 +98,28 @@ export interface TimeseriesResponse {
   period: PeriodMetadata;
 }
 
+export interface WineInsightGroup {
+  id: number;
+  slug: string | null;
+  name: string;
+  views: number;
+  unique_viewers: number;
+  color?: string | null;
+}
+
+export interface WineInsightsResponse {
+  grouping: "producer" | "region" | "grape";
+  groups: WineInsightGroup[];
+  period: PeriodMetadata;
+  overlapping_notice: string | null;
+}
+
+export interface WineInsightsParams extends ReportingParams {
+  grouping?: "producer" | "region" | "grape";
+  sort?: "views" | "unique_viewers" | "name";
+  direction?: "asc" | "desc";
+}
+
 export interface ReportingParams {
   period?: "7d" | "30d" | "90d" | "1y" | "all";
   start_date?: string;
@@ -122,6 +144,7 @@ export interface AnalyticsApi {
     topContent(params?: ReportingParams): Promise<TopContentResponse>;
     contentDetail(contentType: string, contentId: string | number, params?: ReportingParams): Promise<ContentDetailResponse>;
     timeseries(params?: ReportingParams): Promise<TimeseriesResponse>;
+    wineInsights(params?: WineInsightsParams): Promise<WineInsightsResponse>;
   };
 }
 
@@ -149,6 +172,9 @@ export function createAnalyticsApi(request: ApiRequester): AnalyticsApi {
       },
       async timeseries(params?: ReportingParams): Promise<TimeseriesResponse> {
         return request<TimeseriesResponse>("/analytics/timeseries", { auth: true, params: params as any });
+      },
+      async wineInsights(params?: WineInsightsParams): Promise<WineInsightsResponse> {
+        return request<WineInsightsResponse>("/analytics/wine-insights", { auth: true, params: params as any });
       },
     },
   };

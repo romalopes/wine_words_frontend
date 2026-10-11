@@ -1,0 +1,205 @@
+/* Wine Insights Component Styles */
+
+.wine-insights {
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.wine-insights.loading,
+.wine-insights.error,
+.wine-insights.empty {
+  padding: 32px;
+  text-align: center;
+  color: #666;
+}
+
+.wine-insights.error {
+  color: #c00;
+}
+
+/* Controls */
+.wine-insights__controls {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.wine-insights__control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wine-insights__control-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.wine-insights__select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  min-width: 160px;
+}
+
+.wine-insights__grouping-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.wine-insights__grouping-tab {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wine-insights__grouping-tab:hover {
+  background: #f5f5f5;
+}
+
+.wine-insights__grouping-tab.active {
+  background: #0066cc;
+  color: white;
+  border-color: #0066cc;
+}
+
+/* Notice */
+.wine-insights__notice {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #856404;
+}
+
+/* Table */
+.wine-insights__table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.wine-insights__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.wine-insights__table th,
+.wine-insights__table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.wine-insights__table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wine-insights__table th.sorted {
+  background: #e8f0fe;
+  color: #0066cc;
+}
+
+.wine-insights__table th:hover {
+  background: #eef3f8;
+}
+
+.wine-insights__table tbody tr:hover {
+  background: #fafafa;
+}
+
+.wine-insights__rank {
+  font-weight: 600;
+  color: #666;
+  width: 50px;
+}
+
+.wine-insights__name {
+  min-width: 250px;
+}
+
+.wine-insights__entity-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.wine-insights__slug {
+  color: #999;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.wine-insights__color-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  margin-left: 8px;
+  text-transform: capitalize;
+}
+
+.wine-insights__views,
+.wine-insights__unique-viewers {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Pagination */
+.wine-insights__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.wine-insights__page-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wine-insights__page-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.wine-insights__page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wine-insights__page-info {
+  font-size: 13px;
+  color: #666;
+}
+
+/* Meta */
+.wine-insights__meta {
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+  color: #999;
+  font-size: 12px;
+}

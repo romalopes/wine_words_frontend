@@ -7,6 +7,7 @@ import { formatNumber, formatPercent, formatDate } from "../../utils/format";
 import { ContentTable } from "./ContentTable";
 import { TimeseriesChart } from "./TimeseriesChart";
 import { PeriodSelector } from "./PeriodSelector";
+import { Link, useLocation } from "react-router-dom";
 
 const PERIOD_OPTIONS = [
   { value: "7d", label: "Last 7 days" },
@@ -40,6 +41,7 @@ const KPICard = ({ title, value, subtitle, warning }) => (
 const AnalyticsDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [summary, setSummary] = useState(null);
   const [topContent, setTopContent] = useState(null);
@@ -158,6 +160,22 @@ const AnalyticsDashboard = () => {
           </select>
         </div>
       </header>
+
+      {/* Main Navigation Tabs */}
+      <nav className="analytics-tabs" aria-label="Analytics sections">
+        <Link
+          to="/analytics"
+          className={location.pathname === "/analytics" ? "active" : ""}
+        >
+          Overview
+        </Link>
+        <Link
+          to="/analytics/wine-insights"
+          className={location.pathname === "/analytics/wine-insights" ? "active" : ""}
+        >
+          Wine Insights
+        </Link>
+      </nav>
 
       {error && <div className="error-banner" role="alert">{error}</div>}
 
