@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { analyticsApi } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { canAccessAnalytics } from "../../constants/roles";
 import { formatNumber, formatPercent, formatDate } from "../../utils/format";
 import { ContentTable } from "./ContentTable";
 import { TimeseriesChart } from "./TimeseriesChart";
@@ -58,7 +59,7 @@ const AnalyticsDashboard = () => {
   const [timeseriesGrouping, setTimeseriesGrouping] = useState("day");
   const [error, setError] = useState(null);
 
-  const hasReportingAccess = user && ["admin", "editor", "reviewer"].includes(user.role);
+  const hasReportingAccess = canAccessAnalytics(user);
 
   const fetchAll = useCallback(async () => {
     setError(null);
