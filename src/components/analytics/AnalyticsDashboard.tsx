@@ -121,25 +121,33 @@ const AnalyticsDashboard = () => {
 
   if (!hasReportingAccess) {
     return (
-      <div className="analytics-dashboard">
-        <div className="access-denied">
-          <h2>Analytics Access Required</h2>
-          <p>You need Reviewer, Editor, or Admin role to view analytics.</p>
+      <main className="wine-app">
+        <div className="analytics-dashboard">
+          <div className="access-denied">
+            <h2>Analytics Access Required</h2>
+            <p>You need Reviewer, Editor, or Admin role to view analytics.</p>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="analytics-dashboard">
-      <header className="dashboard-header">
+    <main className="wine-app">
+      <div className="analytics-dashboard">
+      <header className="analytics-dashboard__header">
         <h1>Content Analytics</h1>
-        <div className="dashboard-controls">
-          <PeriodSelector
+        <div className="analytics-dashboard__controls">
+          <select
             value={period}
             onChange={(v) => { setPeriod(v); setPage(1); }}
-            options={PERIOD_OPTIONS}
-          />
+            className="period-select"
+            aria-label="Reporting period"
+          >
+            {PERIOD_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
           <label className="checkbox-label">
             <input
               type="checkbox"
@@ -261,6 +269,7 @@ const AnalyticsDashboard = () => {
         </footer>
       )}
     </div>
+    </main>
   );
 };
 

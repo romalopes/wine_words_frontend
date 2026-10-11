@@ -99,7 +99,7 @@ export function WineInsights({ initialParams = {} }: WineInsightsProps) {
   }
 
   return (
-    <div className="wine-insights">
+    <main className="wine-app"><div className="wine-insights">
       {/* Controls */}
       <div className="wine-insights__controls">
         <div className="wine-insights__control-group">
@@ -220,5 +220,6 @@ export function WineInsights({ initialParams = {} }: WineInsightsProps) {
         </small>
       </div>
     </div>
+    </main>
   );
 }

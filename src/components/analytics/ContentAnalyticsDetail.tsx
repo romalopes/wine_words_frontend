@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { analyticsApi } from "../../services/api";
 import { formatNumber, formatPercent, formatDate, formatDateTime } from "../../utils/format";
 import { TimeseriesChart } from "./TimeseriesChart";
-import { PeriodSelector } from "./PeriodSelector";
 
 interface ContentDetailPageProps {}
 
@@ -91,7 +90,7 @@ export const ContentAnalyticsDetail: React.FC<ContentDetailPageProps> = () => {
   };
 
   return (
-    <div className="analytics-detail">
+    <main className="wine-app"><div className="analytics-detail">
       <header className="analytics-detail__header">
         <Link to="/analytics" className="analytics-detail__back" onClick={() => navigate("/analytics")}>
           ← Back to Dashboard
@@ -141,11 +140,16 @@ export const ContentAnalyticsDetail: React.FC<ContentDetailPageProps> = () => {
 
       <section className="analytics-detail__chart" aria-label="Views over time">
         <div className="analytics-detail__chart-controls">
-          <PeriodSelector
+          <select
             value={period}
-            onChange={setPeriod}
-            options={periodOptions}
-          />
+            onChange={(e) => setPeriod(e.target.value)}
+            className="period-select"
+            aria-label="Reporting period"
+          >
+            {periodOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
           <select
             value={grouping}
             onChange={(e) => setGrouping(e.target.value as "day" | "week" | "month")}
@@ -178,6 +182,7 @@ export const ContentAnalyticsDetail: React.FC<ContentDetailPageProps> = () => {
         </div>
       </footer>
     </div>
+    </main>
   );
 };
 
