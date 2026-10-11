@@ -19,6 +19,7 @@ import { formatDate } from "../utils/dates";
 import { normalizeArticleBody } from "../utils/articleHtml";
 import BackToSource from "./BackToSource";
 import { useReturnToLink } from "../hooks/useReturnToLink";
+import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
 
 interface RichBodyProps {
   html: string;
@@ -78,6 +79,15 @@ function ArticleDetail() {
       setLoading(false);
     }
   }, [slug]);
+
+  const { trackView } = useAnalyticsBeacon();
+
+  // Track view after successful authorized load
+  useEffect(() => {
+    if (article?.id) {
+      trackView("Article", article.id);
+    }
+  }, [article?.id, trackView]);
 
   useEffect(() => {
     loadArticle();

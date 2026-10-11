@@ -20,6 +20,7 @@ import LikeButton from "./LikeButton";
 import CommentSection from "./comments/CommentSection";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import AdaptiveImage from "./AdaptiveImage";
+import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
 
 function timeAgo(dateStr) {
   if (!dateStr) return null;
@@ -118,6 +119,15 @@ function WineDetail() {
       setLoading(false);
     }
   }, [slug]);
+
+  const { trackView } = useAnalyticsBeacon();
+
+  // Track view after successful authorized load
+  useEffect(() => {
+    if (wine?.id) {
+      trackView("Wine", wine.id);
+    }
+  }, [wine?.id, trackView]);
 
   useEffect(() => {
     loadWine();

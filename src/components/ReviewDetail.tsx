@@ -18,6 +18,7 @@ import { errorMessage } from "../utils/errors";
 import { formatDate } from "../utils/dates";
 import { normalizeArticleBody } from "../utils/articleHtml";
 import type { Review } from "../types/review";
+import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
 
 /**
  * Renders a review comment, which is stored as Trix HTML: sanitised, then
@@ -81,6 +82,15 @@ function ReviewDetail() {
       setLoading(false);
     }
   }, [slug]);
+
+  const { trackView } = useAnalyticsBeacon();
+
+  // Track view after successful authorized load
+  useEffect(() => {
+    if (review?.id) {
+      trackView("Review", review.id);
+    }
+  }, [review?.id, trackView]);
 
   useEffect(() => {
     loadReview();

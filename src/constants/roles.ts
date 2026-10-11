@@ -43,4 +43,8 @@ export function canAccessPackages(user: RoleUser | null | undefined): boolean {
 
 export const canCreatePackage = canAccessPackages
 
+export function canAccessAnalytics(user: RoleUser | null | undefined): boolean {
+  return user?.roles?.some((role) => role === ROLES.ADMIN || role === ROLES.EDITOR || role === ROLES.REVIEWER) ?? false
+}
+
 export const canAccessArticleProjects = canManageWinesRole

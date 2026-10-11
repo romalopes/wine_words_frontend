@@ -47,6 +47,9 @@ import VerifyEmail from "./VerifyEmail";
 import ArticleProjects from "./ArticleProjects";
 import ArticleProjectDetail from "./ArticleProjectDetail";
 import ArticleProjectForm from "./ArticleProjectForm";
+import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
+import ContentAnalyticsDetail from "./analytics/ContentAnalyticsDetail";
+import { WineInsights } from "./analytics/WineInsights";
 
 function AppRoutes() {
   return (
@@ -107,6 +110,9 @@ function AppRoutes() {
         <Route element={<ArticleProjectForm />} path="/article-projects/new" />
         <Route element={<ArticleProjectDetail />} path="/article-projects/:id" />
         <Route element={<ArticleProjectDetail />} path="/article-projects/:id/edit" />
+        <Route element={<AnalyticsDashboard />} path="/analytics" />
+        <Route element={<ContentAnalyticsDetail />} path="/analytics/content/:contentType/:contentId" />
+        <Route element={<WineInsights />} path="/analytics/wine-insights" />
       </Routes>
     </>
   );

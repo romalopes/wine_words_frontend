@@ -32,6 +32,7 @@ function makeUser(subscriptionName: string | null): User {
     first_name: "Élodie",
     last_name: "Smith",
     roles: [],
+    analytics_opt_out: false,
     subscription: subscriptionName ? { id: 2, name: subscriptionName } : null,
     billing_provider: null,
     can_manage_billing: true,
