@@ -47,6 +47,12 @@ export function createAccountApi(request: ApiRequester): AccountApi {
     show: () => request<Account>("/account", { auth: true }),
     update: (data: AccountUpdatePayload) => request<Account>("/account", { method: "PATCH", auth: true, body: data as unknown as Record<string, never> }),
     changePassword: (data: PasswordUpdatePayload) => request("/account/password", { method: "PATCH", auth: true, body: data as unknown as Record<string, never> }),
+    updateAnalyticsOptOut: (optOut: boolean) =>
+      request<{ analytics_opt_out: boolean }>("/account/analytics_opt_out", {
+        method: "PATCH",
+        auth: true,
+        body: { analytics_opt_out: optOut },
+      }),
   }
 }
 

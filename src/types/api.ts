@@ -323,6 +323,7 @@ export interface AccountApi {
   show(): Promise<Account>
   update(payload: AccountUpdatePayload): Promise<Account>
   changePassword(payload: PasswordUpdatePayload): Promise<unknown>
+  updateAnalyticsOptOut(optOut: boolean): Promise<{ analytics_opt_out: boolean }>
 }
 
 export interface UserApi {

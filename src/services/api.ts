@@ -2,6 +2,7 @@ import { ApiError } from "./ApiError"
 import { request as apiRequest } from "./apiClient"
 import type { ApiRequester, RequestOptions } from "./apiClient"
 import { createAuthApi, createIdentitiesApi } from "./authApi"
+import { createAnalyticsApi } from "./analyticsApi"
 import { createArticlesApi, createProducersApi, createReviewsApi, createSourcesApi, createWinesApi } from "./contentApi"
 import {
   createNotificationsApi,
@@ -125,6 +126,8 @@ const request: ApiRequester = async <T>(
 
 export const authApi = createAuthApi(request);
 export const identitiesApi = createIdentitiesApi(request);
+
+export const analyticsApi = createAnalyticsApi(request);
 
 export const imagesApi = createImagesApi(request);
 

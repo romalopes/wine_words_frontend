@@ -13,6 +13,7 @@ import type { SocialProvider } from "../types/socialAuth";
 import type { PasswordChange } from "../types/account";
 import type { Identity } from "../types/authentication";
 import type { CountryListItem } from "../types/reference";
+import { useAnalyticsOptOut } from "../hooks/useAnalyticsOptOut";
 
 /** The editable profile form. Every field is a string so the inputs stay controlled. */
 interface AccountForm {
@@ -97,6 +98,8 @@ function flattenErrors(errors: FieldErrors | null | undefined): string {
 
 export default function AccountSettings() {
   const { user, refreshSession } = useAuth();
+  const { optedOut, setOptOut, saving: savingOptOut, error: optOutError } =
+    useAnalyticsOptOut();
   const [form, setForm] = useState<AccountForm>(emptyAccount);
   const [countries, setCountries] = useState<CountryListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -492,6 +495,33 @@ export default function AccountSettings() {
                 {savingPassword ? "Updating…" : "Change password"}
               </button>
             </form>
+          </section>
+
+          <section className="account-card">
+            <div className="auth-form account-security-form">
+              <h2 className="account-card__title">Privacy</h2>
+              <p className="account-card__lede">
+                Control whether your content views are counted in editorial
+                analytics. Opting out stops future tracking immediately.
+              </p>
+              {optOutError && (
+                <p className="review-form__error">{optOutError}</p>
+              )}
+              <label className="account-identity">
+                <input
+                  type="checkbox"
+                  checked={!optedOut}
+                  disabled={savingOptOut}
+                  onChange={(e) => setOptOut(!e.target.checked)}
+                />
+                <span className="account-identity__label">
+                  Count my views in content analytics
+                </span>
+              </label>
+              {savingOptOut && (
+                <p className="wine-management__loading">Saving…</p>
+              )}
+            </div>
           </section>
 
           <section className="account-card">

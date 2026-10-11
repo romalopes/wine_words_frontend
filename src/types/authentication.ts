@@ -33,6 +33,8 @@ export interface User {
   first_name: string | null
   last_name: string | null
   roles: string[]
+  /** Opted out of content-view analytics (`users.analytics_opt_out`). */
+  analytics_opt_out: boolean
   subscription: SubscriptionStub | null
   /** Stripe provider attached to the live subscription, if any. */
   billing_provider: string | null
