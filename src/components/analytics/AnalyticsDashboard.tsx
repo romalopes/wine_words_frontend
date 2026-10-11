@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { analyticsApi } from "../../services/analyticsApi";
+import { analyticsApi } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { formatNumber, formatPercent, formatDate } from "../../utils/format";
 import { ContentTable } from "./ContentTable";

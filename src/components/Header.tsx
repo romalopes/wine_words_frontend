@@ -6,6 +6,7 @@ import {
   canManageWinesRole,
   canAccessPackages,
   canAccessArticleProjects,
+  canAccessAnalytics,
 } from "../constants/roles";
 import { categoriesApi } from "../services/api";
 import { useTestAccess } from "../contexts/TestAccessContext";
@@ -111,6 +112,7 @@ function Header() {
   // Wine packages are for content managers and Reviewers (the people who
   // receive and review the wines).
   const canSeePackages = canAccessPackages(effectiveIdentity);
+  const canSeeAnalytics = canAccessAnalytics(effectiveIdentity);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
@@ -260,6 +262,7 @@ function Header() {
         {canSeeArticleProjects && (
           <NavLink to="/article-projects">Article Projects</NavLink>
         )}
+        {canSeeAnalytics && <NavLink to="/analytics">Analytics</NavLink>}
         <div
           className="settings-menu"
           onMouseEnter={() => setExtrasOpen(true)}
