@@ -7,6 +7,8 @@ import WineTable from "./WineTable";
 import RegionSearch from "./RegionSearch";
 import GrapeSearch from "./GrapeSearch";
 import BackToSource from "./BackToSource";
+import usePagedList from "../hooks/usePagedList";
+import Pagination from "./Pagination";
 
 function ProducerDetail() {
   const { slug } = useParams();
@@ -52,8 +54,31 @@ function ProducerDetail() {
   }, [slug]);
 
   useEffect(() => {
-    loadProducer();
+    void loadProducer();
   }, [loadProducer]);
+
+  // Fetch paginated wines for this producer
+  const { items: paginatedWines, page, setPage, totalPages, totalCount, loading: winesLoading, error: winesError, reload: reloadWines } = usePagedList({
+    fetcher: async (params) => {
+      const response = await winesApi.list({ producer_id: producer?.id, ...params });
+      // The API returns either a paginated envelope or a bare array
+      if (Array.isArray(response)) {
+        // If it's a bare array, convert to paginated format
+        return {
+          items: response,
+          page: params.page || 1,
+          per_page: params.per_page || 20,
+          total_count: response.length,
+          total_pages: Math.ceil(response.length / (params.per_page || 20)),
+        };
+      }
+      return response;
+    },
+    extraParams: producer && producer.id !== undefined ? { producer_id: producer.id } : {},
+    enabled: !!producer, // Only enable when producer is loaded
+    paramKey: "wine_page",
+    perPage: 20,
+  });
 
   // Debounced wine search for the linking UI.
   useEffect(() => {
@@ -90,6 +115,7 @@ function ProducerDetail() {
     try {
       await winesApi.update(wine.slug, { producer_id: producer.id });
       await loadProducer();
+      reloadWines();
     } catch (err) {
       setLinkError(err.message || "Failed to link wine");
     } finally {
@@ -592,27 +618,36 @@ function ProducerDetail() {
 
       <div className="wine-detail__section">
         <h2>Wines</h2>
-        {producer.wines && producer.wines.length > 0 ? (
-          <WineTable
-            wines={producer.wines}
-            onDeleted={(deleted) =>
-              setProducer((prev) => ({
-                ...prev,
-                wines: prev.wines.filter((w) => w.slug !== deleted.slug),
-              }))
-            }
-            linkContext={{
-              type: "producer",
-              id: producer.id,
-              name: producer.name,
-            }}
-            onWineLinked={() => {
-              producersApi
-                .show(producer.slug)
-                .then(setProducer)
-                .catch(() => {});
-            }}
-          />
+        {winesLoading ? (
+          <p className="wine-management__loading">Loading wines...</p>
+        ) : winesError ? (
+          <p className="wine-management__error">Failed to load wines: {winesError}</p>
+        ) : paginatedWines !== null && paginatedWines.length > 0 ? (
+          <>
+            <WineTable
+              wines={paginatedWines}
+              onDeleted={(deleted) => {
+                // Reload current page when a wine is deleted
+                reloadWines();
+              }}
+              linkContext={{
+                type: "producer",
+                id: producer?.id || 0,
+                name: producer?.name || "",
+              }}
+              onWineLinked={() => {
+                // Reload current page when a wine is linked
+                reloadWines();
+              }}
+            />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              totalCount={totalCount}
+              onPageChange={setPage}
+              alwaysShow={totalPages > 1}
+            />
+          </>
         ) : (
           <p className="wine-management__empty-state">
             No wines are associated with this producer yet.

@@ -23,15 +23,10 @@ function ProducerWines() {
     try {
       setLoading(true);
       setError(null);
-      const [producerData, winesData] = await Promise.all([
-        producersApi.show(slug),
-        winesApi.list(),
-      ]);
+      const producerData = await producersApi.show(slug);
       setProducer(producerData);
-      const allWines: WineListItem[] = Array.isArray(winesData) ? winesData : [];
-      setWines(
-        allWines.filter((wine) => wine.producer && wine.producer.slug === slug),
-      );
+      const winesData = await winesApi.list({ producer_id: producerData.id });
+      setWines(Array.isArray(winesData) ? winesData : winesData.items);
     } catch (err: unknown) {
       setError(errorMessage(err, "Failed to load wines"));
     } finally {
@@ -87,12 +82,7 @@ function ProducerWines() {
             id: producer.id,
             name: producer.name,
           }}
-          onWineLinked={() => {
-            producersApi
-              .show(producer.slug)
-              .then((p) => setWines(p.wines ?? []))
-              .catch(() => {});
-          }}
+          onWineLinked={loadWines}
         />
       )}
     </div>

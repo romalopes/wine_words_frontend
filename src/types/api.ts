@@ -608,4 +608,3 @@ export interface WineProfilesApi {
   show(id: string): Promise<UserWineProfile>
   search(query: string, limit?: number): Promise<WineProfileSearchResponse>
 }
-

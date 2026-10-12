@@ -154,14 +154,14 @@ function ProducerTable({
             <td>{producer.address?.street_address || "—"}</td>
             <td>{producer.email || "—"}</td>
             <td>
-              {producer.wines && producer.wines.length > 0 ? (
+              {(producer.wines_count ?? producer.wines?.length ?? 0) > 0 ? (
                 <Link
                   to={`/producers/${producer.slug}/wines`}
                   className="grapes-table__link"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {`${producer.wines.length} wine${
-                    producer.wines.length !== 1 ? "s" : ""
+                  {`${producer.wines_count ?? producer.wines?.length ?? 0} wine${
+                    (producer.wines_count ?? producer.wines?.length ?? 0) !== 1 ? "s" : ""
                   }`}
                 </Link>
               ) : (

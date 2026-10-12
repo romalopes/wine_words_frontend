@@ -69,6 +69,7 @@ export interface Producer {
    */
   images?: string[]
   wines?: Wine[]
+  wines_count?: number
   [key: string]: unknown
 }
 
