@@ -11,7 +11,9 @@
     "typecheck": "tsc -b",
     "preview": "vite preview",
     "test": "vitest",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "wrangler-deploy": "wrangler deploy",
+    "wrangler-dev": "wrangler dev"
   },
   "dependencies": {
     "@neondatabase/neon-js": "0.6.1-beta",

@@ -47,7 +47,7 @@ const detailedResult = {
   expectedStatus: 200,
   latencyMs: 120,
   latencyRating: "excellent",
-  payload: { status: "ok", version: "0.0.20", service: "wine-api" },
+  payload: { status: "ok", version: "0.0.21", service: "wine-api" },
   requestHeaders: {},
   error: null,
   retried: false,
@@ -79,7 +79,7 @@ describe("ApiHealth", () => {
   it("renders the health interface heading", () => {
     render(<ApiHealth />);
     expect(
-      screen.getByRole("heading", { name: /API Health/i })
+      screen.getByRole("heading", { name: /API Health/i }),
     ).toBeInTheDocument();
   });
 
@@ -104,7 +104,7 @@ describe("ApiHealth", () => {
     expect(options.getAuthToken()).toBe("fake-token");
   });
 
-  it("displays backend version 0.0.19 when the API reports 0.0.19, even though React is 0.0.20", async () => {
+  it("displays backend version 0.0.20 when the API reports 0.0.20, even though React is 0.0.21", async () => {
     mockRunCheck.mockResolvedValueOnce(mismatchResult);
 
     render(<ApiHealth />);
@@ -112,26 +112,30 @@ describe("ApiHealth", () => {
     await userEvent.click(testButtonFor("Detailed Infrastructure Health"));
 
     // Wait for the async update — the backend version must come from the API
-    // response (0.0.19), not from APP_VERSION (0.0.20).
+    // response (0.0.19), not from APP_VERSION (0.0.21).
     await waitFor(() => {
       expect(
         screen.getByText(
-          /Version mismatch: backend reports 0\.0\.19 but frontend expects 0\.0\.20/i
-        )
+          /Version mismatch: backend reports 0\.0\.20 but frontend expects 0\.0\.21/i,
+        ),
       ).toBeInTheDocument();
     });
 
     // The header meta renders the backend version inside a <code> element.
-    expect(screen.getByText("0.0.19", { selector: "code" })).toBeInTheDocument();
+    expect(
+      screen.getByText("0.0.19", { selector: "code" }),
+    ).toBeInTheDocument();
 
     // It must not claim the backend is on the frontend's version.
     expect(
-      screen.queryByText(/Version match: backend 0\.0\.20/i)
+      screen.queryByText(/Version match: backend 0\.0\.20/i),
     ).not.toBeInTheDocument();
   });
 
   it("the version match check validates against APP_VERSION", () => {
-    const versionCheck = API_CHECKS.find((c) => c.id === "system-version-match");
+    const versionCheck = API_CHECKS.find(
+      (c) => c.id === "system-version-match",
+    );
     if (!versionCheck) throw new Error("the version match check is missing");
     // Only this check validates; without a validator the assertion is vacuous.
     if (!versionCheck.validate) throw new Error("the check has no validator");
