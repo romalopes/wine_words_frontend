@@ -18,10 +18,10 @@ export interface Country {
   is_wine_country?: boolean | null
 }
 
-/** A country from the `index` endpoint, which always includes both counts. */
+/** A country from the `index` endpoint, with producer counts and optional wine counts. */
 export interface CountryListItem extends Country {
   producers_count: number
-  wines_count: number
+  wines_count?: number
 }
 
 /**

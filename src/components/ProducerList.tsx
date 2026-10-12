@@ -39,7 +39,7 @@ function ProducerList() {
 
   // Fetch countries with producers on mount
   useEffect(() => {
-    countriesApi.list().then((data) => {
+    countriesApi.list({ include_wine_counts: false }).then((data) => {
       const countryList = Array.isArray(data) ? data : (data.items || []);
       setCountries(countryList.filter(c => c.producers_count > 0));
       setCountriesLoading(false);

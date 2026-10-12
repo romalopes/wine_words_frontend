@@ -142,7 +142,7 @@ describe("Articles", () => {
     expect(input).toHaveValue("barolo");
     await waitFor(() => {
       expect(
-        mockList.mock.calls.some(
+        mockGrouped.mock.calls.some(
           (call) =>
             typeof call[0] === "object" &&
             call[0] !== null &&

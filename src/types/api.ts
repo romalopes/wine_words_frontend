@@ -515,7 +515,7 @@ export interface GrapesApi {
 }
 
 export interface CountriesApi {
-  list(): Promise<ResourceResponse<CountryListItem>>
+  list(params?: { include_wine_counts?: boolean }): Promise<ResourceResponse<CountryListItem>>
   show(id: string | number): Promise<CountryDetail>
   create(payload: Record<string, unknown>): Promise<Country>
   update(id: string | number, payload: Record<string, unknown>): Promise<Country>

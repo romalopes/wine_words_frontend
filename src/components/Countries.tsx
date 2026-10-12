@@ -370,7 +370,7 @@ function Countries() {
                     )}
                   </td>
                   <td>
-                    {country.wines_count > 0 ? (
+                    {(country.wines_count ?? 0) > 0 ? (
                       <Link
                         to={`/countries/${country.slug}#wines`}
                         className="grapes-table__link"

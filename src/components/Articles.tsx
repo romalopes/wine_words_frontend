@@ -228,7 +228,7 @@ function ArticleCard({
       sort: "relevance",
       query: "",
     },
-    { minQueryLength: MIN_SEARCH_LENGTH },
+    { minQueryLength: MIN_SEARCH_LENGTH, enabled: Boolean(selectedCategory) && scope !== "mine" },
   );
 
   // The term that is actually searched for: blank until the user has typed

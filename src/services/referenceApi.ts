@@ -71,7 +71,7 @@ export function createGrapesApi(request: ApiRequester): GrapesApi {
 
 export function createCountriesApi(request: ApiRequester): CountriesApi {
   return {
-    list: () => request<ResourceResponse<CountryListItem>>("/countries"),
+    list: (params) => request<ResourceResponse<CountryListItem>>(params?.include_wine_counts === false ? "/countries?include_wine_counts=false" : "/countries"),
     show: (id) => request<CountryDetail>(`/countries/${id}`),
     create: (data) => request<Country>("/countries", { method: "POST", auth: true, body: { country: data as unknown as Record<string, never> } }),
     update: (id, data) => request<Country>(`/countries/${id}`, { method: "PATCH", auth: true, body: { country: data as unknown as Record<string, never> } }),
