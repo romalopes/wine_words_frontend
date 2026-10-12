@@ -107,7 +107,7 @@ describe("Reviews", () => {
     renderReviews();
 
     // Let effects settle: the public feeds still load, but my_reviews must not.
-    await waitFor(() => expect(mockAll).toHaveBeenCalled());
+    expect(mockAll).not.toHaveBeenCalled();
     await waitFor(() => expect(mockGrouped).toHaveBeenCalled());
     expect(mockMyReviews).not.toHaveBeenCalled();
     expect(consoleSpy).not.toHaveBeenCalled();
@@ -216,7 +216,7 @@ describe("Reviews", () => {
     expect(input).toHaveValue("malbec");
     await waitFor(() => {
       expect(
-        mockAll.mock.calls.some(
+        mockGrouped.mock.calls.some(
           (call) =>
             typeof call[0] === "object" &&
             call[0] !== null &&

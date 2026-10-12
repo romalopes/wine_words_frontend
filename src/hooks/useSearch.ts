@@ -91,12 +91,13 @@ export interface UseSearchOptions {
    * of being searched on a one- or two-character fragment.
    */
   minQueryLength?: number;
+  enabled?: boolean;
 }
 
 export function useSearch<T>(
   fetchFn: (params: SearchParams, options?: RequestSignal) => Promise<SearchResponse<T>>,
   defaultParams: SearchParams = {},
-  { minQueryLength = 0 }: UseSearchOptions = {}
+  { minQueryLength = 0, enabled = true }: UseSearchOptions = {}
 ) {
   // Initialize params from URL, then merge defaults (URL overrides defaults).
   // Router-owned keys are dropped so this hook can never stale-cache them.
@@ -124,6 +125,10 @@ export function useSearch<T>(
 
   // Fetch whenever the query, the page, or any filter/sort changes.
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     const requestParams = { ...params, query: effectiveQuery };
     const fallbackPerPage = Number(requestParams.per_page) || 20;
     // Abort the previous request as soon as a newer one starts: a searchable
@@ -148,7 +153,7 @@ export function useSearch<T>(
       cancelled = true;
       controller.abort();
     };
-  }, [effectiveQuery, params, fetchFn]);
+  }, [effectiveQuery, params, fetchFn, enabled]);
 
   // Reset to page 1 when the search term, sort or filters change (so a new
   // search never lands on a stale page). The page itself is excluded from the
