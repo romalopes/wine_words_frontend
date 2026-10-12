@@ -49,10 +49,7 @@ function ArticleCard({
   onToggleStatus,
   onDelete,
 }: ArticleCardProps) {
-  const image =
-    Array.isArray(article.images) && article.images.length > 0
-      ? article.images[0]
-      : null;
+  const image = article.primary_image ?? (Array.isArray(article.images) && article.images.length > 0 ? article.images[0] : null);
 
   return (
     <div
@@ -86,7 +83,7 @@ function ArticleCard({
           </span>
         )}
       </div>
-      <p className="wine-management__region">{`by ${article.author_name}`}</p>
+      <p className="wine-management__region">by {article.author_name}</p>
       {Array.isArray(article.tags) && article.tags.length > 0 && (
         <p className="wine-management__vintage-count">
           Tags: {article.tags.join(", ")}
@@ -95,7 +92,6 @@ function ArticleCard({
       {excerpt(article.body, 50) && (
         <p className="wine-management__region">{excerpt(article.body, 50)}</p>
       )}
-
       <div onClick={(e) => e.stopPropagation()}>
         <LikeButton
           kind="article"
@@ -105,7 +101,6 @@ function ArticleCard({
         />
         <CommentLink kind="article" identifier={article.slug || article.id} />
       </div>
-
       {canManage && (
         <div
           className="wine-management__card-actions"
@@ -132,17 +127,14 @@ function ArticleCard({
             type="button"
             className="wine-management__delete-btn"
             onClick={onDelete}
-            title="Delete article"
           >
-            ×
+            Delete
           </button>
         </div>
       )}
     </div>
   );
-}
-
-function Articles() {
+}function Articles() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const canSeeAll = canManageWinesRole(user);

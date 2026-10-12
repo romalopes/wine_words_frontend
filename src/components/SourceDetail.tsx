@@ -164,7 +164,7 @@ function SourceDetail() {
                 >
                   {Array.isArray(article.images) && article.images.length > 0 && (
                     <img
-                      src={article.images[0]}
+                        src={article.primary_image}
                       alt={article.title}
                       className="wine-management__thumb"
                     />
