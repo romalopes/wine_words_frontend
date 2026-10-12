@@ -385,7 +385,7 @@ function Header() {
       </nav>
       <div className="site-header__actions">
         {/* Paid subscribers manage via /subscribe → Stripe portal, so the
-            acquisition CTA is hidden once they hold a non-FREE plan. */}
+            acquisition CTA is hidden once they hold a non-FREE plan.*/}
         {!isPaidSubscriber(user) && (
           <NavLink className="site-header__cta" to="/subscribe">
             Subscribe
