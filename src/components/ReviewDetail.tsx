@@ -128,7 +128,7 @@ function ReviewDetail() {
         next === "published" && !review.published_at
           ? { status: next, published_at: new Date().toISOString() }
           : { status: next };
-      await reviewsApi.update(review.id, payload);
+      await reviewsApi.updateStatus(review.id, payload);
       // Patch only what changed instead of refetching the whole review —
       // the byline badge and the status toolbar read `status`, so updating
       // just these fields re-renders exactly those two areas.

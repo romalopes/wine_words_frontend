@@ -126,6 +126,9 @@ export function createReviewsApi(request: ApiRequester): ReviewApi {
     create(wineSlug, vintageId, payload: ReviewWritePayload) {
       return request<Review>(`/wines/${wineSlug}/vintages/${vintageId}/reviews`, { method: "POST", auth: true, body: { review: payload as unknown as Record<string, never> } })
     },
+    updateStatus(id, payload) {
+      return request<void>(`/reviews/${id}`, { method: "PATCH", auth: true, headers: { Prefer: "return=minimal" }, body: { review: payload } })
+    },
     update(id, payload: ReviewWritePayload) {
       return request<Review>(`/reviews/${id}`, { method: "PATCH", auth: true, body: { review: payload as unknown as Record<string, never> } })
     },
@@ -157,6 +160,9 @@ export function createArticlesApi(request: ApiRequester): ArticleApi {
     },
     create(payload) {
       return request<Article>("/articles", { method: "POST", auth: true, body: payload instanceof FormData ? payload : { article: payload as unknown as Record<string, never> } })
+    },
+    updateStatus(id, payload) {
+      return request<void>(`/articles/${id}`, { method: "PATCH", auth: true, headers: { Prefer: "return=minimal" }, body: { article: payload } })
     },
     update(id, payload) {
       return request<Article>(`/articles/${id}`, { method: "PATCH", auth: true, body: payload instanceof FormData ? payload : { article: payload as unknown as Record<string, never> } })

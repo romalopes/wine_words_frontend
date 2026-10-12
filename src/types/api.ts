@@ -189,6 +189,7 @@ export interface RequestSignal {
 }
 
 export interface ReviewApi {
+  updateStatus(id: string | number, payload: Pick<ReviewWritePayload, "status" | "published_at">): Promise<void>
   all(params?: QueryParams, options?: RequestSignal): Promise<ResourceResponse<Review>>
   list(wineSlug: string, vintageId: number): Promise<Review[]>
   show(id: string | number): Promise<Review>
@@ -215,6 +216,7 @@ export interface ArticleGroup {
 }
 
 export interface ArticleApi {
+  updateStatus(id: string | number, payload: Pick<ArticleWritePayload, "status" | "published_at">): Promise<void>
   list(params?: QueryParams, options?: RequestSignal): Promise<ResourceResponse<Article>>
   myArticles(): Promise<Article[]>
   show(id: string | number): Promise<Article>

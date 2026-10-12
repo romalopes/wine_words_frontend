@@ -103,7 +103,7 @@ function ArticleDetail() {
         next === "published" && !article.published_at
           ? { status: next, published_at: new Date().toISOString() }
           : { status: next };
-      await articlesApi.update(article.id, payload);
+      await articlesApi.updateStatus(article.id, payload);
       // Patch only what changed instead of refetching the whole article —
       // the byline badge and the status toolbar read `status`, so updating
       // just these fields re-renders exactly those two areas.
