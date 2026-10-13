@@ -46,6 +46,10 @@ function makeUser(subscriptionName: string | null): User {
   };
 }
 
+function makeUserWithRoles(roles: string[]): User {
+  return { ...makeUser(null), roles };
+}
+
 function renderHeader() {
   return render(
     <MemoryRouter>
@@ -53,6 +57,32 @@ function renderHeader() {
     </MemoryRouter>,
   );
 }
+
+describe("Header Analytics link", () => {
+  it.each([["Reviewer"], ["Editor"], ["Admin"]])(
+    "shows Analytics for %s role",
+    (role) => {
+      authState.user = makeUserWithRoles([role]);
+      renderHeader();
+      expect(screen.getByRole("link", { name: "Analytics" })).toBeInTheDocument();
+    },
+  );
+
+  it.each([[[]], [["Reader"]], [["Guest"]]])(
+    "hides Analytics for non-privileged roles %s",
+    (roles) => {
+      authState.user = makeUserWithRoles(roles);
+      renderHeader();
+      expect(screen.queryByRole("link", { name: "Analytics" })).not.toBeInTheDocument();
+    },
+  );
+
+  it("hides Analytics for logged-out visitors", () => {
+    authState.user = null;
+    renderHeader();
+    expect(screen.queryByRole("link", { name: "Analytics" })).not.toBeInTheDocument();
+  });
+});
 
 describe("Header Subscribe CTA", () => {
   it("shows Subscribe for logged-out visitors", () => {

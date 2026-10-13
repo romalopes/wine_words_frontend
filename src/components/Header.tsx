@@ -111,8 +111,8 @@ function Header() {
     isAdminUser || canManageWinesRole(effectiveIdentity);
   // Wine packages are for content managers and Reviewers (the people who
   // receive and review the wines).
-  const canSeePackages = canAccessPackages(effectiveIdentity);
-  const canSeeAnalytics = canAccessAnalytics(effectiveIdentity);
+  const canSeePackages = canAccessPackages(user);
+  const canSeeAnalytics = canAccessAnalytics(user);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
