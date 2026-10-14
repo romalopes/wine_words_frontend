@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import type { MouseEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { winesApi, categoriesApi } from "../services/api";
 import type { WineGroup } from "../types/api";
@@ -23,24 +22,50 @@ import {
 } from "../services/searchParams";
 
 /**
- * Card body for a simple-search hit: name, producer, grapes and regions with
- * the query highlighted, reusing the same CSS classes as the grouped cards.
- * Split out of the results branch below so the file stays within the editor
- * and lint size budgets for a single JSX block.
+ * Shared wine card used by every listing on this page (advanced search,
+ * category, simple search and the grouped view). One component keeps the
+ * markup in sync across all four call sites.
+ *
+ * Optional props cover the few per-view differences:
+ *  - `query` highlights matching text (simple search); empty = plain text.
+ *  - `showImage` / `showSparkling` hide the thumbnail and "Sparkling" badge
+ *    (the compact simple-search card omits both).
+ *  - `showInteractions` renders the Like/Comment footer (grouped + simple).
  */
-function SimpleResultCard({
+function WineCard({
   wine,
-  query,
-  canManageWines,
-  onDelete,
+  query = "",
+  showImage = true,
+  showSparkling = true,
+  showInteractions = false,
 }: {
   wine: WineListItem;
-  query: string;
-  canManageWines: boolean;
-  onDelete: (wine: WineListItem, e: MouseEvent) => void;
+  query?: string;
+  showImage?: boolean;
+  showSparkling?: boolean;
+  showInteractions?: boolean;
 }) {
+  const navigate = useNavigate();
   return (
-    <>
+    <div
+      className="wine-management__card"
+      onClick={() => navigate(`/wines/${wine.slug}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigate(`/wines/${wine.slug}`);
+        }
+      }}
+    >
+      {showImage && Array.isArray(wine.images) && wine.images.length > 0 && (
+        <img
+          src={wine.images[0]}
+          alt={wine.name}
+          className="wine-management__thumb"
+        />
+      )}
       <div className="wine-management__card-header">
         <h3>
           <SearchHighlight text={wine.name} query={query} />
@@ -52,7 +77,7 @@ function SimpleResultCard({
         </span>
       </div>
       {wine.producer && (
-        <p className="wine-management__producer">
+        <p className="wine-management__producer" style={{ marginBottom: 0 }}>
           <SearchHighlight text={wine.producer.name} query={query} />
         </p>
       )}
@@ -83,41 +108,32 @@ function SimpleResultCard({
           {wine.regions.length > 3 ? "…" : ""}
         </p>
       )}
-      {(wine.vintages_count ?? 0) > 0 && (
-        <p className="wine-management__vintage-count">
-          {wine.vintages_count} vintage
-          {wine.vintages_count !== 1 ? "s" : ""}
-        </p>
+      {showSparkling && wine.sparkling && (
+        <p className="wine-management__sparkling">✨ Sparkling</p>
       )}
-      <div onClick={(e) => e.stopPropagation()}>
-        <LikeButton
-          kind="wine"
-          identifier={wine.slug || wine.id}
-          initialLiked={wine.liked_by_current_user}
-          initialCount={wine.likes_count}
-        />
-        <CommentLink kind="wine" identifier={wine.slug || wine.id} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {(wine.vintages_count ?? 0) > 0 && (
+          <p className="wine-management__vintage-count">
+            {wine.vintages_count} vintage
+            {wine.vintages_count !== 1 ? "s" : ""}
+          </p>
+        )}
+        {showInteractions && (
+          <div
+            className="wine-management__interactions"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <LikeButton
+              kind="wine"
+              identifier={wine.slug || wine.id}
+              initialLiked={wine.liked_by_current_user}
+              initialCount={wine.likes_count}
+            />
+            <CommentLink kind="wine" identifier={wine.slug || wine.id} />
+          </div>
+        )}
       </div>
-      {canManageWines && (
-        <div
-          className="wine-management__card-actions"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Link
-            to={`/wines/${wine.slug}/edit`}
-            className="wine-management__edit-btn"
-          >
-            Edit
-          </Link>
-          <button
-            className="wine-management__delete-btn"
-            onClick={(e) => onDelete(wine, e)}
-          >
-            Delete
-          </button>
-        </div>
-      )}
-    </>
+    </div>
   );
 }
 
@@ -193,7 +209,6 @@ function WineList() {
   const [groups, setGroups] = useState<WineGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
   const selectedCategory = useSelectedCategory();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -338,28 +353,6 @@ function WineList() {
     }
   }
 
-  async function handleDelete(wine: WineListItem, e: MouseEvent) {
-    e.stopPropagation();
-    if (
-      !window.confirm(`Delete "${wine.name}"? This action cannot be undone.`)
-    ) {
-      return;
-    }
-    try {
-      await winesApi.destroy(wine.slug);
-      if (showingSimpleResults) {
-        simplePaged.reload();
-      } else if (selectedCategory) {
-        pagedWines.reload();
-      } else {
-        // Re-fetch the grouped view (cheap: only 12 per category).
-        loadGroups();
-      }
-    } catch (err) {
-      alert(errorMessage(err, "Failed to delete wine"));
-    }
-  }
-
   if (loading) {
     return (
       <div className="wine-app">
@@ -409,86 +402,7 @@ function WineList() {
           <>
             <div className="content-grid">
               {advancedPaged.items.map((wine) => (
-                <div
-                  key={wine.slug}
-                  className="wine-management__card"
-                  onClick={() => navigate(`/wines/${wine.slug}`)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      navigate(`/wines/${wine.slug}`);
-                    }
-                  }}
-                >
-                  {Array.isArray(wine.images) && wine.images.length > 0 && (
-                    <img
-                      src={wine.images[0]}
-                      alt={wine.name}
-                      className="wine-management__thumb"
-                    />
-                  )}
-                  <div className="wine-management__card-header">
-                    <h3>{wine.name}</h3>
-                    <span
-                      className={`wine-management__color-badge wine-management__color-badge--${wine.color}`}
-                    >
-                      {wine.color}
-                    </span>
-                  </div>
-                  {wine.producer && (
-                    <p className="wine-management__producer">
-                      {wine.producer.name}
-                    </p>
-                  )}
-                  {Array.isArray(wine.grapes) && wine.grapes.length > 0 && (
-                    <p className="wine-management__grapes">
-                      <strong>Grapes:</strong>{" "}
-                      {wine.grapes
-                        .slice(0, 3)
-                        .map((g) => g.name)
-                        .join(", ")}
-                      {wine.grapes.length > 3 ? "…" : ""}
-                    </p>
-                  )}
-                  {Array.isArray(wine.regions) && wine.regions.length > 0 && (
-                    <p className="wine-management__regions">
-                      <strong>Regions:</strong>{" "}
-                      {wine.regions
-                        .slice(0, 3)
-                        .map((r) => (r.name ? r.name : r))
-                        .join(", ")}
-                      {wine.regions.length > 3 ? "…" : ""}
-                    </p>
-                  )}
-                  {wine.sparkling && (
-                    <p className="wine-management__sparkling">✨ Sparkling</p>
-                  )}
-                  {(wine.vintages_count ?? 0) > 0 && (
-                    <p className="wine-management__vintage-count">
-                      {wine.vintages_count} vintage
-                      {wine.vintages_count !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                  {canManageWines && (
-                    <div className="wine-management__card-actions">
-                      <Link
-                        to={`/wines/${wine.slug}/edit`}
-                        className="wine-management__edit-btn"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        className="wine-management__delete-btn"
-                        onClick={(e) => handleDelete(wine, e)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <WineCard key={wine.slug} wine={wine} />
               ))}
             </div>
             <Pagination
@@ -551,26 +465,14 @@ function WineList() {
             </p>
             <div className="content-grid">
               {simplePaged.items.map((wine) => (
-                <div
+                <WineCard
                   key={wine.slug}
-                  className="wine-management__card"
-                  onClick={() => navigate(`/wines/${wine.slug}`)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      navigate(`/wines/${wine.slug}`);
-                    }
-                  }}
-                >
-                  <SimpleResultCard
-                    wine={wine}
-                    query={simpleQuery}
-                    canManageWines={canManageWines}
-                    onDelete={handleDelete}
-                  />
-                </div>
+                  wine={wine}
+                  query={simpleQuery}
+                  showImage={false}
+                  showSparkling={false}
+                  showInteractions
+                />
               ))}
             </div>
             <Pagination
@@ -640,86 +542,7 @@ function WineList() {
           <>
             <div className="content-grid">
               {pagedWines.items.map((wine) => (
-                <div
-                  key={wine.slug}
-                  className="wine-management__card"
-                  onClick={() => navigate(`/wines/${wine.slug}`)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      navigate(`/wines/${wine.slug}`);
-                    }
-                  }}
-                >
-                  {Array.isArray(wine.images) && wine.images.length > 0 && (
-                    <img
-                      src={wine.images[0]}
-                      alt={wine.name}
-                      className="wine-management__thumb"
-                    />
-                  )}
-                  <div className="wine-management__card-header">
-                    <h3>{wine.name}</h3>
-                    <span
-                      className={`wine-management__color-badge wine-management__color-badge--${wine.color}`}
-                    >
-                      {wine.color}
-                    </span>
-                  </div>
-                  {wine.producer && (
-                    <p className="wine-management__producer">
-                      {wine.producer.name}
-                    </p>
-                  )}
-                  {Array.isArray(wine.grapes) && wine.grapes.length > 0 && (
-                    <p className="wine-management__grapes">
-                      <strong>Grapes:</strong>{" "}
-                      {wine.grapes
-                        .slice(0, 3)
-                        .map((g) => g.name)
-                        .join(", ")}
-                      {wine.grapes.length > 3 ? "…" : ""}
-                    </p>
-                  )}
-                  {Array.isArray(wine.regions) && wine.regions.length > 0 && (
-                    <p className="wine-management__regions">
-                      <strong>Regions:</strong>{" "}
-                      {wine.regions
-                        .slice(0, 3)
-                        .map((r) => (r.name ? r.name : r))
-                        .join(", ")}
-                      {wine.regions.length > 3 ? "…" : ""}
-                    </p>
-                  )}
-                  {wine.sparkling && (
-                    <p className="wine-management__sparkling">✨ Sparkling</p>
-                  )}
-                  {(wine.vintages_count ?? 0) > 0 && (
-                    <p className="wine-management__vintage-count">
-                      {wine.vintages_count} vintage
-                      {wine.vintages_count !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                  {canManageWines && (
-                    <div className="wine-management__card-actions">
-                      <Link
-                        to={`/wines/${wine.slug}/edit`}
-                        className="wine-management__edit-btn"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        className="wine-management__delete-btn"
-                        onClick={(e) => handleDelete(wine, e)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <WineCard key={wine.slug} wine={wine} />
               ))}
             </div>
             <Pagination
@@ -817,98 +640,7 @@ function WineList() {
               </h2>
               <div className="content-grid">
                 {group.wines.map((wine) => (
-                  <div
-                    key={wine.slug}
-                    className="wine-management__card"
-                    onClick={() => navigate(`/wines/${wine.slug}`)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        navigate(`/wines/${wine.slug}`);
-                      }
-                    }}
-                  >
-                    {Array.isArray(wine.images) && wine.images.length > 0 && (
-                      <img
-                        src={wine.images[0]}
-                        alt={wine.name}
-                        className="wine-management__thumb"
-                      />
-                    )}
-                    <div className="wine-management__card-header">
-                      <h3>{wine.name}</h3>
-                      <span
-                        className={`wine-management__color-badge wine-management__color-badge--${wine.color}`}
-                      >
-                        {wine.color}
-                      </span>
-                    </div>
-                    {wine.producer && (
-                      <p className="wine-management__producer">
-                        {wine.producer.name}
-                      </p>
-                    )}
-                    {Array.isArray(wine.grapes) && wine.grapes.length > 0 && (
-                      <p className="wine-management__grapes">
-                        <strong>Grapes:</strong>{" "}
-                        {wine.grapes
-                          .slice(0, 3)
-                          .map((g) => g.name)
-                          .join(", ")}
-                        {wine.grapes.length > 3 ? "…" : ""}
-                      </p>
-                    )}
-                    {Array.isArray(wine.regions) && wine.regions.length > 0 && (
-                      <p className="wine-management__regions">
-                        <strong>Regions:</strong>{" "}
-                        {wine.regions
-                          .slice(0, 3)
-                          .map((r) => (r.name ? r.name : r))
-                          .join(", ")}
-                        {wine.regions.length > 3 ? "…" : ""}
-                      </p>
-                    )}
-                    {wine.sparkling && (
-                      <p className="wine-management__sparkling">✨ Sparkling</p>
-                    )}
-                    {(wine.vintages_count ?? 0) > 0 && (
-                      <p className="wine-management__vintage-count">
-                        {wine.vintages_count} vintage
-                        {wine.vintages_count !== 1 ? "s" : ""}
-                      </p>
-                    )}
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <LikeButton
-                        kind="wine"
-                        identifier={wine.slug || wine.id}
-                        initialLiked={wine.liked_by_current_user}
-                        initialCount={wine.likes_count}
-                      />
-                      <CommentLink
-                        kind="wine"
-                        identifier={wine.slug || wine.id}
-                      />
-                    </div>
-                    {canManageWines && (
-                      <div className="wine-management__card-actions">
-                        <Link
-                          to={`/wines/${wine.slug}/edit`}
-                          className="wine-management__edit-btn"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          className="wine-management__delete-btn"
-                          onClick={(e) => handleDelete(wine, e)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <WineCard key={wine.slug} wine={wine} showInteractions />
                 ))}
               </div>
             </section>

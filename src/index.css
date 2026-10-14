@@ -1372,7 +1372,13 @@ textarea {
   font-size: 0.82rem;
   font-weight: 700;
   margin: 0;
+  display: inline-block;
+  vertical-align: top;
   text-transform: uppercase;
+}
+.wine-management__interactions {
+  display: inline-block;
+  vertical-align: top;
 }
 
 .wine-management__color-badge {
