@@ -4,19 +4,14 @@ import { sourcesApi, reviewsApi, articlesApi } from "../services/api";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
 import ReviewCard from "./ReviewCard";
+import ArticleCard from "./ArticleCard";
+import { type ContentStatus } from "./ContentStatusActions";
 import { errorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import type { Source } from "../types/api";
 import type { Review } from "../types/review";
 import type { Article } from "../types/article";
-
-/** Plain-text excerpt for the article cards. */
-function excerpt(html: string | null | undefined, max = 60): string {
-  if (!html) return "";
-  const stripped = html.replace(/<[^>]+>/g, "").trim();
-  return stripped.length <= max ? stripped : stripped.slice(0, max) + "…";
-}
 
 /**
  * Source page: every review and article for one content source, each list
@@ -67,6 +62,57 @@ function SourceDetail() {
     enabled: Boolean(source) && canManage,
     paramKey: "article_page",
   });
+
+  // Ids of the cards whose status transition is in flight — their buttons
+  // render disabled, exactly like the detail pages' `statusBusy`.
+  const [busyReviewId, setBusyReviewId] = useState<number | null>(null);
+  const [busyArticleId, setBusyArticleId] = useState<number | null>(null);
+
+  // Draft / Publish / Archive from the source page. Publishing stamps
+  // `published_at` the first time, matching the detail-page behaviour.
+  const changeReviewStatus = async (review: Review, next: ContentStatus) => {
+    if (next === review.status) return;
+    try {
+      setBusyReviewId(review.id);
+      const payload =
+        next === "published" && !review.published_at
+          ? { status: next, published_at: new Date().toISOString() }
+          : { status: next };
+      await reviewsApi.updateStatus(review.id, payload);
+      // Patch the card in place, like the detail pages do — no list refetch,
+      // so no loading flicker.
+      reviews.patchItem(review.id, {
+        status: next,
+        published_at: payload.published_at ?? review.published_at,
+      });
+    } catch (err) {
+      alert(errorMessage(err, "Failed to update review"));
+    } finally {
+      setBusyReviewId(null);
+    }
+  };
+
+  const changeArticleStatus = async (article: Article, next: ContentStatus) => {
+    if (next === article.status) return;
+    try {
+      setBusyArticleId(article.id);
+      const payload =
+        next === "published" && !article.published_at
+          ? { status: next, published_at: new Date().toISOString() }
+          : { status: next };
+      await articlesApi.updateStatus(article.id, payload);
+      // Patch the card in place, like the detail pages do — no list refetch,
+      // so no loading flicker.
+      articles.patchItem(article.id, {
+        status: next,
+        published_at: payload.published_at ?? article.published_at,
+      });
+    } catch (err) {
+      alert(errorMessage(err, "Failed to update article"));
+    } finally {
+      setBusyArticleId(null);
+    }
+  };
 
   if (!canManage) {
     return (
@@ -121,6 +167,12 @@ function SourceDetail() {
                   key={review.id}
                   review={review}
                   onOpen={() => navigate(`/reviews/${review.slug}`)}
+                  canManage
+                  onStatusChange={(status) =>
+                    changeReviewStatus(review, status)
+                  }
+                  user={user}
+                  statusBusy={busyReviewId === review.id}
                 />
               ))}
             </div>
@@ -149,34 +201,18 @@ function SourceDetail() {
           <>
             <div className="content-grid">
               {articles.items.map((article) => (
-                <div
+                <ArticleCard
                   key={article.id}
-                  className="wine-management__card"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(`/articles/${article.slug}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      navigate(`/articles/${article.slug}`);
-                    }
-                  }}
-                >
-                  {Array.isArray(article.images) && article.images.length > 0 && (
-                    <img
-                        src={article.primary_image}
-                      alt={article.title}
-                      className="wine-management__thumb"
-                    />
-                  )}
-                  <div className="wine-management__card-header">
-                    <h3>{article.title}</h3>
-                  </div>
-                  <p className="wine-management__region">by {article.author_name}</p>
-                  {excerpt(article.body) && (
-                    <p className="wine-management__region">{excerpt(article.body)}</p>
-                  )}
-                </div>
+                  article={article}
+                  canManage
+                  canManageContent
+                  onOpen={() => navigate(`/articles/${article.slug}`)}
+                  onStatusChange={(status) =>
+                    changeArticleStatus(article, status)
+                  }
+                  user={user}
+                  statusBusy={busyArticleId === article.id}
+                />
               ))}
             </div>
             <Pagination

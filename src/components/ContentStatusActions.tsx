@@ -39,6 +39,7 @@ function ContentStatusActions({ status, onChange, user, busy }: ContentStatusAct
             type="button"
             className={`content-status__btn${active ? " content-status__btn--active" : ""}`}
             aria-pressed={active}
+            aria-label={`Set status to ${option.label}`}
             disabled={busy || active}
             onClick={() => onChange(option.value)}
           >

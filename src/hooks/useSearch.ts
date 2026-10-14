@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { buildQuery, parseQuery } from '../services/searchParams';
 import type { SearchParams } from '../services/searchParams';
 import type { Paginated, ResourceResponse } from '../types/common';
@@ -200,6 +200,24 @@ export function useSearch<T>(
       return rest;
     });
 
+  // Merge a partial update into one item of the current page, without
+  // refetching — mirrors the detail pages' in-place status update so the
+  // list doesn't flicker through a loading state.
+  const patchItem = useCallback((id: number | string, patch: Partial<T>) => {
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            data: prev.data.map((item) =>
+              (item as { id?: unknown }).id === id
+                ? { ...item, ...patch }
+                : item,
+            ),
+          }
+        : prev,
+    );
+  }, []);
+
   return {
     data,
     loading,
@@ -209,5 +227,6 @@ export function useSearch<T>(
     setSort,
     setFilter,
     removeFilter,
+    patchItem,
   };
 }

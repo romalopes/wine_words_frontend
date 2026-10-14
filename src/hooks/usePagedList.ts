@@ -20,6 +20,8 @@ export interface PagedList<T> {
   loading: boolean
   error: string | null
   reload: () => void
+  /** Merge a partial update into one item by id, without refetching. */
+  patchItem: (id: number | string, patch: Partial<T>) => void
 }
 
 // Reusable paginated-list state. Fetches one page at a time from an API
@@ -104,6 +106,14 @@ function usePagedList<T>({
 
   const reload = useCallback(() => setReloadToken((token) => token + 1), [])
 
+  const patchItem = useCallback((id: number | string, patch: Partial<T>) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        (item as { id?: unknown }).id === id ? { ...item, ...patch } : item,
+      ),
+    )
+  }, [])
+
   return {
     items,
     page,
@@ -113,6 +123,7 @@ function usePagedList<T>({
     loading,
     error,
     reload,
+    patchItem,
   }
 }
 

@@ -2,6 +2,10 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import LikeButton from "./LikeButton";
 import CommentLink from "./comments/CommentLink";
+import ContentStatusActions, {
+  type ContentStatus,
+} from "./ContentStatusActions";
+import type { RoleUser } from "../constants/roles";
 import type { Review } from "../types/review";
 import { SearchHighlight } from "./search";
 
@@ -17,12 +21,17 @@ export interface ReviewCardProps {
   review: Review;
   /** Search term to highlight in the title; omit outside search contexts. */
   query?: string;
-  /** Whether to render the management (Edit / Publish / Delete) buttons. */
+  /** Whether to render the management (Edit / status / Delete) buttons. */
   canManage?: boolean;
   /** Opens the review — the card body is the click target. */
   onOpen: () => void;
   onEdit?: (() => void) | undefined;
-  onToggleStatus?: (() => void) | undefined;
+  /** Draft / Publish / Archive transition for the card. */
+  onStatusChange?: ((status: ContentStatus) => void) | undefined;
+  /** Signed-in user — forwarded to ContentStatusActions (managers only). */
+  user?: RoleUser | null;
+  /** Disables the status buttons while a transition is in flight. */
+  statusBusy?: boolean;
   onDelete?: (() => void) | undefined;
   /** Rendered inside the card, used for the inline edit form. */
   children?: ReactNode;
@@ -41,7 +50,9 @@ export default function ReviewCard({
   canManage = false,
   onOpen,
   onEdit,
-  onToggleStatus,
+  onStatusChange,
+  user,
+  statusBusy = false,
   onDelete,
   children,
 }: ReviewCardProps) {
@@ -103,30 +114,22 @@ export default function ReviewCard({
         </p>
       )}
 
-      {review.reviewer_name && (
-        <p className="wine-management__region">by {review.reviewer_name}</p>
-      )}
-
-      {hasDrinkWindow && (
-        <p className="wine-management__vintage-count">
-          Drink {review.drink_from ?? ""}
-          {review.drink_to != null ? `–${review.drink_to}` : ""}
-          {review.drink_plus ? "+" : ""}
-        </p>
-      )}
-
-      {excerpt(review.comment, 50) && (
-        <p className="wine-management__region">{excerpt(review.comment, 50)}</p>
-      )}
-
-      <div onClick={(e) => e.stopPropagation()}>
-        <LikeButton
-          kind="review"
-          identifier={review.slug || review.id}
-          initialLiked={review.liked_by_current_user}
-          initialCount={review.likes_count}
-        />
-        <CommentLink kind="review" identifier={review.slug || review.id} />
+      <div
+        className="wine-management__card-meta"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {review.reviewer_name && (
+          <span className="wine-management__region">by {review.reviewer_name}</span>
+        )}
+        <span className="wine-management__card-meta-actions">
+          <LikeButton
+            kind="review"
+            identifier={review.slug || review.id}
+            initialLiked={review.liked_by_current_user}
+            initialCount={review.likes_count}
+          />
+          <CommentLink kind="review" identifier={review.slug || review.id} />
+        </span>
       </div>
 
       {image && (
@@ -137,33 +140,19 @@ export default function ReviewCard({
         />
       )}
 
-      {canManage && onEdit && onToggleStatus && onDelete && (
+      {canManage && (onEdit ?? onStatusChange ?? onDelete) && (
         <div
           className="wine-management__card-actions"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            type="button"
-            className="wine-management__edit-btn"
-            onClick={onEdit}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            className="wine-management__edit-btn"
-            onClick={onToggleStatus}
-          >
-            {review.status === "draft" ? "Publish" : "Unpublish"}
-          </button>
-          <button
-            type="button"
-            className="wine-management__delete-btn"
-            onClick={onDelete}
-            title="Delete review"
-          >
-            ×
-          </button>
+          {onStatusChange && (
+            <ContentStatusActions
+              status={review.status}
+              user={user}
+              busy={statusBusy}
+              onChange={onStatusChange}
+            />
+          )}
         </div>
       )}
 

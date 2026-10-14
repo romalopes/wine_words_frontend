@@ -3,8 +3,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { articlesApi, categoriesApi } from "../services/api";
 import { useCategoryOrder, sortCategoryNames } from "../hooks/useCategoryOrder";
 import ArticleForm from "./ArticleForm";
-import LikeButton from "./LikeButton";
-import CommentLink from "./comments/CommentLink";
+import ArticleCard from "./ArticleCard";
+import { type ContentStatus } from "./ContentStatusActions";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import Pagination from "./Pagination";
@@ -16,125 +16,9 @@ import {
 import type { SearchParams } from "../services/searchParams";
 import type { Article } from "../types/article";
 import type { ArticleGroup, RequestSignal } from "../types/api";
-import { SearchBar, SearchHighlight } from "./search";
+import { SearchBar } from "./search";
 
-function excerpt(text: string | null | undefined, max = 50): string {
-  if (!text) return "";
-  // Strip HTML tags for a plain-text excerpt
-  const stripped = text.replace(/<[^>]+>/g, "").trim();
-  if (stripped.length <= max) return stripped;
-  return stripped.slice(0, max) + "…";
-}
-
-interface ArticleCardProps {
-  article: Article;
-  query: string;
-  canManage: boolean;
-  canManageContent: boolean;
-  onOpen: () => void;
-  onToggleStatus: () => void;
-  onDelete: () => void;
-}
-
-/**
- * A single article card in the grid. Mirrors the `wine-management__card`
- * markup used by the other grouped listings, so the grid/typography match.
- */
-function ArticleCard({
-  article,
-  query,
-  canManage,
-  canManageContent,
-  onOpen,
-  onToggleStatus,
-  onDelete,
-}: ArticleCardProps) {
-  const image = article.primary_image ?? (Array.isArray(article.images) && article.images.length > 0 ? article.images[0] : null);
-
-  return (
-    <div
-      className="wine-management__card"
-      onClick={onOpen}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onOpen();
-        }
-      }}
-    >
-      {image && (
-        <img
-          src={image}
-          alt={article.title}
-          className="wine-management__thumb"
-        />
-      )}
-      <div className="wine-management__card-header">
-        <h3>
-          <SearchHighlight text={article.title} query={query} />
-        </h3>
-        {canManageContent && (
-          <span
-            className={`wine-management__color-badge wine-management__color-badge--${article.status}`}
-          >
-            {article.status}
-          </span>
-        )}
-      </div>
-      <p className="wine-management__region">by {article.author_name}</p>
-      {Array.isArray(article.tags) && article.tags.length > 0 && (
-        <p className="wine-management__vintage-count">
-          Tags: {article.tags.join(", ")}
-        </p>
-      )}
-      {excerpt(article.body, 50) && (
-        <p className="wine-management__region">{excerpt(article.body, 50)}</p>
-      )}
-      <div onClick={(e) => e.stopPropagation()}>
-        <LikeButton
-          kind="article"
-          identifier={article.slug || article.id}
-          initialLiked={article.liked_by_current_user}
-          initialCount={article.likes_count}
-        />
-        <CommentLink kind="article" identifier={article.slug || article.id} />
-      </div>
-      {canManage && (
-        <div
-          className="wine-management__card-actions"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Link
-            to={`/articles/${article.slug}/edit`}
-            className="wine-management__edit-btn"
-          >
-            Edit
-          </Link>
-          <button
-            type="button"
-            className={
-              article.status === "draft"
-                ? "wine-management__edit-btn"
-                : "wine-management__delete-btn"
-            }
-            onClick={onToggleStatus}
-          >
-            {article.status === "draft" ? "Publish" : "Unpublish"}
-          </button>
-          <button
-            type="button"
-            className="wine-management__delete-btn"
-            onClick={onDelete}
-          >
-            Delete
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}function Articles() {
+function Articles() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const canSeeAll = canManageWinesRole(user);
@@ -220,6 +104,7 @@ function ArticleCard({
     setSort,
     setFilter,
     removeFilter,
+    patchItem,
   } = useSearch(
     fetchArticles,
     {
@@ -303,33 +188,46 @@ function ArticleCard({
     }
   }, [user, loadMyArticles]);
 
-  async function handleDelete(id: number) {
-    if (!window.confirm("Delete this article?")) return;
-    try {
-      await articlesApi.destroy(id);
-      if (scope === "mine") {
-        setMyArticles((prev) => prev.filter((a) => a.id !== id));
-      }
-      reload();
-    } catch (err) {
-      alert((err as Error).message || "Failed to delete article");
-    }
-  }
+  // Id of the card whose status transition is in flight — its buttons render
+  // disabled, exactly like the detail page's `statusBusy`.
+  const [statusBusyId, setStatusBusyId] = useState<number | null>(null);
 
-  async function togglePublish(article: Article) {
-    const nextStatus = article.status === "draft" ? "published" : "draft";
+  async function changeStatus(article: Article, next: ContentStatus) {
+    if (next === article.status) return;
     try {
-      await articlesApi.update(article.id, { status: nextStatus });
+      setStatusBusyId(article.id);
+      const payload =
+        next === "published" && !article.published_at
+          ? { status: next, published_at: new Date().toISOString() }
+          : { status: next };
+      await articlesApi.updateStatus(article.id, payload);
+      const patch = {
+        status: next,
+        published_at: payload.published_at ?? article.published_at,
+      };
+      // Patch every rendered copy in place — paginated feed, grouped view and
+      // "mine" list — instead of refetching, so only that card re-renders
+      // (no loading flicker), exactly like ArticleDetail does.
+      patchItem(article.id, patch);
+      setGroups((prev) =>
+        prev.map((group) => ({
+          ...group,
+          articles: (group.articles ?? []).map((a) =>
+            a.id === article.id ? { ...a, ...patch } : a,
+          ),
+        })),
+      );
       if (scope === "mine") {
         setMyArticles((prev) =>
           prev.map((a) =>
-            a.id === article.id ? { ...a, status: nextStatus } : a,
+            a.id === article.id ? { ...a, ...patch } : a,
           ),
         );
       }
-      reload();
     } catch (err) {
       alert((err as Error).message || "Failed to update article");
+    } finally {
+      setStatusBusyId(null);
     }
   }
 
@@ -535,8 +433,9 @@ function ArticleCard({
                       canManage={canManage(article)}
                       canManageContent={canManageContent}
                       onOpen={() => navigate(`/articles/${article.slug}`)}
-                      onToggleStatus={() => togglePublish(article)}
-                      onDelete={() => handleDelete(article.id)}
+                      onStatusChange={(status) => changeStatus(article, status)}
+                      user={user}
+                      statusBusy={statusBusyId === article.id}
                     />
                   ))}
                 </div>
@@ -609,8 +508,11 @@ function ArticleCard({
                           canManage={canManage(article)}
                           canManageContent={canManageContent}
                           onOpen={() => navigate(`/articles/${article.slug}`)}
-                          onToggleStatus={() => togglePublish(article)}
-                          onDelete={() => handleDelete(article.id)}
+                          onStatusChange={(status) =>
+                            changeStatus(article, status)
+                          }
+                          user={user}
+                          statusBusy={statusBusyId === article.id}
                         />
                       ))}
                     </div>

@@ -1350,6 +1350,23 @@ textarea {
   margin: 0;
 }
 
+/* Byline + Like + Comment on a single horizontal line in cards. The name
+   takes the available space so the two pills sit right-aligned. */
+.wine-management__card-meta {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.wine-management__card-meta-actions {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .wine-management__vintage-count {
   color: #27615e;
   font-size: 0.82rem;

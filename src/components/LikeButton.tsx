@@ -5,8 +5,8 @@ import type { LikeableKind } from "../types/like"
 interface LikeButtonProps {
   kind: LikeableKind
   identifier: string | number | null | undefined
-  initialLiked?: boolean | null
-  initialCount?: number | null
+  initialLiked?: boolean | null | undefined
+  initialCount?: number | null | undefined
   onChange?: (state: { liked: boolean; likes_count: number }) => void
   className?: string
 }

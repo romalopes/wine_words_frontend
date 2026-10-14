@@ -4,6 +4,7 @@ import { reviewsApi, categoriesApi, winesApi } from "../services/api";
 import { useCategoryOrder, sortCategoryNames } from "../hooks/useCategoryOrder";
 import ReviewForm from "./ReviewForm";
 import ReviewCard from "./ReviewCard";
+import type { ContentStatus } from "./ContentStatusActions";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import Pagination from "./Pagination";
@@ -130,6 +131,7 @@ function Reviews() {
     setSort,
     setFilter,
     removeFilter,
+    patchItem,
   } = useSearch(
     fetchReviews,
     {
@@ -242,20 +244,47 @@ function Reviews() {
     }
   }, [user, loadMyReviews]);
 
+  // Id of the card whose status transition is in flight — its buttons render
+  // disabled, exactly like the detail page's `statusBusy`.
+  const [statusBusyId, setStatusBusyId] = useState<number | null>(null);
+
   // Status change and delete handlers
-  const onStatusChange = async (review: Review, newStatus: string) => {
+  const onStatusChange = async (review: Review, newStatus: ContentStatus) => {
+    if (newStatus === review.status) return;
     try {
-      await reviewsApi.update(review.id, { status: newStatus });
+      setStatusBusyId(review.id);
+      const payload =
+        newStatus === "published" && !review.published_at
+          ? { status: newStatus, published_at: new Date().toISOString() }
+          : { status: newStatus };
+      await reviewsApi.updateStatus(review.id, payload);
+      const patch = {
+        status: newStatus,
+        published_at: payload.published_at ?? review.published_at,
+      };
+      // Patch every rendered copy in place — paginated feed, grouped view and
+      // "mine" list — instead of refetching, so only that card re-renders
+      // (no loading flicker), exactly like ReviewDetail does.
+      patchItem(review.id, patch);
+      setGroups((prev) =>
+        prev.map((group) => ({
+          ...group,
+          reviews: (group.reviews ?? []).map((r) =>
+            r.id === review.id ? { ...r, ...patch } : r,
+          ),
+        })),
+      );
       if (scope === "mine") {
         setMyReviews((prev) =>
           prev.map((r) =>
-            r.id === review.id ? { ...r, status: newStatus } : r,
+            r.id === review.id ? { ...r, ...patch } : r,
           ),
         );
       }
-      reload();
     } catch (err) {
       console.error("Failed to update review status", err);
+    } finally {
+      setStatusBusyId(null);
     }
   };
 
@@ -464,12 +493,9 @@ function Reviews() {
                       onOpen={() => navigate(`/reviews/${review.slug}`)}
                       canManage={canManage(review)}
                       onEdit={() => setEditingReview(review)}
-                      onToggleStatus={() =>
-                        onStatusChange(
-                          review,
-                          review.status === "draft" ? "published" : "draft",
-                        )
-                      }
+                      onStatusChange={(status) => onStatusChange(review, status)}
+                      user={user}
+                      statusBusy={statusBusyId === review.id}
                       onDelete={() => onDelete(review.id)}
                     >
                       <InlineReviewEdit
@@ -550,12 +576,11 @@ function Reviews() {
                           onOpen={() => navigate(`/reviews/${review.slug}`)}
                           canManage={canManage(review)}
                           onEdit={() => setEditingReview(review)}
-                          onToggleStatus={() =>
-                            onStatusChange(
-                              review,
-                              review.status === "draft" ? "published" : "draft",
-                            )
+                          onStatusChange={(status) =>
+                            onStatusChange(review, status)
                           }
+                          user={user}
+                          statusBusy={statusBusyId === review.id}
                           onDelete={() => onDelete(review.id)}
                         >
                           <InlineReviewEdit

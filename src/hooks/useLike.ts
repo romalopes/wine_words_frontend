@@ -7,11 +7,11 @@ export interface UseLikeOptions {
   kind: LikeableKind
   /** Slug (preferred) or numeric id used in the like URL. */
   identifier: string | number | null | undefined
-  initialLiked?: boolean | null
-  initialCount?: number | null
+  initialLiked: boolean | null | undefined
+  initialCount: number | null | undefined
   /** When false (anonymous) the control renders read-only and never calls the API. */
   enabled?: boolean
-  onChange?: (state: { liked: boolean; likes_count: number }) => void
+  onChange: (state: { liked: boolean; likes_count: number }) => void | undefined
 }
 
 /**
@@ -26,7 +26,7 @@ export function useLike({
   initialLiked = false,
   initialCount = 0,
   enabled = true,
-  onChange,
+  onChange = undefined,
 }: UseLikeOptions) {
   const [liked, setLiked] = useState(Boolean(initialLiked))
   const [count, setCount] = useState(Number(initialCount) || 0)
