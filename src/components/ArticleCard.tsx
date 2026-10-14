@@ -79,19 +79,14 @@ export default function ArticleCard({
         <h3>
           <SearchHighlight text={article.title} query={query} />
         </h3>
-        {canManageContent && (
-          <span
-            className={`wine-management__color-badge wine-management__color-badge--${article.status}`}
-          >
-            {article.status}
-          </span>
-        )}
       </div>
       <div
         className="wine-management__card-meta"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="wine-management__region">by {article.author_name}</span>
+        <span className="wine-management__region">
+          by {article.author_name}
+        </span>
         <span className="wine-management__card-meta-actions">
           <LikeButton
             kind="article"

@@ -210,9 +210,7 @@ function WineList() {
 
   // --- Advanced search state ---------------------------------------------
   // null => normal browsing; an object => show the advanced-search results.
-  const [searchFilters, setSearchFilters] = useState<SearchParams | null>(
-    null,
-  );
+  const [searchFilters, setSearchFilters] = useState<SearchParams | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const advancedPaged = usePagedList({
@@ -306,8 +304,7 @@ function WineList() {
 
   // Simple query first: it spans the catalogue and must win over a stale
   // category selection.
-  const showingSimpleResults =
-    searchMode === "simple" && simpleQuery !== "";
+  const showingSimpleResults = searchMode === "simple" && simpleQuery !== "";
   const showingAdvancedResults =
     searchMode === "advanced" && searchFilters !== null;
 
@@ -448,7 +445,10 @@ function WineList() {
                   {Array.isArray(wine.grapes) && wine.grapes.length > 0 && (
                     <p className="wine-management__grapes">
                       <strong>Grapes:</strong>{" "}
-                      {wine.grapes.slice(0, 3).map((g) => g.name).join(", ")}
+                      {wine.grapes
+                        .slice(0, 3)
+                        .map((g) => g.name)
+                        .join(", ")}
                       {wine.grapes.length > 3 ? "…" : ""}
                     </p>
                   )}
@@ -590,25 +590,25 @@ function WineList() {
     return (
       <div className="wine-app">
         <div className="wine-management__header">
-            <div>
-              <p className="wine-kicker">Cellar</p>
-              <h1>{selectedCategory} Wines</h1>
-              {selectedCategory && (
-                <CategoryChip
-                  label={selectedCategory}
-                  onClear={() => {
-                    setSearchParams((prev) => {
-                      const next = new URLSearchParams(prev);
-                      next.delete("category");
-                      return next;
-                    });
-                  }}
-                />
-              )}
-              <Link className="group-show-all" to="/wines">
-                ← Show all categories
-              </Link>
-            </div>
+          <div>
+            <p className="wine-kicker">Cellar</p>
+            <h1>{selectedCategory} Wines</h1>
+            {selectedCategory && (
+              <CategoryChip
+                label={selectedCategory}
+                onClear={() => {
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete("category");
+                    return next;
+                  });
+                }}
+              />
+            )}
+            <Link className="group-show-all" to="/wines">
+              ← Show all categories
+            </Link>
+          </div>
           {canManageWines && (
             <Link
               to="/wines/new"
@@ -830,14 +830,13 @@ function WineList() {
                       }
                     }}
                   >
-                    {Array.isArray(wine.images) &&
-                      wine.images.length > 0 && (
-                        <img
-                          src={wine.images[0]}
-                          alt={wine.name}
-                          className="wine-management__thumb"
-                        />
-                      )}
+                    {Array.isArray(wine.images) && wine.images.length > 0 && (
+                      <img
+                        src={wine.images[0]}
+                        alt={wine.name}
+                        className="wine-management__thumb"
+                      />
+                    )}
                     <div className="wine-management__card-header">
                       <h3>{wine.name}</h3>
                       <span
@@ -851,28 +850,26 @@ function WineList() {
                         {wine.producer.name}
                       </p>
                     )}
-                    {Array.isArray(wine.grapes) &&
-                      wine.grapes.length > 0 && (
-                        <p className="wine-management__grapes">
-                          <strong>Grapes:</strong>{" "}
-                          {wine.grapes
-                            .slice(0, 3)
-                            .map((g) => g.name)
-                            .join(", ")}
-                          {wine.grapes.length > 3 ? "…" : ""}
-                        </p>
-                      )}
-                    {Array.isArray(wine.regions) &&
-                      wine.regions.length > 0 && (
-                        <p className="wine-management__regions">
-                          <strong>Regions:</strong>{" "}
-                          {wine.regions
-                            .slice(0, 3)
-                            .map((r) => (r.name ? r.name : r))
-                            .join(", ")}
-                          {wine.regions.length > 3 ? "…" : ""}
-                        </p>
-                      )}
+                    {Array.isArray(wine.grapes) && wine.grapes.length > 0 && (
+                      <p className="wine-management__grapes">
+                        <strong>Grapes:</strong>{" "}
+                        {wine.grapes
+                          .slice(0, 3)
+                          .map((g) => g.name)
+                          .join(", ")}
+                        {wine.grapes.length > 3 ? "…" : ""}
+                      </p>
+                    )}
+                    {Array.isArray(wine.regions) && wine.regions.length > 0 && (
+                      <p className="wine-management__regions">
+                        <strong>Regions:</strong>{" "}
+                        {wine.regions
+                          .slice(0, 3)
+                          .map((r) => (r.name ? r.name : r))
+                          .join(", ")}
+                        {wine.regions.length > 3 ? "…" : ""}
+                      </p>
+                    )}
                     {wine.sparkling && (
                       <p className="wine-management__sparkling">✨ Sparkling</p>
                     )}

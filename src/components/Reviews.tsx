@@ -60,8 +60,6 @@ function Reviews() {
   const canSeeAll = canManageWinesRole(user);
   const canManageContent = canManageWinesRole(user);
   const categoryOrder = useCategoryOrder("sort_order_review");
-  const [myReviews, setMyReviews] = useState<Review[]>([]);
-  const [mineLoaded, setMineLoaded] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCategory = searchParams.get("category") ?? null;
   const [categoryNameToId, setCategoryNameToId] = useState<
@@ -140,7 +138,7 @@ function Reviews() {
       sort: "relevance",
       query: "",
     },
-    { minQueryLength: MIN_SEARCH_LENGTH, enabled: Boolean(selectedCategory) && scope !== "mine" },
+    { minQueryLength: MIN_SEARCH_LENGTH, enabled: Boolean(selectedCategory) },
   );
 
   // The term that is actually searched for: blank until the user has typed
@@ -161,11 +159,18 @@ function Reviews() {
     try {
       // The grouped view backs the no-category listing, so it must honour the
       // same free-text search as the paginated feed; otherwise the query would
-      // be fetched and then thrown away.
-      const rows = await reviewsApi.grouped(
-        searchTerm ? { query: searchTerm } : {},
-        options,
-      );
+      // be fetched and then thrown away. It must also honour the active status
+      // filter: the per-category window caps each section at `per_group` rows,
+      // so if drafts aren't filtered server-side they get crowded out by the
+      // newest published reviews and never reach the client-side filter.
+      const params: Record<string, unknown> = {};
+      if (searchTerm) params.query = searchTerm;
+      if (statusFilter !== "all") params.status = statusFilter;
+      // The grouped endpoint also backs "My Reviews" — scoped to the author — so
+      // both tabs render through the same per-category-capped response instead of
+      // shipping the author's whole, unpaginated library.
+      if (scope === "mine") params.scope = "mine";
+      const rows = await reviewsApi.grouped(params, options);
       setGroups(Array.isArray(rows) ? rows : []);
     } catch (error) {
       // An abort is the expected outcome of a superseded search, not a failure.
@@ -173,20 +178,22 @@ function Reviews() {
     } finally {
       if (!options?.signal?.aborted) setLoadingGroups(false);
     }
-  }, [searchTerm]);
+  }, [searchTerm, statusFilter, scope]);
 
-  // Load the grouped view whenever the listing is not scoped to one category,
-  // and re-run it when the search term changes.
+  // Load the grouped view whenever the listing is not scoped to one category.
+  // It backs both the "All Reviews" and "My Reviews" tabs (the latter scoped to
+  // the author), and re-runs when the search term, status filter or scope change
+  // — `loadGroups` captures all three, so its identity drives this effect.
   useEffect(() => {
     if (selectedCategory) return;
     const controller = new AbortController();
     void loadGroups({ signal: controller.signal });
     return () => controller.abort();
-  }, [selectedCategory, searchTerm, loadGroups]);
+  }, [selectedCategory, loadGroups]);
 
   // The grouped view has its own loader, so either one counts as "loading".
   const loading =
-    listLoading || (!selectedCategory && scope !== "mine" && loadingGroups);
+    listLoading || (!selectedCategory && loadingGroups);
 
   // Refetch the active listing. Bumping the token guarantees a request even
   // when the page number is already 1 and no filter changed.
@@ -214,35 +221,8 @@ function Reviews() {
 
   const onSaved = () => {
     closeForm();
-    if (user) void loadMyReviews();
     reload();
   };
-
-  const loadMyReviews = useCallback(async () => {
-    if (!user) {
-      setMyReviews([]);
-      setMineLoaded(true);
-      return;
-    }
-    setMineLoaded(false);
-    try {
-      const resp = await reviewsApi.myReviews();
-      setMyReviews(Array.isArray(resp) ? resp : []);
-    } catch {
-      setMyReviews([]);
-    } finally {
-      setMineLoaded(true);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      void loadMyReviews();
-    } else {
-      setMyReviews([]);
-      setMineLoaded(true);
-    }
-  }, [user, loadMyReviews]);
 
   // Id of the card whose status transition is in flight — its buttons render
   // disabled, exactly like the detail page's `statusBusy`.
@@ -262,9 +242,9 @@ function Reviews() {
         status: newStatus,
         published_at: payload.published_at ?? review.published_at,
       };
-      // Patch every rendered copy in place — paginated feed, grouped view and
-      // "mine" list — instead of refetching, so only that card re-renders
-      // (no loading flicker), exactly like ReviewDetail does.
+      // Patch every rendered copy in place — paginated feed and grouped view —
+      // instead of refetching, so only that card re-renders (no loading
+      // flicker), exactly like ReviewDetail does.
       patchItem(review.id, patch);
       setGroups((prev) =>
         prev.map((group) => ({
@@ -274,13 +254,6 @@ function Reviews() {
           ),
         })),
       );
-      if (scope === "mine") {
-        setMyReviews((prev) =>
-          prev.map((r) =>
-            r.id === review.id ? { ...r, ...patch } : r,
-          ),
-        );
-      }
     } catch (err) {
       console.error("Failed to update review status", err);
     } finally {
@@ -292,9 +265,6 @@ function Reviews() {
     if (!window.confirm("Delete this review?")) return;
     try {
       await reviewsApi.destroy(id);
-      if (scope === "mine") {
-        setMyReviews((prev) => prev.filter((r) => r.id !== id));
-      }
       reload();
     } catch (err) {
       console.error("Failed to delete review", err);
@@ -426,13 +396,11 @@ function Reviews() {
               ? statusFilter
               : "published";
             const source: Review[] =
-              effectiveScope === "mine"
-                ? myReviews
-                : selectedCategory
-                  ? (data?.data ?? [])
-                  : groups.flatMap((group) =>
-                      Array.isArray(group.reviews) ? group.reviews : [],
-                    );
+              selectedCategory
+                ? (data?.data ?? [])
+                : groups.flatMap((group) =>
+                    Array.isArray(group.reviews) ? group.reviews : [],
+                  );
             const filtered = (
               effectiveStatus === "all"
                 ? source
@@ -461,11 +429,6 @@ function Reviews() {
                 <p className="wine-management__empty-state">
                   Sign in to see your reviews.
                 </p>
-              );
-            }
-            if (effectiveScope === "mine" && !mineLoaded) {
-              return (
-                <p className="wine-management__loading">Loading reviews…</p>
               );
             }
             if (deduped.length === 0) {
@@ -535,7 +498,7 @@ function Reviews() {
             // are capped at 12 per group, so counts can't be derived from
             // `grouped`).
             const groupCounts =
-              effectiveScope === "mine" || selectedCategory
+              selectedCategory
                 ? null
                 : Object.fromEntries(
                     groups.map((g) => [

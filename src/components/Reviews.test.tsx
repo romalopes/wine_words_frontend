@@ -115,6 +115,33 @@ describe("Reviews", () => {
     consoleSpy.mockRestore();
   });
 
+  it("scopes the grouped feed to the author for My Reviews, never the unpaginated endpoint", async () => {
+    mockGrouped.mockResolvedValue(
+      groupedPayload([makeReview({ id: 5, title: "My own review" })]),
+    );
+    const user = userEvent.setup();
+
+    renderReviews();
+
+    await user.click(await screen.findByRole("button", { name: "My Reviews" }));
+
+    // "My Reviews" renders through the same per-category-capped grouped endpoint
+    // as "All Reviews", just scoped to the author — NOT the unbounded
+    // /reviews/my_reviews call that shipped the author's whole library.
+    await waitFor(() => {
+      expect(
+        mockGrouped.mock.calls.some(
+          (call) =>
+            typeof call[0] === "object" &&
+            call[0] !== null &&
+            (call[0] as { scope?: string }).scope === "mine",
+        ),
+      ).toBe(true);
+    });
+    expect(mockMyReviews).not.toHaveBeenCalled();
+    expect(await screen.findByText("My own review")).toBeInTheDocument();
+  });
+
   it("renders the category sections from the grouped endpoint", async () => {
     mockGrouped.mockResolvedValue(groupedPayload());
 
@@ -310,6 +337,35 @@ describe("Reviews", () => {
     expect(groupedSignals().at(-1)?.aborted).toBe(false);
     // No load went out without a signal, or cancellation would be impossible.
     expect(groupedSignals().length).toBe(mockGrouped.mock.calls.length);
+  });
+
+  it("sends the status filter to the grouped feed and renders the returned drafts", async () => {
+    // The grouped view is what backs the no-category listing. Selecting Draft
+    // must reach that request as `status: "draft"`, and a draft it returns must
+    // actually render (previously the filter was client-side only, so a draft
+    // outside the per-category cap never arrived and the page read "No draft
+    // reviews." even when drafts existed).
+    mockGrouped.mockResolvedValue(
+      groupedPayload([makeReview({ id: 7, title: "A draft wine", status: "draft" })]),
+    );
+    const user = userEvent.setup();
+
+    renderReviews();
+
+    await user.click(await screen.findByRole("button", { name: "Draft" }));
+
+    await waitFor(() => {
+      expect(
+        mockGrouped.mock.calls.some(
+          (call) =>
+            typeof call[0] === "object" &&
+            call[0] !== null &&
+            (call[0] as { status?: string }).status === "draft",
+        ),
+      ).toBe(true);
+    });
+
+    expect(await screen.findByText("A draft wine")).toBeInTheDocument();
   });
 
   it("clears the status filter chip when its × is clicked", async () => {
