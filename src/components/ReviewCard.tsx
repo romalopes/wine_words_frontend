@@ -9,7 +9,7 @@ import type { RoleUser } from "../constants/roles";
 import type { Review } from "../types/review";
 import { SearchHighlight } from "./search";
 
-/** Strips HTML tags and truncates, for the plain-text line on a card. */
+/** Strips HTML tags and truncates, for the plain-text excerpt on a card. */
 function excerpt(html: string | null | undefined, max = 50) {
   if (!html) return "";
   const stripped = html.replace(/<[^>]+>/g, "").trim();
@@ -78,6 +78,13 @@ export default function ReviewCard({
         }
       }}
     >
+      {image && (
+        <img
+          src={image}
+          alt={review.title || review.wine_name || "review"}
+          className="wine-management__thumb"
+        />
+      )}
       <div className="wine-management__card-header">
         <h3>
           <SearchHighlight
@@ -93,7 +100,6 @@ export default function ReviewCard({
           </span>
         )}
       </div>
-
       {(review.wine_name || review.vintage_year) && (
         <p className="wine-management__region">
           {review.wine_slug ? (
@@ -113,13 +119,20 @@ export default function ReviewCard({
           )}
         </p>
       )}
+      {excerpt(review.comment) && (
+        <p className="wine-management__card-excerpt">
+          {excerpt(review.comment)}
+        </p>
+      )}
 
       <div
         className="wine-management__card-meta"
         onClick={(e) => e.stopPropagation()}
       >
         {review.reviewer_name && (
-          <span className="wine-management__region">by {review.reviewer_name}</span>
+          <span className="wine-management__region">
+            by {review.reviewer_name}
+          </span>
         )}
         <span className="wine-management__card-meta-actions">
           <LikeButton
@@ -131,15 +144,6 @@ export default function ReviewCard({
           <CommentLink kind="review" identifier={review.slug || review.id} />
         </span>
       </div>
-
-      {image && (
-        <img
-          src={image}
-          alt={review.title || review.wine_name || "review"}
-          className="wine-management__thumb"
-        />
-      )}
-
       {canManage && (onEdit ?? onStatusChange ?? onDelete) && (
         <div
           className="wine-management__card-actions"
@@ -155,7 +159,6 @@ export default function ReviewCard({
           )}
         </div>
       )}
-
       {children}
     </div>
   );

@@ -7,8 +7,8 @@ import type { RoleUser } from "../constants/roles";
 import type { Article } from "../types/article";
 import { SearchHighlight } from "./search";
 
-/** Strips HTML tags and truncates, for the plain-text line on a card. */
-function excerpt(text: string | null | undefined, max = 50): string {
+/** Strips HTML tags and truncates, for the plain-text excerpt on a card. */
+function excerpt(text: string | null | undefined, max = 80): string {
   if (!text) return "";
   const stripped = text.replace(/<[^>]+>/g, "").trim();
   if (stripped.length <= max) return stripped;
@@ -72,7 +72,7 @@ export default function ArticleCard({
         <img
           src={image}
           alt={article.title}
-          className="wine-management__thumb"
+          className="wine-management__content-thumb"
         />
       )}
       <div className="wine-management__card-header">
@@ -80,6 +80,16 @@ export default function ArticleCard({
           <SearchHighlight text={article.title} query={query} />
         </h3>
       </div>
+      {Array.isArray(article.tags) && article.tags.length > 0 && (
+        <p className="wine-management__vintage-count">
+          Tags: {article.tags.join(", ")}
+        </p>
+      )}
+      {excerpt(article.abstract || article.body) && (
+        <p className="wine-management__card-excerpt">
+          {excerpt(article.abstract || article.body)}
+        </p>
+      )}
       <div
         className="wine-management__card-meta"
         onClick={(e) => e.stopPropagation()}
@@ -97,14 +107,6 @@ export default function ArticleCard({
           <CommentLink kind="article" identifier={article.slug || article.id} />
         </span>
       </div>
-      {Array.isArray(article.tags) && article.tags.length > 0 && (
-        <p className="wine-management__vintage-count">
-          Tags: {article.tags.join(", ")}
-        </p>
-      )}
-      {excerpt(article.body, 50) && (
-        <p className="wine-management__region">{excerpt(article.body, 50)}</p>
-      )}
       {canManage && onStatusChange && (
         <div
           className="wine-management__card-actions"

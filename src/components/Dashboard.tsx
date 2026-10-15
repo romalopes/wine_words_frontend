@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { articlesApi, reviewsApi, statsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import ArticleCard from "./ArticleCard";
+import ReviewCard from "./ReviewCard";
 import type { Article } from "../types/article";
 import type { Review } from "../types/review";
 import type { Stats } from "../types/stats";
@@ -10,16 +12,16 @@ import type { Stats } from "../types/stats";
 interface DashboardCard {
   title: string;
   statKey: keyof Stats;
-  bandColor: string;
+  tone: "neutral" | "gold" | "rose";
   to: string;
   cta: string;
 }
 
 const dashboardCards: DashboardCard[] = [
-  { title: "Producers", statKey: "producers", bandColor: "#6b5855", to: "/producers", cta: "Browse wineries →" },
-  { title: "Wines", statKey: "wines", bandColor: "#c49b38", to: "/wines", cta: "Explore the catalogue →" },
-  { title: "Reviews", statKey: "reviews", bandColor: "#d47386", to: "/reviews", cta: "Read reviews →" },
-  { title: "Articles", statKey: "articles", bandColor: "#c49b38", to: "/articles", cta: "Read articles →" },
+  { title: "Producers", statKey: "producers", tone: "neutral", to: "/producers", cta: "Browse wineries →" },
+  { title: "Wines", statKey: "wines", tone: "gold", to: "/wines", cta: "Explore the catalogue →" },
+  { title: "Reviews", statKey: "reviews", tone: "rose", to: "/reviews", cta: "Read reviews →" },
+  { title: "Articles", statKey: "articles", tone: "gold", to: "/articles", cta: "Read articles →" },
 ];
 
 const EMPTY_STATS: Stats = { producers: 0, wines: 0, reviews: 0, articles: 0 };
@@ -31,6 +33,7 @@ function asArray<T>(response: T[] | { items?: T[] }): T[] {
 
 function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
   const [recentArticles, setRecentArticles] = useState<Article[]>([]);
   const [recentReviews, setRecentReviews] = useState<Review[]>([]);
@@ -43,24 +46,24 @@ function Dashboard() {
 
   return (
     <main className="wine-app">
-      <p className="lede" style={{ marginBottom: "1.5rem" }}>
+      <p className="lede dashboard__lede">
         Welcome{user ? `, ${user.email.split("@")[0]}` : ""} to Wine Words. Your cellar command centre.
       </p>
       {!user && (
-        <p style={{ marginBottom: "1.5rem" }}>
+        <p className="dashboard__sign-in-prompt">
           <Link className="text-link" to="/login">Sign in or create an account</Link> to save tasting profiles and write reviews.
         </p>
       )}
-      <div className="content-grid" style={{ marginBottom: "2rem" }}>
+      <div className="content-grid dashboard__stats-grid">
         {dashboardCards.map((card) => (
-          <Link key={card.title} to={card.to} className="wine-management__card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", textDecoration: "none", color: "inherit" }}>
-            <div style={{ height: "0.5rem", background: card.bandColor }} />
-            <div style={{ padding: "1.1rem" }}>
-              <h2 style={{ fontSize: "1.25rem", marginBottom: "0.3rem" }}>{card.title}</h2>
-              <p style={{ color: "#6b5855", fontSize: "0.9rem", marginBottom: "0.7rem" }}>
+          <Link key={card.title} to={card.to} className="dashboard__stat-card">
+            <div className={`dashboard__stat-card-band dashboard__stat-card-band--${card.tone}`} />
+            <div className="dashboard__stat-card-body">
+              <h2 className="dashboard__stat-card-title">{card.title}</h2>
+              <p className="dashboard__stat-card-copy">
                 {stats[card.statKey] || 0} {card.title.toLowerCase()} in the library.
               </p>
-              <span style={{ display: "inline-block", background: "#f3e9e3", borderRadius: "99px", color: "#6b2834", fontSize: "0.78rem", fontWeight: 600, padding: "0.22rem 0.5rem" }}>
+              <span className="dashboard__stat-card-cta">
                 {card.cta}
               </span>
             </div>
@@ -70,22 +73,14 @@ function Dashboard() {
 
       {recentArticles.length > 0 && (
         <>
-          <h2 style={{ marginTop: "2rem", marginBottom: "1rem" }}>Latest Articles</h2>
-          <div className="content-grid" style={{ marginBottom: "2rem" }}>
+          <h2 className="dashboard__section-title">Latest Articles</h2>
+          <div className="content-grid dashboard__content-grid">
             {recentArticles.map((article) => (
-              <Link key={article.id} to={`/articles/${article.slug}`} className="wine-management__card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", textDecoration: "none", color: "inherit" }}>
-                {Array.isArray(article.images) && article.images.length > 0 && (
-                  <img src={article.images[0]} alt={article.title} style={{ width: "100%", height: "8rem", objectFit: "cover" }} />
-                )}
-                <div style={{ height: "0.5rem", background: "#8a273c" }} />
-                <div style={{ padding: "1.1rem" }}>
-                  <h3 style={{ fontSize: "1.1rem", marginBottom: "0.3rem" }}>{article.title}</h3>
-                  <p style={{ color: "#6b5855", fontSize: "0.85rem", marginBottom: "0.5rem" }}>
-                    {[article.category, `by ${article.author_name}`].filter(Boolean).join(" · ")}
-                  </p>
-                  {article.abstract && <p style={{ color: "#6b5855", fontSize: "0.85rem", lineHeight: 1.5 }}>{String(article.abstract).slice(0, 120)}...</p>}
-                </div>
-              </Link>
+              <ArticleCard
+                key={article.id}
+                article={article}
+                onOpen={() => navigate(`/articles/${article.slug || article.id}`)}
+              />
             ))}
           </div>
         </>
@@ -93,17 +88,14 @@ function Dashboard() {
 
       {recentReviews.length > 0 && (
         <>
-          <h2 style={{ marginTop: "2rem", marginBottom: "1rem" }}>Latest Reviews</h2>
+          <h2 className="dashboard__section-title">Latest Reviews</h2>
           <div className="content-grid">
             {recentReviews.map((review) => (
-              <Link key={review.id} to={`/reviews/${review.slug}`} className="wine-management__card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", textDecoration: "none", color: "inherit" }}>
-                <div style={{ height: "0.5rem", background: "#d47386" }} />
-                <div style={{ padding: "1.1rem" }}>
-                  <h3 style={{ fontSize: "1.1rem", marginBottom: "0.3rem" }}>{review.title || "Untitled review"}</h3>
-                  <p style={{ color: "#6b5855", fontSize: "0.85rem", marginBottom: "0.5rem" }}>Score {review.score} · by {review.reviewer_name}</p>
-                  {review.comment && <p style={{ color: "#6b5855", fontSize: "0.85rem", lineHeight: 1.5 }}>{String(review.comment).replace(/<[^>]+>/g, "").slice(0, 120)}...</p>}
-                </div>
-              </Link>
+              <ReviewCard
+                key={review.id}
+                review={review}
+                onOpen={() => navigate(`/reviews/${review.slug || review.id}`)}
+              />
             ))}
           </div>
         </>

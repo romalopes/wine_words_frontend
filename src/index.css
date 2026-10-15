@@ -1350,6 +1350,13 @@ textarea {
   margin: 0;
 }
 
+.wine-management__card-excerpt {
+  color: #6b5855;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
 /* Byline + Like + Comment on a single horizontal line in cards. The name
    takes the available space so the two pills sit right-aligned. */
 .wine-management__card-meta {
@@ -3193,6 +3200,98 @@ textarea {
   background: #efe5dc;
   border-radius: 0.6rem;
   margin-bottom: 0.75rem;
+}
+
+/* Article and review cards use the dashboard's editorial image proportions.
+   Wine cards retain the `wine-management__thumb` dimensions above. */
+.wine-management__content-thumb {
+  background: #efe5dc;
+  border-radius: 0.6rem;
+  height: 8rem;
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+}
+
+/* Dashboard */
+.dashboard__lede,
+.dashboard__sign-in-prompt {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard__stats-grid,
+.dashboard__content-grid {
+  margin-bottom: 2rem;
+}
+
+.dashboard__stat-card {
+  background: #fffaf4;
+  border: 1px solid #e4d9cd;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(54, 36, 28, 0.06);
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  text-decoration: none;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.1s ease;
+}
+
+.dashboard__stat-card:hover {
+  box-shadow: 0 12px 30px rgba(54, 36, 28, 0.12);
+  transform: translateY(-2px);
+}
+
+.dashboard__stat-card:focus-visible {
+  box-shadow: 0 0 0 3px rgba(39, 97, 94, 0.3);
+  outline: none;
+}
+
+.dashboard__stat-card-band {
+  height: 0.5rem;
+}
+
+.dashboard__stat-card-band--neutral {
+  background: #6b5855;
+}
+
+.dashboard__stat-card-band--gold {
+  background: #c49b38;
+}
+
+.dashboard__stat-card-band--rose {
+  background: #d47386;
+}
+
+.dashboard__stat-card-body {
+  padding: 1.1rem;
+}
+
+.dashboard__stat-card-title {
+  font-size: 1.25rem;
+  margin: 0 0 0.3rem;
+}
+
+.dashboard__stat-card-copy {
+  color: #6b5855;
+  font-size: 0.9rem;
+  margin: 0 0 0.7rem;
+}
+
+.dashboard__stat-card-cta {
+  background: #f3e9e3;
+  border-radius: 99px;
+  color: #6b2834;
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.22rem 0.5rem;
+}
+
+.dashboard__section-title {
+  margin: 2rem 0 1rem;
 }
 
 /* ===== Content Grid by Category (4 columns) ===== */
