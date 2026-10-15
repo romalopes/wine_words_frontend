@@ -1,5 +1,5 @@
 import React from "react";
-import { formatNumber, formatPercent, formatDate } from "../../utils/format";
+import { formatEngagementsPer100Views, formatNumber, formatDate } from "../../utils/format";
 
 interface ContentTableProps {
   rows: any[];
@@ -64,7 +64,7 @@ export const ContentTable: React.FC<ContentTableProps> = ({
             {sortableHeader("Likes", "likes")}
             {sortableHeader("Comments", "comments")}
             {sortableHeader("Replies", "replies")}
-            {sortableHeader("Engagement", "engagement_rate")}
+            {sortableHeader("Engagements / 100 Views", "engagement_rate")}
           </tr>
         </thead>
         <tbody>
@@ -85,7 +85,7 @@ export const ContentTable: React.FC<ContentTableProps> = ({
               <td className="numeric">{formatNumber(row.likes)}</td>
               <td className="numeric">{formatNumber(row.comments)}</td>
               <td className="numeric">{formatNumber(row.replies)}</td>
-              <td className="numeric">{row.engagement_denominator_zero ? "—" : formatPercent(row.engagement_rate)}</td>
+              <td className="numeric">{row.engagement_denominator_zero ? "—" : formatEngagementsPer100Views(row.engagement_rate)}</td>
             </tr>
           ))}
         </tbody>

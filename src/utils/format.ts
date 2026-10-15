@@ -31,6 +31,22 @@ export function formatPercent(value: number | null | undefined): string {
 }
 
 /**
+ * Format engagement actions per 100 views with one decimal place.
+ * The analytics API already scales this value by 100.
+ */
+export function formatEngagementsPer100Views(value: number | null | undefined): string {
+  if (value === null || value === undefined || isNaN(value)) return "—";
+  try {
+    return new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(value);
+  } catch {
+    return value.toFixed(1);
+  }
+}
+
+/**
  * Format a date string (ISO) as a short localized date (e.g., "Jan 15, 2024").
  */
 export function formatDate(value: string | null | undefined): string {

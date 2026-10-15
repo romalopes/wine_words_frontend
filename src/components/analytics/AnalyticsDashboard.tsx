@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { analyticsApi } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { canAccessAnalytics } from "../../constants/roles";
-import { formatNumber, formatPercent, formatDate } from "../../utils/format";
+import { formatEngagementsPer100Views, formatNumber, formatDate } from "../../utils/format";
 import { ContentTable } from "./ContentTable";
 import { TimeseriesChart } from "./TimeseriesChart";
 import { PeriodSelector } from "./PeriodSelector";
@@ -26,7 +26,7 @@ const CONTENT_TYPE_OPTIONS = [
 
 const SORT_OPTIONS = [
   { value: "views", label: "Views" },
-  { value: "engagement", label: "Engagement Rate" },
+  { value: "engagement", label: "Engagements per 100 Views" },
   { value: "published_at", label: "Published Date" },
 ];
 
@@ -195,8 +195,8 @@ const AnalyticsDashboard = () => {
           <KPICard title="Comments" value={formatNumber(summary.comments)} />
           <KPICard title="Replies" value={formatNumber(summary.replies)} />
           <KPICard
-            title="Engagement Rate"
-            value={summary.engagement_denominator_zero ? "—" : formatPercent(summary.engagement_rate)}
+            title="Engagements per 100 Views"
+            value={summary.engagement_denominator_zero ? "—" : formatEngagementsPer100Views(summary.engagement_rate)}
             subtitle={summary.engagement_denominator_zero ? "(no views in period)" : undefined}
             warning={summary.engagement_denominator_zero}
           />

@@ -26,14 +26,14 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({ data, loading,
               left: `${(i / data.buckets.length) * 100}%`,
               width: `${100 / data.buckets.length - 2}%`,
             }}
-            title={`${bucket.period_start.split('T')[0]}: ${bucket.views} views, ${bucket.unique_viewers} unique viewers`}
+            title={`${bucket.bucket_start.split('T')[0]}: ${bucket.views} views, ${bucket.unique_viewers} unique viewers`}
           />
         ))}
       </div>
       <div className="chart-labels">
         {data.buckets.map((bucket: any, i: number) => (
           <span key={i} style={{ left: `${(i / data.buckets.length) * 100}%` }}>
-            {new Date(bucket.period_start).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            {new Date(bucket.bucket_start).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
           </span>
         ))}
       </div>

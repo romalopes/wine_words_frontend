@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { analyticsApi } from "../../services/api";
-import { formatNumber, formatPercent, formatDate, formatDateTime } from "../../utils/format";
+import { formatEngagementsPer100Views, formatNumber, formatDate, formatDateTime } from "../../utils/format";
 import { TimeseriesChart } from "./TimeseriesChart";
 
 interface ContentDetailPageProps {}
@@ -85,9 +85,7 @@ export const ContentAnalyticsDetail: React.FC<ContentDetailPageProps> = () => {
     }
   };
 
-  const formatKpi = (value: number | null | undefined, isPercent = false) => {
-    return isPercent ? formatPercent(value) : formatNumber(value);
-  };
+  const formatKpi = (value: number | null | undefined) => formatNumber(value);
 
   return (
     <main className="wine-app"><div className="analytics-detail">
@@ -130,9 +128,9 @@ export const ContentAnalyticsDetail: React.FC<ContentDetailPageProps> = () => {
             <span className="kpi-value">{formatKpi(detail.replies)}</span>
           </article>
           <article className="kpi-card">
-            <span className="kpi-label">Engagement Rate</span>
+            <span className="kpi-label">Engagements per 100 Views</span>
             <span className="kpi-value">
-              {detail.engagement_denominator_zero ? "—" : formatKpi(detail.engagement_rate, true)}
+              {detail.engagement_denominator_zero ? "—" : formatEngagementsPer100Views(detail.engagement_rate)}
             </span>
           </article>
         </div>
