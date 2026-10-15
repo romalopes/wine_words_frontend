@@ -4,8 +4,10 @@ import { grapesApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageGrapes, canManageWinesRole } from "../constants/roles";
 import WineTable from "./WineTable";
+import Pagination from "./Pagination";
 import BackToSource from "./BackToSource";
 import { errorMessage } from "../utils/errors";
+import usePagedList from "../hooks/usePagedList";
 import type { GrapeDetail as GrapeDetailData } from "../types/catalog";
 import type { WineListItem } from "../types/wine";
 
@@ -208,12 +210,16 @@ function GrapeDetail() {
     }
   }
 
+  // Paginated wines for this grape
+  const wines = usePagedList<WineListItem>({
+    fetcher: (params) => winesApi.list({ ...params, grape_id: grape?.id }),
+    enabled: Boolean(grape?.id),
+    paramKey: "wine_page",
+    perPage: 20,
+  });
+
   if (loading) return <p className="loading">Loading grape…</p>;
   if (!grape) return <p className="empty">Grape not found.</p>;
-
-  // `wines` is only sent by `show`; default it once so the table and its
-  // delete handler can treat it as a plain array.
-  const wines: WineListItem[] = grape.wines ?? [];
 
   return (
     <div className="grapes-page">
@@ -351,9 +357,9 @@ function GrapeDetail() {
           </form>
         </section>
       ) : (
-        <section className="grape-detail">
+        <section className="detail-card">
           <h1>{grape.name}</h1>
-          <ul className="facts" aria-label="Grape details">
+          <ul className="grape-facts" aria-label="Grape details">
             {grape.color && (
               <li><strong>Color:</strong> {grape.color}</li>
             )}
@@ -441,20 +447,30 @@ function GrapeDetail() {
                 ))}
             </div>
           )}
-
           <div className="grape-detail__wines">
-            <h2>Wines</h2>
-            {wines.length > 0 ? (
-              <WineTable
-                wines={wines}
-                onDeleted={(deleted) =>
-                  setGrape((prev) => (prev ? { ...prev, wines: wines.filter((w) => w.slug !== deleted.slug) } : prev))
-                }
-                linkContext={{ type: "grape", id: grape.id, name: grape.name }}
-                onWineLinked={() => {
-                  grapesApi.show(grape.id).then(setGrape).catch(() => {});
-                }}
-              />
+            <h2>
+              Wines{!wines.loading && ` (${wines.totalCount})`}
+            </h2>
+            {wines.loading ? (
+              <p className="wine-management__loading">Loading wines…</p>
+            ) : wines.items.length > 0 ? (
+              <>
+                <WineTable
+                  wines={wines.items}
+                  onDeleted={() => {
+                    grapesApi.show(grape.id).then(setGrape).catch(() => {});
+                    wines.reload();
+                  }}
+                  linkContext={{ type: "grape", id: grape.id, name: grape.name }}
+                  onWineLinked={() => wines.reload()}
+                />
+                <Pagination
+                  page={wines.page}
+                  totalPages={wines.totalPages}
+                  totalCount={wines.totalCount}
+                  onPageChange={wines.setPage}
+                />
+              </>
             ) : (
               <p className="empty">No wines are associated with this grape yet.</p>
             )}

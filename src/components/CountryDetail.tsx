@@ -27,11 +27,13 @@ function CountryDetail() {
     fetcher: (params) => producersApi.list({ ...params, country_id: country?.id }),
     enabled: Boolean(country?.id),
     paramKey: "producer_page",
+     perPage: 20,
   });
   const wines = usePagedList<WineListItem>({
     fetcher: (params) => winesApi.list({ ...params, country_id: country?.id }),
     enabled: Boolean(country?.id),
     paramKey: "page",
+     perPage: 20,
   });
 
   useEffect(() => {

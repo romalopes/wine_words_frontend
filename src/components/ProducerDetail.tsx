@@ -211,7 +211,7 @@ function ProducerDetail() {
       )}
 
       <section className="detail-card">
-        <ul className="facts" aria-label="Producer details">
+        <ul className="producer-facts" aria-label="Producer details">
           <li>
             <strong>Status:</strong>{" "}
             {producer.active === false ? "Inactive" : "Active"}

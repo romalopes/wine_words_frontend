@@ -234,7 +234,7 @@ function WineDetail() {
       )}
 
       <section className="detail-card">
-        <ul className="facts" aria-label="Wine details">
+        <ul className="wine-facts" aria-label="Wine details">
         <li>
           <strong>Producer:</strong>{" "}
           {wine.producer ? (

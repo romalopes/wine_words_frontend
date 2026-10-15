@@ -3602,6 +3602,64 @@ textarea {
   border-bottom: none;
 }
 
+.detail-card .producer-facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.detail-card .producer-facts li {
+  border-bottom: none;
+  padding: 0.5rem 0;
+}
+
+/* Optional: make it one column on small screens */
+@media (max-width: 480px) {
+  .detail-card .producer-facts {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-card .wine-facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.detail-card .wine-facts li {
+  border-bottom: none;
+  padding: 0.5rem 0;
+}
+/* Optional: make it one column on small screens */
+@media (max-width: 480px) {
+  .detail-card .wine-facts {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-card .grape-facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.detail-card .grape-facts li {
+  border-bottom: none;
+  padding: 0.5rem 0;
+}
+/* Optional: make it one column on small screens */
+@media (max-width: 480px) {
+  .detail-card .grape-facts {
+    grid-template-columns: 1fr;
+  }
+}
 .grapes-list-section h2 {
   margin-bottom: 1rem;
   color: #333;
