@@ -19,7 +19,12 @@ interface WineTableProps {
 // Vintages count and Edit actions for wine managers.
 // When `linkContext` is provided, shows a "Link a Wine" button that opens
 // a dialog to search and link wines to the given entity.
-function WineTable({ wines, linkContext, onWineLinked, onDeleted }: WineTableProps) {
+function WineTable({
+  wines,
+  linkContext,
+  onWineLinked,
+  onDeleted,
+}: WineTableProps) {
   const { user } = useAuth();
   const canManageWines = canManageWinesRole(user);
   const navigate = useNavigate();
@@ -89,111 +94,113 @@ function WineTable({ wines, linkContext, onWineLinked, onDeleted }: WineTablePro
         </div>
       )}
       <table className="grapes-table producers-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Producer</th>
-          <th>Regions</th>
-          <th>Grapes</th>
-          <th>Vintages</th>
-          {canManageWines && <th>Actions</th>}
-        </tr>
-      </thead>
-      <tbody>
-        {wines.map((wine, index) => (
-          <tr
-            key={wine.slug || wine.id}
-            className={index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"}
-            onClick={() => navigate(returnToLink(`/wines/${wine.slug}`))}
-            style={{ cursor: "pointer" }}
-          >
-            <td>
-              <Link
-                to={returnToLink(`/wines/${wine.slug}`)}
-                className="grapes-table__link"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {wine.name}
-              </Link>
-            </td>
-            <td>
-              {wine.producer ? (
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Producer</th>
+            <th>Regions</th>
+            <th>Grapes</th>
+            <th>Vintages</th>
+            {canManageWines && <th>Actions</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {wines.map((wine, index) => (
+            <tr
+              key={wine.slug || wine.id}
+              className={
+                index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"
+              }
+              onClick={() => navigate(returnToLink(`/wines/${wine.slug}`))}
+              style={{ cursor: "pointer" }}
+            >
+              <td>
                 <Link
-                  to={returnToLink(`/producers/${wine.producer.slug}`)}
+                  to={returnToLink(`/wines/${wine.slug}`)}
                   className="grapes-table__link"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {wine.producer.name}
+                  {wine.name}
                 </Link>
-              ) : (
-                "—"
-              )}
-            </td>
-            <td>
-              {Array.isArray(wine.regions) && wine.regions.length > 0
-                ? wine.regions.map((region, regionIndex) => (
-                    <span key={region.id || regionIndex}>
-                      {regionIndex > 0 && ", "}
-                      <Link
-                        to={returnToLink(`/regions/${region.slug}`)}
-                        className="grapes-table__link"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {region.name}
-                      </Link>
-                    </span>
-                  ))
-                : "—"}
-            </td>
-            <td>
-              {Array.isArray(wine.grapes) && wine.grapes.length > 0
-                ? wine.grapes.map((grape, grapeIndex) => (
-                    <span key={grape.id || grapeIndex}>
-                      {grapeIndex > 0 && ", "}
-                      <Link
-                        to={returnToLink(`/grapes/${grape.slug}`)}
-                        className="grapes-table__link"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {grape.name}
-                      </Link>
-                    </span>
-                  ))
-                : "—"}
-            </td>
-            <td>
-              {(wine.vintages_count ?? 0) > 0
-                ? `${wine.vintages_count} vintage${
-                    wine.vintages_count !== 1 ? "s" : ""
-                  }`
-                : "—"}
-            </td>
-            {canManageWines && (
-              <td className="actions">
-                <Link
-                  to={`/wines/${wine.slug}/edit`}
-                  className="btn-action"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Edit
-                </Link>
-                <button
-                  type="button"
-                  className="btn-action btn-action--delete"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(wine);
-                  }}
-                  disabled={deletingSlug === wine.slug}
-                >
-                  {deletingSlug === wine.slug ? "Deleting…" : "Delete"}
-                </button>
               </td>
-            )}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+              <td>
+                {wine.producer ? (
+                  <Link
+                    to={returnToLink(`/producers/${wine.producer.slug}`)}
+                    className="grapes-table__link"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {wine.producer.name}
+                  </Link>
+                ) : (
+                  "—"
+                )}
+              </td>
+              <td>
+                {Array.isArray(wine.regions) && wine.regions.length > 0
+                  ? wine.regions.map((region, regionIndex) => (
+                      <span key={region.id || regionIndex}>
+                        {regionIndex > 0 && ", "}
+                        <Link
+                          to={returnToLink(`/regions/${region.slug}`)}
+                          className="grapes-table__link"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {region.name}
+                        </Link>
+                      </span>
+                    ))
+                  : "—"}
+              </td>
+              <td>
+                {Array.isArray(wine.grapes) && wine.grapes.length > 0
+                  ? wine.grapes.map((grape, grapeIndex) => (
+                      <span key={grape.id || grapeIndex}>
+                        {grapeIndex > 0 && ", "}
+                        <Link
+                          to={returnToLink(`/grapes/${grape.slug}`)}
+                          className="grapes-table__link"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {grape.name}
+                        </Link>
+                      </span>
+                    ))
+                  : "—"}
+              </td>
+              <td>
+                {(wine.vintages_count ?? 0) > 0
+                  ? `${wine.vintages_count} vintage${
+                      wine.vintages_count !== 1 ? "s" : ""
+                    }`
+                  : "—"}
+              </td>
+              {canManageWines && (
+                <td className="actions">
+                  <Link
+                    to={`/wines/${wine.slug}/edit`}
+                    className="btn-action"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn-action btn-action--delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(wine);
+                    }}
+                    disabled={deletingSlug === wine.slug}
+                  >
+                    {deletingSlug === wine.slug ? "Deleting…" : "Delete"}
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
       {dialogOpen && linkContext && (
         <LinkWineDialog
           entityType={linkContext.type}
