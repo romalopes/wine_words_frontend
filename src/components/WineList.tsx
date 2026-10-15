@@ -111,7 +111,13 @@ function WineCard({
       {showSparkling && wine.sparkling && (
         <p className="wine-management__sparkling">✨ Sparkling</p>
       )}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         {(wine.vintages_count ?? 0) > 0 && (
           <p className="wine-management__vintage-count">
             {wine.vintages_count} vintage

@@ -65,7 +65,10 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route element={<Navigate replace to="/reviews" />} path="/my-reviews" />
+        <Route
+          element={<Navigate replace to="/reviews" />}
+          path="/my-reviews"
+        />
         <Route element={<Reviews />} path="/reviews" />
         <Route element={<ReviewDetail />} path="/reviews/:slug" />
         <Route element={<Articles />} path="/articles" />
@@ -108,10 +111,19 @@ function AppRoutes() {
         <Route element={<Notifications />} path="/notifications" />
         <Route element={<ArticleProjects />} path="/article-projects" />
         <Route element={<ArticleProjectForm />} path="/article-projects/new" />
-        <Route element={<ArticleProjectDetail />} path="/article-projects/:id" />
-        <Route element={<ArticleProjectDetail />} path="/article-projects/:id/edit" />
+        <Route
+          element={<ArticleProjectDetail />}
+          path="/article-projects/:id"
+        />
+        <Route
+          element={<ArticleProjectDetail />}
+          path="/article-projects/:id/edit"
+        />
         <Route element={<AnalyticsDashboard />} path="/analytics" />
-        <Route element={<ContentAnalyticsDetail />} path="/analytics/content/:contentType/:contentId" />
+        <Route
+          element={<ContentAnalyticsDetail />}
+          path="/analytics/content/:contentType/:contentId"
+        />
         <Route element={<WineInsights />} path="/analytics/wine-insights" />
       </Routes>
     </>

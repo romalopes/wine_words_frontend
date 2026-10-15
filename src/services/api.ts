@@ -1,21 +1,41 @@
-import { ApiError } from "./ApiError"
-import { request as apiRequest } from "./apiClient"
-import type { ApiRequester, RequestOptions } from "./apiClient"
-import { createAuthApi, createIdentitiesApi } from "./authApi"
-import { createAnalyticsApi } from "./analyticsApi"
-import { createArticlesApi, createProducersApi, createReviewsApi, createSourcesApi, createWinesApi } from "./contentApi"
+import { ApiError } from "./ApiError";
+import { request as apiRequest } from "./apiClient";
+import type { ApiRequester, RequestOptions } from "./apiClient";
+import { createAuthApi, createIdentitiesApi } from "./authApi";
+import { createAnalyticsApi } from "./analyticsApi";
+import {
+  createArticlesApi,
+  createProducersApi,
+  createReviewsApi,
+  createSourcesApi,
+  createWinesApi,
+} from "./contentApi";
 import {
   createNotificationsApi,
   createShipmentTrackingsApi,
   createWinePackageItemsApi,
   createWinePackagesApi,
-} from "./packagesApi"
-import { createAccountApi, createBillingApi, createSubscriptionsApi, createUserApi, createUsersApi, createVintagesApi } from "./accountApi"
-import { createImagesApi, createWineProfilesApi } from "./imagesApi"
-import { createLikesApi } from "./likesApi"
-import { createCommentsApi } from "./commentsApi"
-import { createArticleProjectsApi } from "./articleProjectsApi"
-import { createCategoriesApi, createCountriesApi, createGrapesApi, createRegionsApi, createStatsApi, createTasteParametersApi } from "./referenceApi"
+} from "./packagesApi";
+import {
+  createAccountApi,
+  createBillingApi,
+  createSubscriptionsApi,
+  createUserApi,
+  createUsersApi,
+  createVintagesApi,
+} from "./accountApi";
+import { createImagesApi, createWineProfilesApi } from "./imagesApi";
+import { createLikesApi } from "./likesApi";
+import { createCommentsApi } from "./commentsApi";
+import { createArticleProjectsApi } from "./articleProjectsApi";
+import {
+  createCategoriesApi,
+  createCountriesApi,
+  createGrapesApi,
+  createRegionsApi,
+  createStatsApi,
+  createTasteParametersApi,
+} from "./referenceApi";
 import {
   createConfigurationApi,
   createEmailVerificationsApi,
@@ -23,10 +43,9 @@ import {
   createLogsApi,
   createSettingsApi,
   createTestAccessApi,
-} from "./adminApi"
+} from "./adminApi";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1").replace(/\/+$/, "");
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; //|| "http://localhost:3000/api/v1").replace(/\/+$/, "");
 
 const TOKEN_STORAGE_KEY = "wine_prediction_token";
 
@@ -38,11 +57,11 @@ const TOKEN_STORAGE_KEY = "wine_prediction_token";
 export const TEST_ACCESS_STORAGE_KEY = "wine_words_test_access_token";
 
 export function getTestAccessToken(): string | null {
-  if (typeof window === "undefined") return null
+  if (typeof window === "undefined") return null;
   try {
-    return window.sessionStorage.getItem(TEST_ACCESS_STORAGE_KEY)
+    return window.sessionStorage.getItem(TEST_ACCESS_STORAGE_KEY);
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -65,7 +84,7 @@ export function clearTestAccessToken() {
   setTestAccessToken(null);
 }
 
-let authToken: string | null = null
+let authToken: string | null = null;
 
 export function setAuthToken(token: string | null): void {
   authToken = token;

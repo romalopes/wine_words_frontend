@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@neondatabase/neon-js": "0.6.1-beta",
+    "@sentry/react": "^11.7.0",
     "bootstrap": "^5.3.3",
     "dompurify": "^3.4.14",
     "react": "^19.0.0",
