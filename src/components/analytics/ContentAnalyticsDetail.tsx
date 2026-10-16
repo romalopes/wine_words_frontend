@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { analyticsApi } from "../../services/api";
-import { formatEngagementsPer100Views, formatNumber, formatDate, formatDateTime } from "../../utils/format";
+import { formatEngagementsPer100Views, formatNumber, formatDate } from "../../utils/format";
 import { TimeseriesChart } from "./TimeseriesChart";
 
 interface ContentDetailPageProps {}
@@ -13,7 +13,9 @@ export const ContentAnalyticsDetail: React.FC<ContentDetailPageProps> = () => {
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState("30d");
+  const [period, setPeriod] = useState<"7d" | "30d" | "90d" | "1y" | "all">(
+    "30d",
+  );
   const [grouping, setGrouping] = useState<"day" | "week" | "month">("day");
 
   const groupingOptions = [
@@ -32,6 +34,8 @@ export const ContentAnalyticsDetail: React.FC<ContentDetailPageProps> = () => {
 
   useEffect(() => {
     if (!contentType || !contentId) return;
+    const type: string = contentType;
+    const id: string = contentId;
 
     let cancelled = false;
 
@@ -39,7 +43,7 @@ export const ContentAnalyticsDetail: React.FC<ContentDetailPageProps> = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await analyticsApi.reports.contentDetail(contentType, contentId, {
+        const data = await analyticsApi.reports.contentDetail(type, id, {
           period,
           grouping,
         });
@@ -140,7 +144,9 @@ export const ContentAnalyticsDetail: React.FC<ContentDetailPageProps> = () => {
         <div className="analytics-detail__chart-controls">
           <select
             value={period}
-            onChange={(e) => setPeriod(e.target.value)}
+            onChange={(e) =>
+              setPeriod(e.target.value as "7d" | "30d" | "90d" | "1y" | "all")
+            }
             className="period-select"
             aria-label="Reporting period"
           >

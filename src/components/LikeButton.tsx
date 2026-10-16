@@ -31,7 +31,7 @@ export default function LikeButton({
     initialLiked,
     initialCount,
     enabled: isAuthenticated,
-    onChange,
+    ...(onChange ? { onChange } : {}),
   })
 
   if (!isAuthenticated) {

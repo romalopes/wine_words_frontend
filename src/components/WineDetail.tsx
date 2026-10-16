@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   winesApi,
@@ -10,15 +10,6 @@ import { volumeLabel } from "../data/wineVolumes";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import DOMPurify from "dompurify";
-
-function RichComment({ html }) {
-  return (
-    <div
-      className="review-card__comment"
-      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
-    />
-  );
-}
 import ReviewForm from "./ReviewForm";
 import BackToSource from "./BackToSource";
 import LikeButton from "./LikeButton";
@@ -26,8 +17,19 @@ import CommentSection from "./comments/CommentSection";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import AdaptiveImage from "./AdaptiveImage";
 import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
+import type { Wine } from "../types/wine";
+import type { Review } from "../types/review";
 
-function timeAgo(dateStr) {
+function RichComment({ html }: { html: string }) {
+  return (
+    <div
+      className="review-card__comment"
+      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+    />
+  );
+}
+
+function timeAgo(dateStr?: string | null): string | null {
   if (!dateStr) return null;
   const now = Date.now();
   const then = new Date(dateStr).getTime();
@@ -50,17 +52,21 @@ function timeAgo(dateStr) {
 }
 
 function WineDetail() {
-  const { slug } = useParams();
+  const { slug = "" } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const returnToLink = useReturnToLink();
   // Admins, Reviewers and Editors may edit or delete wines.
   const canManageWines = canManageWinesRole(user);
-  const [wine, setWine] = useState(null);
+  const [wine, setWine] = useState<Wine | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [reviewsByVintage, setReviewsByVintage] = useState({});
-  const [loadingReviews, setLoadingReviews] = useState({});
+  const [error, setError] = useState<string | null>(null);
+  const [reviewsByVintage, setReviewsByVintage] = useState<
+    Record<number, Review[]>
+  >({});
+  const [loadingReviews, setLoadingReviews] = useState<
+    Record<number, boolean>
+  >({});
 
   // Inline "add vintage" form (any signed-in user; enforced by the API too).
   const [showVintageForm, setShowVintageForm] = useState(false);
@@ -71,9 +77,9 @@ function WineDetail() {
     no_vintage: false,
   });
   const [addingVintage, setAddingVintage] = useState(false);
-  const [vintageError, setVintageError] = useState(null);
+  const [vintageError, setVintageError] = useState<string | null>(null);
 
-  async function handleAddVintage(e) {
+  async function handleAddVintage(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setAddingVintage(true);
     setVintageError(null);
@@ -88,21 +94,27 @@ function WineDetail() {
       setShowVintageForm(false);
       await loadWine();
     } catch (err) {
-      setVintageError(err.message || "Failed to add vintage");
+      setVintageError(
+        err instanceof Error ? err.message : "Failed to add vintage",
+      );
     } finally {
       setAddingVintage(false);
     }
   }
-  const [activeFormVintage, setActiveFormVintage] = useState(null);
-  const [editingReview, setEditingReview] = useState(null);
-  const [tasteLabels, setTasteLabels] = useState({});
+  const [activeFormVintage, setActiveFormVintage] = useState<number | null>(
+    null,
+  );
+  const [editingReview, setEditingReview] = useState<
+    (Review & { vintageId: number }) | null
+  >(null);
+  const [tasteLabels, setTasteLabels] = useState<Record<string, string>>({});
 
   // Map taste parameter slug -> human label for the detail view.
   useEffect(() => {
     tasteParametersApi
       .list()
       .then((params) => {
-        const map = {};
+        const map: Record<string, string> = {};
         (Array.isArray(params) ? params : []).forEach((p) => {
           if (p?.slug) map[p.slug] = p.label || p.slug;
         });
@@ -118,7 +130,7 @@ function WineDetail() {
       const data = await winesApi.show(slug);
       setWine(data);
     } catch (err) {
-      setError(err.message || "Failed to load wine");
+      setError(err instanceof Error ? err.message : "Failed to load wine");
     } finally {
       setLoading(false);
     }
@@ -137,7 +149,7 @@ function WineDetail() {
     loadWine();
   }, [loadWine]);
 
-  async function loadReviews(vintageId) {
+  async function loadReviews(vintageId: number) {
     setLoadingReviews((prev) => ({ ...prev, [vintageId]: true }));
     try {
       const data = await reviewsApi.list(slug, vintageId);
@@ -149,7 +161,7 @@ function WineDetail() {
     }
   }
 
-  function handleToggleReviews(vintageId) {
+  function handleToggleReviews(vintageId: number) {
     if (reviewsByVintage[vintageId]) {
       setReviewsByVintage((prev) => {
         const next = { ...prev };
@@ -161,19 +173,19 @@ function WineDetail() {
     }
   }
 
-  function handleReviewSaved(vintageId) {
+  function handleReviewSaved(vintageId: number) {
     setActiveFormVintage(null);
     setEditingReview(null);
     loadReviews(vintageId);
   }
 
-  async function handleDeleteReview(reviewId, vintageId) {
+  async function handleDeleteReview(reviewId: number, vintageId: number) {
     if (!window.confirm("Delete this review?")) return;
     try {
       await reviewsApi.destroy(reviewId);
       loadReviews(vintageId);
     } catch (err) {
-      alert(err.message || "Failed to delete review");
+      alert(err instanceof Error ? err.message : "Failed to delete review");
     }
   }
 
@@ -259,7 +271,7 @@ function WineDetail() {
                     <Link to={returnToLink(`/categories/${cat.slug}`)}>
                       {cat.name}
                     </Link>
-                    {i < wine.categories.length - 1 ? ", " : ""}
+                    {i < (wine.categories?.length ?? 0) - 1 ? ", " : ""}
                   </span>
                 ))
               : "—"}
@@ -333,7 +345,9 @@ function WineDetail() {
                 await winesApi.destroy(wine.slug);
                 navigate("/wines", { replace: true });
               } catch (err) {
-                alert(err.message || "Failed to delete wine");
+                alert(
+                  err instanceof Error ? err.message : "Failed to delete wine",
+                );
               }
             }}
           >
@@ -483,17 +497,15 @@ function WineDetail() {
                   <p className="review-loading">Loading reviews…</p>
                 )}
 
-                {reviewsByVintage[vintage.id] &&
-                  reviewsByVintage[vintage.id].length === 0 && (
+                {reviewsByVintage[vintage.id]?.length === 0 && (
                     <p className="review-empty">
                       No reviews yet. Be the first!
                     </p>
                   )}
 
-                {reviewsByVintage[vintage.id] &&
-                  reviewsByVintage[vintage.id].length > 0 && (
+                {(reviewsByVintage[vintage.id]?.length ?? 0) > 0 && (
                     <div className="review-list">
-                      {reviewsByVintage[vintage.id].map((review) => (
+                      {(reviewsByVintage[vintage.id] ?? []).map((review) => (
                         <div
                           key={review.id}
                           className={`review-card ${review.status === "draft" ? "review-card--draft" : ""}`}
@@ -571,8 +583,9 @@ function WineDetail() {
                                         loadReviews(vintage.id);
                                       } catch (err) {
                                         alert(
-                                          err.message ||
-                                            "Failed to publish review",
+                                          err instanceof Error
+                                            ? err.message
+                                            : "Failed to publish review",
                                         );
                                       }
                                     }}
@@ -591,8 +604,9 @@ function WineDetail() {
                                         loadReviews(vintage.id);
                                       } catch (err) {
                                         alert(
-                                          err.message ||
-                                            "Failed to unpublish review",
+                                          err instanceof Error
+                                            ? err.message
+                                            : "Failed to unpublish review",
                                         );
                                       }
                                     }}

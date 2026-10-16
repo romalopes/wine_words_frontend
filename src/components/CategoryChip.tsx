@@ -1,5 +1,3 @@
-import { MouseEvent } from "react";
-
 /**
  * Simple pill‑style component used to show the currently selected wine
  * category with a clickable close button.  It is intentionally lightweight

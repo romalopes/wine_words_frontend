@@ -164,7 +164,7 @@ export default function EmailSendSandbox({
           <span className={styles.statusText}>
             {sentResult.error
               ? sentResult.error
-              : `Delivered to ${sentResult.payload?.recipients?.[0] ?? "the supplied recipient"} in ${sentResult.latencyMs}ms`}
+              : `Delivered to ${(sentResult.payload as { recipients?: string[] } | undefined)?.recipients?.[0] ?? "the supplied recipient"} in ${sentResult.latencyMs}ms`}
           </span>
           <div className={styles.inspectorWrapper}>
             <ResponseInspector check={check} result={sentResult} />

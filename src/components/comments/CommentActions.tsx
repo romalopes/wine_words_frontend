@@ -1,3 +1,5 @@
+import type { CommentDTO } from "../../types/comment";
+
 interface CommentActionsProps {
   comment: CommentDTO
   pending: boolean

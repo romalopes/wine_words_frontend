@@ -1,8 +1,9 @@
 import React from "react";
 import { formatEngagementsPer100Views, formatNumber, formatDate } from "../../utils/format";
+import type { TopContentRow } from "../../services/analyticsApi";
 
 interface ContentTableProps {
-  rows: any[];
+  rows: TopContentRow[];
   total: number;
   page: number;
   perPage: number;
@@ -11,7 +12,7 @@ interface ContentTableProps {
   loading: boolean;
   onSort: (field: string) => void;
   onPageChange: (page: number) => void;
-  onRowClick: (row: any) => void;
+  onRowClick: (row: TopContentRow) => void;
 }
 
 const getTypeBadgeClass = (type: string) => {

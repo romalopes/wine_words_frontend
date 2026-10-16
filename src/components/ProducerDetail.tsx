@@ -4,33 +4,36 @@ import { producersApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import WineTable from "./WineTable";
-import RegionSearch from "./RegionSearch";
-import GrapeSearch from "./GrapeSearch";
+import RegionSearch, { type SelectedRegion } from "./RegionSearch";
+import GrapeSearch, { type SelectedGrape } from "./GrapeSearch";
 import BackToSource from "./BackToSource";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
+import type { Producer } from "../types/producer";
+import type { WineListItem } from "../types/wine";
+import type { QueryParams } from "../types/common";
 
 function ProducerDetail() {
-  const { slug } = useParams();
+  const { slug = "" } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   // Admins, Reviewers and Editors may manage producers / link wines.
   const canManageProducers = canManageWinesRole(user);
-  const [producer, setProducer] = useState(null);
+  const [producer, setProducer] = useState<Producer | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Inline wine search for linking wines to this producer.
   const [wineQuery, setWineQuery] = useState("");
-  const [wineResults, setWineResults] = useState(null);
+  const [wineResults, setWineResults] = useState<WineListItem[] | null>(null);
   const [linking, setLinking] = useState(false);
-  const [linkError, setLinkError] = useState(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   // Region / grape link editors (search pickers + save).
   const [regionsEditorOpen, setRegionsEditorOpen] = useState(false);
   const [grapesEditorOpen, setGrapesEditorOpen] = useState(false);
-  const [selectedRegions, setSelectedRegions] = useState([]);
-  const [selectedGrapes, setSelectedGrapes] = useState([]);
+  const [selectedRegions, setSelectedRegions] = useState<SelectedRegion[]>([]);
+  const [selectedGrapes, setSelectedGrapes] = useState<SelectedGrape[]>([]);
   const [savingLinks, setSavingLinks] = useState(false);
 
   const loadProducer = useCallback(async () => {
@@ -47,7 +50,9 @@ function ProducerDetail() {
         (data.grapes || []).map((g) => ({ id: g.id, name: g.name })),
       );
     } catch (err) {
-      setError(err.message || "Failed to load producer");
+      setError(
+        err instanceof Error ? err.message : "Failed to load producer",
+      );
     } finally {
       setLoading(false);
     }
@@ -58,18 +63,19 @@ function ProducerDetail() {
   }, [loadProducer]);
 
   // Fetch paginated wines for this producer
-  const { items: paginatedWines, page, setPage, totalPages, totalCount, loading: winesLoading, error: winesError, reload: reloadWines } = usePagedList({
-    fetcher: async (params) => {
+  const { items: paginatedWines, page, setPage, totalPages, totalCount, loading: winesLoading, error: winesError, reload: reloadWines } = usePagedList<WineListItem>({
+    fetcher: async (params: QueryParams) => {
       const response = await winesApi.list({ producer_id: producer?.id, ...params });
       // The API returns either a paginated envelope or a bare array
       if (Array.isArray(response)) {
         // If it's a bare array, convert to paginated format
+        const perPage = Number(params.per_page) || 20;
         return {
           items: response,
-          page: params.page || 1,
-          per_page: params.per_page || 20,
+          page: Number(params.page) || 1,
+          per_page: perPage,
           total_count: response.length,
-          total_pages: Math.ceil(response.length / (params.per_page || 20)),
+          total_pages: Math.ceil(response.length / perPage),
         };
       }
       return response;
@@ -103,7 +109,8 @@ function ProducerDetail() {
     };
   }, [wineQuery, canManageProducers]);
 
-  async function handleLinkWine(wine) {
+  async function handleLinkWine(wine: WineListItem) {
+    if (!producer) return;
     const current = wine.producer?.name;
     const message =
       current && current !== producer.name
@@ -117,7 +124,9 @@ function ProducerDetail() {
       await loadProducer();
       reloadWines();
     } catch (err) {
-      setLinkError(err.message || "Failed to link wine");
+      setLinkError(
+        err instanceof Error ? err.message : "Failed to link wine",
+      );
     } finally {
       setLinking(false);
     }
@@ -136,7 +145,9 @@ function ProducerDetail() {
       await loadProducer();
       setRegionsEditorOpen(false);
     } catch (err) {
-      setLinkError(err.message || "Failed to update regions");
+      setLinkError(
+        err instanceof Error ? err.message : "Failed to update regions",
+      );
     } finally {
       setSavingLinks(false);
     }
@@ -152,7 +163,9 @@ function ProducerDetail() {
       await loadProducer();
       setGrapesEditorOpen(false);
     } catch (err) {
-      setLinkError(err.message || "Failed to update grapes");
+      setLinkError(
+        err instanceof Error ? err.message : "Failed to update grapes",
+      );
     } finally {
       setSavingLinks(false);
     }
@@ -333,7 +346,11 @@ function ProducerDetail() {
                 await producersApi.destroy(producer.slug);
                 navigate("/producers", { replace: true });
               } catch (err) {
-                alert(err.message || "Failed to delete producer");
+                alert(
+                  err instanceof Error
+                    ? err.message
+                    : "Failed to delete producer",
+                );
               }
             }}
           >
@@ -372,7 +389,7 @@ function ProducerDetail() {
             <RegionSearch
               selected={selectedRegions}
               onChange={setSelectedRegions}
-              countryId={producer.country?.id}
+              countryId={producer.country?.id ?? null}
             />
             <button
               type="button"
@@ -626,7 +643,7 @@ function ProducerDetail() {
           <>
             <WineTable
               wines={paginatedWines}
-              onDeleted={(deleted) => {
+              onDeleted={() => {
                 // Reload current page when a wine is deleted
                 reloadWines();
               }}

@@ -83,7 +83,7 @@ function SourceDetail() {
       // so no loading flicker.
       reviews.patchItem(review.id, {
         status: next,
-        published_at: payload.published_at ?? review.published_at,
+        published_at: payload.published_at ?? review.published_at ?? null,
       });
     } catch (err) {
       alert(errorMessage(err, "Failed to update review"));
@@ -105,7 +105,7 @@ function SourceDetail() {
       // so no loading flicker.
       articles.patchItem(article.id, {
         status: next,
-        published_at: payload.published_at ?? article.published_at,
+        published_at: payload.published_at ?? article.published_at ?? null,
       });
     } catch (err) {
       alert(errorMessage(err, "Failed to update article"));

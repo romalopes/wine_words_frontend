@@ -191,11 +191,11 @@ export default function ArticleProjectDetail() {
           ? TABS.length - 1
           : (index + (event.key === "ArrowRight" ? 1 : -1) + TABS.length) %
             TABS.length;
-    selectTab(TABS[target].id);
+    const nextTab = TABS[target];
+    if (!nextTab) return;
+    selectTab(nextTab.id);
     window.requestAnimationFrame(() =>
-      document
-        .getElementById(`article-project-tab-${TABS[target].id}`)
-        ?.focus(),
+      document.getElementById(`article-project-tab-${nextTab.id}`)?.focus(),
     );
   }
   async function destroy() {

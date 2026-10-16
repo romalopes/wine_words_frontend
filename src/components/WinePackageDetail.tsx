@@ -16,6 +16,11 @@ import ReviewForm from "./ReviewForm";
 import ShipmentTrackingPanel from "./ShipmentTrackingPanel";
 import ImageManager from "./ImageManager";
 import styles from "./winePackages.module.css";
+import type {
+  ReviewProgress,
+  WinePackage,
+  WinePackageItem,
+} from "../types/winePackage";
 
 // One wine package: what arrived, who is responsible, how the reviews are
 // going, and the workflow actions available right now.
@@ -24,18 +29,18 @@ import styles from "./winePackages.module.css";
 // never offer a move the backend would reject. Completion is shown as automatic
 // or deliberate, because only automatic completions reopen by themselves.
 function WinePackageDetail() {
-  const { id } = useParams();
+  const { id = "" } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const returnToLink = useReturnToLink();
 
-  const [pkg, setPkg] = useState(null);
+  const [pkg, setPkg] = useState<WinePackage | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [reviewItemId, setReviewItemId] = useState(null);
+  const [editingItem, setEditingItem] = useState<number | null>(null);
+  const [reviewItemId, setReviewItemId] = useState<number | null>(null);
   const [showReject, setShowReject] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
 
@@ -45,7 +50,9 @@ function WinePackageDetail() {
       const data = await winePackagesApi.show(id);
       setPkg(data);
     } catch (err) {
-      setError(err.message || "Failed to load wine package");
+      setError(
+        err instanceof Error ? err.message : "Failed to load wine package",
+      );
     } finally {
       setLoading(false);
     }
@@ -63,7 +70,10 @@ function WinePackageDetail() {
       Number(pkg.reviewer_id) === Number(user?.id)),
   );
 
-  async function runAction(action, options = {}) {
+  async function runAction(
+    action: () => Promise<unknown>,
+    options: { confirm?: string } = {},
+  ) {
     if (options.confirm && !window.confirm(options.confirm)) return;
 
     setBusy(true);
@@ -72,7 +82,11 @@ function WinePackageDetail() {
       await action();
       await load();
     } catch (err) {
-      setError(err.message || "That action could not be completed");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "That action could not be completed",
+      );
     } finally {
       setBusy(false);
     }
@@ -81,19 +95,23 @@ function WinePackageDetail() {
   async function handleDelete() {
     if (!window.confirm("Delete this wine package? This cannot be undone."))
       return;
+    if (!pkg) return;
 
     setBusy(true);
     try {
       await winePackagesApi.destroy(pkg.id);
       navigate("/wine-packages");
     } catch (err) {
-      setError(err.message || "Failed to delete wine package");
+      setError(
+        err instanceof Error ? err.message : "Failed to delete wine package",
+      );
       setBusy(false);
     }
   }
 
-  async function handleRemoveItem(item) {
+  async function handleRemoveItem(item: WinePackageItem) {
     if (!window.confirm(`Remove “${item.label}” from this package?`)) return;
+    if (!pkg) return;
 
     setBusy(true);
     setError(null);
@@ -101,7 +119,9 @@ function WinePackageDetail() {
       await winePackageItemsApi.destroy(pkg.id, item.id);
       await load();
     } catch (err) {
-      setError(err.message || "Failed to remove this wine line");
+      setError(
+        err instanceof Error ? err.message : "Failed to remove this wine line",
+      );
     } finally {
       setBusy(false);
     }
@@ -126,7 +146,9 @@ function WinePackageDetail() {
     );
   }
 
-  const progress = pkg.review_progress || {
+  if (!pkg) return null;
+
+  const progress: ReviewProgress = (pkg.review_progress as ReviewProgress | undefined) || {
     requested: 0,
     reviewed: 0,
     pending: 0,
@@ -193,7 +215,7 @@ function WinePackageDetail() {
             />
           ) : (
             <div className="image-manager__thumbs">
-              {pkg.images.map((src) => (
+              {(pkg.images ?? []).map((src) => (
                 <a
                   key={src}
                   href={src}
@@ -216,8 +238,8 @@ function WinePackageDetail() {
             className={styles.progressBar}
             role="progressbar"
             aria-valuenow={progress.percent}
-            aria-valuemin="0"
-            aria-valuemax="100"
+            aria-valuemin={0}
+            aria-valuemax={100}
             aria-label="Review progress"
           >
             <div
@@ -293,7 +315,7 @@ function WinePackageDetail() {
                   confirm:
                     progress.pending > 0
                       ? `${progress.pending} review(s) are still outstanding. Complete this package anyway?`
-                      : undefined,
+                      : "",
                 })
               }
             >
@@ -368,7 +390,7 @@ function WinePackageDetail() {
       <div className={styles.section}>
         <h2>Wines in this package</h2>
 
-        {pkg.items?.length > 0 ? (
+        {(pkg.items?.length ?? 0) > 0 ? (
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -383,7 +405,7 @@ function WinePackageDetail() {
                 </tr>
               </thead>
               <tbody>
-                {pkg.items.map((item) => (
+                {(pkg.items ?? []).map((item) => (
                   <tr key={item.id}>
                     <td>
                       {item.wine_slug ? (
@@ -467,36 +489,43 @@ function WinePackageDetail() {
 
         {canManage && (
           <>
-            {editingItem && (
-              <WinePackageItemForm
-                packageId={pkg.id}
-                item={pkg.items.find(
-                  (candidate) => candidate.id === editingItem,
-                )}
-                producerId={pkg.producer_id}
-                producerName={pkg.producer_name}
-                onSaved={() => {
-                  setEditingItem(null);
-                  load();
-                }}
-                onCancel={() => setEditingItem(null)}
-              />
-            )}
-
-            {reviewItemId &&
+            {editingItem != null &&
               (() => {
-                const reviewItem = pkg.items.find(
+                const editing = pkg.items?.find(
+                  (candidate) => candidate.id === editingItem,
+                );
+                if (!editing) return null;
+                return (
+                  <WinePackageItemForm
+                    packageId={pkg.id}
+                    item={editing}
+                    producerId={pkg.producer_id ?? null}
+                    producerName={pkg.producer_name ?? null}
+                    onSaved={() => {
+                      setEditingItem(null);
+                      load();
+                    }}
+                    onCancel={() => setEditingItem(null)}
+                  />
+                );
+              })()}
+
+            {reviewItemId != null &&
+              (() => {
+                const reviewItem = pkg.items?.find(
                   (candidate) => candidate.id === reviewItemId,
                 );
                 if (!reviewItem) return null;
                 return (
                   <div className="review-form-wrapper">
                     <ReviewForm
-                      wineSlug={reviewItem.wine_slug}
-                      vintageId={reviewItem.vintage_id}
-                      vintageYear={reviewItem.vintage_year}
-                      wineName={reviewItem.wine_name}
-                      vintageNoVintage={reviewItem.vintage_no_vintage}
+                      wineSlug={reviewItem.wine_slug ?? undefined}
+                      vintageId={reviewItem.vintage_id ?? undefined}
+                      vintageYear={reviewItem.vintage_year ?? null}
+                      wineName={reviewItem.wine_name ?? undefined}
+                      vintageNoVintage={
+                        reviewItem.vintage_no_vintage ?? undefined
+                      }
                       packageId={pkg.id}
                       packageItemId={reviewItem.id}
                       onSaved={(review) => {
@@ -514,8 +543,8 @@ function WinePackageDetail() {
             {showAddItem ? (
               <WinePackageItemForm
                 packageId={pkg.id}
-                producerId={pkg.producer_id}
-                producerName={pkg.producer_name}
+                producerId={pkg.producer_id ?? null}
+                producerName={pkg.producer_name ?? null}
                 onSaved={() => {
                   setShowAddItem(false);
                   load();

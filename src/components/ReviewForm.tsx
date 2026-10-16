@@ -63,11 +63,11 @@ interface ReviewFormProps {
    * create paths and unused when editing, so the review detail page — which
    * only ever edits — can omit all three.
    */
-  wineSlug?: string;
-  vintageId?: number;
+  wineSlug?: string | undefined;
+  vintageId?: number | undefined;
   vintageYear: number | null;
-  wineName?: string;
-  vintageNoVintage?: boolean;
+  wineName?: string | undefined;
+  vintageNoVintage?: boolean | undefined;
   review?: Review | null;
   onSaved: (saved?: Review) => void;
   onCancel?: () => void;

@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import type { AboutHeroData } from "../../types/about";
-import { heroData } from "../../data/about/hero";
 import styles from "./AboutPage.module.css";
 
 function AboutHero({ hero }: { hero: AboutHeroData }) {

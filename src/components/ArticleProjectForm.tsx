@@ -305,7 +305,7 @@ export default function ArticleProjectForm({
     if (row?.id) setRemoved((current) => [...current, row.id!]);
     update(
       key,
-      rows.filter((_, rowIndex) => rowIndex !== index) as FormState[typeof key],
+      rows.filter((_, rowIndex) => rowIndex !== index) as unknown as FormState[typeof key],
     );
   };
   const backTo =
@@ -765,11 +765,10 @@ export default function ArticleProjectForm({
           </div>
           <Lookup
             kind="vintage"
-            producerId={
-              form.producers.length === 1
-                ? form.producers[0]?.producer_id
-                : undefined
-            }
+            {...(form.producers.length === 1 &&
+            form.producers[0]?.producer_id != null
+              ? { producerId: form.producers[0].producer_id }
+              : {})}
             placeholder="Search wine or vintage year"
             disabledIds={vintageIds}
             onPick={addVintage}

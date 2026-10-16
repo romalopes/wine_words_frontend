@@ -63,7 +63,6 @@ export default function ReviewCard({
     (typeof review.wine_image === "string" ? review.wine_image : null) ??
     review.primary_image ??
     null;
-  const hasDrinkWindow = review.drink_from != null || review.drink_to != null;
 
   return (
     <div
@@ -152,7 +151,7 @@ export default function ReviewCard({
           {onStatusChange && (
             <ContentStatusActions
               status={review.status}
-              user={user}
+              user={user ?? null}
               busy={statusBusy}
               onChange={onStatusChange}
             />

@@ -6,6 +6,7 @@ import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
 import ProducerTable from "./ProducerTable";
 import { useState, useEffect, useMemo } from "react";
+import type { CountryListItem } from "../types/reference";
 import styles from "./ProducerList.module.css";
 
 const PRODUCER_TYPES = [
@@ -31,7 +32,7 @@ function ProducerList() {
   const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [countries, setCountries] = useState<Array<{id: number, name: string, flag_emoji?: string, producers_count: number}>>([]);
+  const [countries, setCountries] = useState<CountryListItem[]>([]);
   const [countriesLoading, setCountriesLoading] = useState(true);
 
   // Debounced search query for API calls

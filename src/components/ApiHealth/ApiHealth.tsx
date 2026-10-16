@@ -30,7 +30,7 @@ const methodClass: Record<HttpMethod, string | undefined> = {
 
 type LatencyRating = HealthCheckResult["latencyRating"];
 
-function latencyClass(rating: LatencyRating): string | undefined {
+function latencyClass(rating: LatencyRating | undefined): string | undefined {
   if (rating === "excellent") return styles.pass;
   if (rating === "good") return styles.neutral;
   return styles.fail;
@@ -287,16 +287,6 @@ export default function ApiHealth() {
     }
   }
 
-  async function runEmailSingle(check: ApiCheck): Promise<HealthCheckResult> {
-    setRunning((prev) => ({ ...prev, [check.id]: true }));
-    try {
-      const result = await runCheck(check, { getAuthToken });
-      setResults((prev) => ({ ...prev, [check.id]: result }));
-      return result;
-    } finally {
-      setRunning((prev) => ({ ...prev, [check.id]: false }));
-    }
-  }
 
   function toggleCategory(name: string): void {
     setOpenCategories((prev) => ({ ...prev, [name]: !prev[name] }));
@@ -470,9 +460,9 @@ export default function ApiHealth() {
           <EmailSendSandbox
             key={check.id}
             check={check}
-            result={results[check.id]}
+            result={results[check.id] ?? null}
             running={running[check.id] === true}
-            transportResult={results["email-transport"]}
+            transportResult={results["email-transport"] ?? null}
           />
         ) : (
           <div key={check.id}>
@@ -488,11 +478,11 @@ export default function ApiHealth() {
               {results[check.id] && (
                 <span className={styles.latency}>
                   <span
-                    className={`${styles.badge} ${latencyClass(results[check.id].latencyRating)}`}
+                    className={`${styles.badge} ${latencyClass(results[check.id]?.latencyRating)}`}
                   >
-                    {results[check.id].latencyMs}ms
+                    {results[check.id]?.latencyMs}ms
                   </span>
-                  <span style={{ marginLeft: "0.4rem" }}>{results[check.id].status}</span>
+                  <span style={{ marginLeft: "0.4rem" }}>{results[check.id]?.status}</span>
                 </span>
               )}
               <button

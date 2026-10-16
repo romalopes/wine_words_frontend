@@ -10,6 +10,18 @@ export interface WinePackageItem {
   review_requested?: boolean
   review?: Review | null
   wine?: Wine | null
+  /** Denormalised display fields from the package-items serializer. */
+  label?: string | null
+  notes?: string | null
+  quantity?: number | null
+  condition?: string | null
+  wine_slug?: string | null
+  wine_name?: string | null
+  vintage_year?: number | null
+  vintage_no_vintage?: boolean | null
+  review_slug?: string | null
+  review_id?: number | null
+  reviewable?: boolean
   [key: string]: unknown
 }
 
@@ -72,6 +84,13 @@ export interface WinePackage {
   reviewed_at?: string | null
   notes?: string | null
   status: string
+  reviewer_name?: string | null
+  rejection_reason?: string | null
+  auto_completed?: boolean | null
+  /** True only for active packages whose deadline has passed. */
+  overdue?: boolean
+  /** Workflow capability flags returned by the API (`can` map). */
+  can?: Record<string, boolean> | null
   items?: WinePackageItem[]
   /**
    * Ordered image URL strings — `image_urls` in Rails (ImageAttributes).

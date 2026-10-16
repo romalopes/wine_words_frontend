@@ -216,7 +216,7 @@ function WineList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const selectedCategory = useSelectedCategory();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
 
   // ---------------------------------------------------------------------------
   // One search mode is visible at a time. Simple search is the default quick

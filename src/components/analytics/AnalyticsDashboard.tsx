@@ -1,13 +1,18 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { analyticsApi } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { canAccessAnalytics } from "../../constants/roles";
-import { formatEngagementsPer100Views, formatNumber, formatDate } from "../../utils/format";
+import { formatEngagementsPer100Views, formatNumber } from "../../utils/format";
 import { ContentTable } from "./ContentTable";
 import { TimeseriesChart } from "./TimeseriesChart";
-import { PeriodSelector } from "./PeriodSelector";
-import { Link, useLocation } from "react-router-dom";
+import type {
+  ReportingParams,
+  SummaryResponse,
+  TopContentResponse,
+  TopContentRow,
+  TimeseriesResponse,
+} from "../../services/analyticsApi";
 
 const PERIOD_OPTIONS = [
   { value: "7d", label: "Last 7 days" },
@@ -30,7 +35,17 @@ const SORT_OPTIONS = [
   { value: "published_at", label: "Published Date" },
 ];
 
-const KPICard = ({ title, value, subtitle, warning }) => (
+const KPICard = ({
+  title,
+  value,
+  subtitle,
+  warning,
+}: {
+  title: string;
+  value: string;
+  subtitle?: string | undefined;
+  warning?: boolean | undefined;
+}) => (
   <div className={`kpi-card ${warning ? "warning" : ""}`}>
     <div className="kpi-title">{title}</div>
     <div className="kpi-value">{value}</div>
@@ -38,28 +53,35 @@ const KPICard = ({ title, value, subtitle, warning }) => (
   </div>
 );
 
+type AnalyticsPeriod = "7d" | "30d" | "90d" | "1y" | "all";
+type AnalyticsSort = "views" | "engagement" | "published_at";
+type SortDirection = "asc" | "desc";
+type ContentTypeFilter = "all" | "article" | "review" | "wine";
+type TimeseriesGrouping = "day" | "week" | "month";
+
 const AnalyticsDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [summary, setSummary] = useState(null);
-  const [topContent, setTopContent] = useState(null);
-  const [timeseries, setTimeseries] = useState(null);
+  const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [topContent, setTopContent] = useState<TopContentResponse | null>(null);
+  const [timeseries, setTimeseries] = useState<TimeseriesResponse | null>(null);
 
-  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [, setSummaryLoading] = useState(true);
   const [topContentLoading, setTopContentLoading] = useState(true);
   const [timeseriesLoading, setTimeseriesLoading] = useState(true);
 
-  const [period, setPeriod] = useState("30d");
-  const [sort, setSort] = useState("views");
-  const [direction, setDirection] = useState("desc");
+  const [period, setPeriod] = useState<AnalyticsPeriod>("30d");
+  const [sort, setSort] = useState<AnalyticsSort>("views");
+  const [direction, setDirection] = useState<SortDirection>("desc");
   const [page, setPage] = useState(1);
   const [perPage] = useState(20);
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState<ContentTypeFilter>("all");
   const [includeZeroViews, setIncludeZeroViews] = useState(true);
-  const [timeseriesGrouping, setTimeseriesGrouping] = useState("day");
-  const [error, setError] = useState(null);
+  const [timeseriesGrouping, setTimeseriesGrouping] =
+    useState<TimeseriesGrouping>("day");
+  const [error, setError] = useState<string | null>(null);
 
   const hasReportingAccess = canAccessAnalytics(user);
 
@@ -70,7 +92,7 @@ const AnalyticsDashboard = () => {
     setTimeseriesLoading(true);
 
     try {
-      const params = {
+      const params: ReportingParams = {
         period,
         content_type: typeFilter,
         sort,
@@ -92,7 +114,9 @@ const AnalyticsDashboard = () => {
       setTimeseries(timeseriesRes);
     } catch (err) {
       console.error("Failed to load analytics:", err);
-      setError(err.response?.data?.error || "Failed to load analytics data");
+      setError(
+        err instanceof Error ? err.message : "Failed to load analytics data",
+      );
     } finally {
       setSummaryLoading(false);
       setTopContentLoading(false);
@@ -104,18 +128,18 @@ const AnalyticsDashboard = () => {
     fetchAll();
   }, [fetchAll]);
 
-  const handleSort = (field) => {
+  const handleSort = (field: string) => {
     if (sort === field) {
       setDirection(direction === "asc" ? "desc" : "asc");
     } else {
-      setSort(field);
+      setSort(field as AnalyticsSort);
       setDirection("desc");
     }
     setPage(1);
   };
 
-  const handleRowClick = (row) => {
-    const typeMap = { Article: "article", Review: "review", Wine: "wine" };
+  const handleRowClick = (row: TopContentRow) => {
+    const typeMap: Record<string, string> = { Article: "article", Review: "review", Wine: "wine" };
     navigate(`/analytics/content/${typeMap[row.content_type]}/${row.content_id}`);
   };
 
@@ -140,7 +164,10 @@ const AnalyticsDashboard = () => {
         <div className="analytics-dashboard__controls">
           <select
             value={period}
-            onChange={(v) => { setPeriod(v); setPage(1); }}
+            onChange={(e) => {
+              setPeriod(e.target.value as AnalyticsPeriod);
+              setPage(1);
+            }}
             className="period-select"
             aria-label="Reporting period"
           >
@@ -158,7 +185,10 @@ const AnalyticsDashboard = () => {
           </label>
           <select
             value={typeFilter}
-            onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setTypeFilter(e.target.value as ContentTypeFilter);
+              setPage(1);
+            }}
             className="type-filter"
             aria-label="Content type filter"
           >
@@ -209,7 +239,9 @@ const AnalyticsDashboard = () => {
           <h2 id="trending-heading">Trending Views</h2>
           <select
             value={timeseriesGrouping}
-            onChange={(e) => setTimeseriesGrouping(e.target.value)}
+            onChange={(e) =>
+              setTimeseriesGrouping(e.target.value as TimeseriesGrouping)
+            }
             className="grouping-select"
             aria-label="Time grouping"
           >
@@ -227,7 +259,7 @@ const AnalyticsDashboard = () => {
           <div className="table-controls">
             <select
               value={sort}
-              onChange={(e) => handleSort(e.target.value)}
+              onChange={(e) => handleSort(e.target.value as AnalyticsSort)}
               className="sort-select"
               aria-label="Sort by"
             >
@@ -237,7 +269,7 @@ const AnalyticsDashboard = () => {
             </select>
             <select
               value={direction}
-              onChange={(e) => setDirection(e.target.value)}
+              onChange={(e) => setDirection(e.target.value as SortDirection)}
               className="direction-select"
               aria-label="Sort direction"
             >

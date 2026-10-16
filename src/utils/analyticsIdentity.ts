@@ -48,8 +48,12 @@ export function clearVisitorId(): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(VISITOR_ID_KEY);
-  } catch {}
+  } catch {
+    // Storage may be unavailable (private mode); nothing to clean up.
+  }
   try {
     sessionStorage.removeItem(SESSION_FALLBACK_KEY);
-  } catch {}
+  } catch {
+    // Storage may be unavailable (private mode); nothing to clean up.
+  }
 }

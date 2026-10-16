@@ -170,11 +170,11 @@ describe("CommentSection", () => {
 
     await waitFor(() => expect(screen.getByText(/Interesting difference/)).toBeInTheDocument())
     // The first "Reply" button opens the form; the second one submits it.
-    await user.click(screen.getAllByRole("button", { name: "Reply" })[0])
+    await user.click(screen.getAllByRole("button", { name: "Reply" })[0]!)
     // Scoped by its label: the top-level form is also a textarea on this page.
     const replyBox = screen.getByLabelText("Reply to Anderson")
     await user.type(replyBox, "I agree.")
-    await user.click(screen.getAllByRole("button", { name: "Reply" })[1])
+    await user.click(screen.getAllByRole("button", { name: "Reply" })[1]!)
 
     await waitFor(() => expect(screen.getByText("I agree.")).toBeInTheDocument())
     // Only the comment id is sent: the API derives the commentable from it.
@@ -281,9 +281,9 @@ describe("CommentSection", () => {
     renderSection({ kind: "wine", identifier: "some-wine" })
 
     await waitFor(() => expect(screen.getByText(/Interesting difference/)).toBeInTheDocument())
-    await user.click(screen.getAllByRole("button", { name: "Reply" })[0])
+    await user.click(screen.getAllByRole("button", { name: "Reply" })[0]!)
     await user.type(screen.getByLabelText("Reply to Anderson"), "I agree.")
-    await user.click(screen.getAllByRole("button", { name: "Reply" })[1])
+    await user.click(screen.getAllByRole("button", { name: "Reply" })[1]!)
 
     await waitFor(() => expect(screen.getByText(/network down/)).toBeInTheDocument())
     // Exactly one alert: the open form owns the message.

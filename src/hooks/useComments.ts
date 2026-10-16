@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { commentsApi } from "../services/api"
 import { errorStatus } from "../utils/errors"
 import type { CommentDTO, CommentableKind } from "../types/comment"

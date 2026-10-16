@@ -6,6 +6,12 @@ export type AboutTab =
   | "credentials"
   | "trade";
 
+/** One entry of the About page tab bar. */
+export interface AboutTabData {
+  id: AboutTab;
+  label: string;
+}
+
 export interface TimelineEntry {
   year: string;
   title: string;

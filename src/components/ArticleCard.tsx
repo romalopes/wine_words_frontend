@@ -43,7 +43,6 @@ export default function ArticleCard({
   article,
   query = "",
   canManage = false,
-  canManageContent = false,
   onOpen,
   onStatusChange,
   user,
@@ -114,7 +113,7 @@ export default function ArticleCard({
         >
           <ContentStatusActions
             status={article.status}
-            user={user}
+            user={user ?? null}
             busy={statusBusy}
             onChange={onStatusChange}
           />

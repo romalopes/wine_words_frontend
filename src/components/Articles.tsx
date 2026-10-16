@@ -203,7 +203,7 @@ function Articles() {
       await articlesApi.updateStatus(article.id, payload);
       const patch = {
         status: next,
-        published_at: payload.published_at ?? article.published_at,
+        published_at: payload.published_at ?? article.published_at ?? null,
       };
       // Patch every rendered copy in place — paginated feed, grouped view and
       // "mine" list — instead of refetching, so only that card re-renders

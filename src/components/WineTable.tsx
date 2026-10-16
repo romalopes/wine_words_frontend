@@ -42,7 +42,7 @@ function WineTable({
       await winesApi.destroy(wine.slug);
       onDeleted?.(wine);
     } catch (err) {
-      alert(err.message || "Failed to delete wine");
+      alert(err instanceof Error ? err.message : "Failed to delete wine");
     } finally {
       setDeletingSlug(null);
     }

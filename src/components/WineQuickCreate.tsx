@@ -8,7 +8,6 @@ import {
   DEFAULT_ALCOHOL_PERCENTAGE,
 } from "../data/wineVolumes";
 import { errorMessage } from "../utils/errors";
-import type { WineListItem, Vintage } from "../types/wine";
 
 /**
  * The wine fields this form collects. Numeric inputs are held as strings so a

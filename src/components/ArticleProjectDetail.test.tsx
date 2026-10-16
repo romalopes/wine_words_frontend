@@ -31,7 +31,7 @@ vi.mock("./ArticleProjectForm", () => ({
   }: {
     activeTab?: string;
     embedded?: boolean;
-    onSaved?: (project: typeof project) => void;
+    onSaved?: (project: unknown) => void;
   }) => (
     <>
       <p>Article Project form: {activeTab ?? "standalone"}</p>

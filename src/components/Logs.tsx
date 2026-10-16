@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin } from "../constants/roles";
@@ -6,7 +6,7 @@ import { logsApi } from "../services/api";
 import { copyText } from "../utils/clipboard";
 import Pagination from "./Pagination";
 
-import type { LogEntry } from "../types/user";
+import type { AuditLog } from "../types/user";
 const LINE_COUNT_OPTIONS = [100, 250, 500, 1000, 2000];
 const PER_PAGE_OPTIONS = [10, 20, 50, 100];
 
@@ -56,13 +56,13 @@ const EMPTY_FILTERS = {
   search: "",
 };
 
-function formatDateTime(value) {
+function formatDateTime(value?: string | null) {
   if (!value) return "—";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
 }
 
-function objectsSummary(entry) {
+function objectsSummary(entry: AuditLog) {
   const objects = entry.objects || [];
   if (objects.length === 0) return "—";
   return objects
@@ -72,9 +72,9 @@ function objectsSummary(entry) {
 
 // Seed audit filters from the URL (e.g. /admin/logs?request_id=xyz arrived
 // from the detail page) while ignoring unknown params.
-function filtersFromSearchParams(searchParams) {
+function filtersFromSearchParams(searchParams: URLSearchParams) {
   const next = { ...EMPTY_FILTERS };
-  Object.keys(EMPTY_FILTERS).forEach((key) => {
+  (Object.keys(EMPTY_FILTERS) as Array<keyof typeof EMPTY_FILTERS>).forEach((key) => {
     const value = searchParams.get(key);
     if (value) next[key] = value;
   });
@@ -84,12 +84,14 @@ function filtersFromSearchParams(searchParams) {
 // Legacy view: raw tail of the Rails log file (log/<env>.log), unchanged.
 function LogFileViewer() {
   const { token } = useAuth();
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [lineCount, setLineCount] = useState(500);
   const [copyState, setCopyState] = useState("idle"); // idle | copied | failed
-  const copyTimerRef = useRef(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
@@ -111,7 +113,7 @@ function LogFileViewer() {
       const data = await logsApi.fetchLines(lineCount);
       setLogs(Array.isArray(data.logs) ? data.logs : []);
     } catch (err) {
-      setError(err.message || "Failed to load logs");
+      setError(err instanceof Error ? err.message : "Failed to load logs");
     } finally {
       setLoading(false);
     }
@@ -192,13 +194,24 @@ function AuditLogTable() {
   const [filters, setFilters] = useState(() => filtersFromSearchParams(searchParams));
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
-  const [entries, setEntries] = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const [entries, setEntries] = useState<AuditLog[]>([]);
+  const [pagination, setPagination] = useState<{
+    page: number;
+    perPage: number;
+    totalCount: number;
+    totalPages: number;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [searchTimer, setSearchTimer] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTimer, setSearchTimer] = useState<
+    ReturnType<typeof setTimeout> | null
+  >(null);
 
-  function applyFilters(nextPage, nextFilters = filters, nextPerPage = perPage) {
+  function applyFilters(
+    nextPage: number,
+    nextFilters = filters,
+    nextPerPage = perPage,
+  ) {
     const requested = {
       page: nextPage,
       per_page: nextPerPage,
@@ -219,14 +232,18 @@ function AuditLogTable() {
         } else {
           setEntries(Array.isArray(data.items) ? data.items : []);
           setPagination({
-            page: data.page,
-            perPage: data.per_page,
-            totalCount: data.total_count,
-            totalPages: data.total_pages,
+            page: data.page ?? 1,
+            perPage: data.per_page ?? nextPerPage,
+            totalCount: data.total_count ?? 0,
+            totalPages: data.total_pages ?? 1,
           });
         }
       })
-      .catch((err) => setError(err.message || "Failed to load audit logs"))
+      .catch((err) =>
+        setError(
+          err instanceof Error ? err.message : "Failed to load audit logs",
+        ),
+      )
       .finally(() => setLoading(false));
   }
 
@@ -235,18 +252,21 @@ function AuditLogTable() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, perPage]);
 
-  function handleFilterChange(key, value) {
+  function handleFilterChange(
+    key: keyof typeof EMPTY_FILTERS,
+    value: string,
+  ) {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }
 
-  function submitFilters(event) {
+  function submitFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPage(1);
     applyFilters(1);
   }
 
   // Debounced free-text search across description/action/path.
-  function handleSearchChange(value) {
+  function handleSearchChange(value: string) {
     handleFilterChange("search", value);
     if (searchTimer) clearTimeout(searchTimer);
     const timer = setTimeout(() => {

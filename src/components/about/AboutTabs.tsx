@@ -28,7 +28,8 @@ function AboutTabs({ tabs, activeTab, onChange }: AboutTabsProps) {
 
       if (nextIndex !== null) {
         event.preventDefault();
-        onChange(tabs[nextIndex].id);
+        const nextTab = tabs[nextIndex];
+        if (nextTab) onChange(nextTab.id);
         tabRefs.current[nextIndex]?.focus();
       }
     },

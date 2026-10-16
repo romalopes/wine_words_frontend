@@ -137,7 +137,7 @@ function ReviewDetail() {
           ? {
               ...prev,
               status: next,
-              published_at: payload.published_at ?? prev.published_at,
+              published_at: payload.published_at ?? prev.published_at ?? null,
             }
           : prev,
       );
@@ -191,7 +191,7 @@ function ReviewDetail() {
         <header className="article-page__header">
           <p className="article-page__kicker">
             {categories.length > 0 ? (
-              <Link to={returnToLink(`/categories/${categories[0].slug}`)}>
+              <Link to={returnToLink(`/categories/${categories[0]?.slug}`)}>
                 {kicker}
               </Link>
             ) : (

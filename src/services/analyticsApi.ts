@@ -1,6 +1,7 @@
 /** Analytics API client (ingestion + reporting). */
 
 import type { ApiRequester } from "./apiClient";
+import { buildQuery } from "./apiClient";
 import { getVisitorId } from "../utils/analyticsIdentity";
 
 // --- Ingestion types ---
@@ -114,11 +115,10 @@ export interface WineInsightsResponse {
   overlapping_notice: string | null;
 }
 
-export interface WineInsightsParams extends ReportingParams {
+export type WineInsightsParams = Omit<ReportingParams, "sort" | "grouping"> & {
   grouping?: "producer" | "region" | "grape";
   sort?: "views" | "unique_viewers" | "name";
-  direction?: "asc" | "desc";
-}
+};
 
 export interface ReportingParams {
   period?: "7d" | "30d" | "90d" | "1y" | "all";
@@ -162,19 +162,19 @@ export function createAnalyticsApi(request: ApiRequester): AnalyticsApi {
     },
     reports: {
       async summary(params?: ReportingParams): Promise<SummaryResponse> {
-        return request<SummaryResponse>("/analytics/summary", { auth: true, params: params as any });
+        return request<SummaryResponse>(`/analytics/summary${buildQuery({ ...params })}`, { auth: true });
       },
       async topContent(params?: ReportingParams): Promise<TopContentResponse> {
-        return request<TopContentResponse>("/analytics/top_content", { auth: true, params: params as any });
+        return request<TopContentResponse>(`/analytics/top_content${buildQuery({ ...params })}`, { auth: true });
       },
       async contentDetail(contentType: string, contentId: string | number, params?: ReportingParams): Promise<ContentDetailResponse> {
-        return request<ContentDetailResponse>(`/analytics/content/${contentType}/${contentId}`, { auth: true, params: params as any });
+        return request<ContentDetailResponse>(`/analytics/content/${contentType}/${contentId}${buildQuery({ ...params })}`, { auth: true });
       },
       async timeseries(params?: ReportingParams): Promise<TimeseriesResponse> {
-        return request<TimeseriesResponse>("/analytics/timeseries", { auth: true, params: params as any });
+        return request<TimeseriesResponse>(`/analytics/timeseries${buildQuery({ ...params })}`, { auth: true });
       },
       async wineInsights(params?: WineInsightsParams): Promise<WineInsightsResponse> {
-        return request<WineInsightsResponse>("/analytics/wine-insights", { auth: true, params: params as any });
+        return request<WineInsightsResponse>(`/analytics/wine-insights${buildQuery({ ...params })}`, { auth: true });
       },
     },
   };

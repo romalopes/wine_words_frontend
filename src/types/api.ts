@@ -51,7 +51,7 @@ export interface ForgotPasswordRequest {
 import type { QueryParams, ResourceResponse } from "./common"
 import type { Account, AccountUpdate, PasswordChange } from "./account"
 import type { Configuration, Setting } from "./notification"
-import type { AuditLog, LogEntry, ImpersonationResponse, UserWineProfile } from "./user"
+import type { AuditLog, ImpersonationResponse, UserWineProfile } from "./user"
 import type { Article } from "./article"
 import type {
   Category,
@@ -169,6 +169,8 @@ export interface ReviewWritePayload {
   comment?: string | null
   score?: number | null
   status?: string
+  /** Only sent with status transitions (`updateStatus`). */
+  published_at?: string | null
   category_ids?: number[]
   [key: string]: unknown
 }
@@ -206,6 +208,8 @@ export interface ArticleWritePayload {
   title?: string
   body?: string
   status?: string
+  /** Only sent with status transitions (`updateStatus`). */
+  published_at?: string | null
   [key: string]: unknown
 }
 
@@ -539,7 +543,8 @@ export interface RegionsApi {
 }
 
 export interface LogsApi {
-  fetchLines(lines?: number): Promise<LogEntry[]>
+  /** Raw tail of the log file — the Rails controller renders `{ logs: [...] }`. */
+  fetchLines(lines?: number): Promise<{ logs: string[] }>
   fetchAuditLogs(params?: QueryParams): Promise<ResourceResponse<AuditLog>>
   fetchAuditLog(id: string | number): Promise<AuditLog>
 }

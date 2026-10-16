@@ -11,7 +11,7 @@ export interface UseLikeOptions {
   initialCount: number | null | undefined
   /** When false (anonymous) the control renders read-only and never calls the API. */
   enabled?: boolean
-  onChange: (state: { liked: boolean; likes_count: number }) => void | undefined
+  onChange?: (state: { liked: boolean; likes_count: number }) => void
 }
 
 /**
@@ -26,7 +26,7 @@ export function useLike({
   initialLiked = false,
   initialCount = 0,
   enabled = true,
-  onChange = undefined,
+  onChange,
 }: UseLikeOptions) {
   const [liked, setLiked] = useState(Boolean(initialLiked))
   const [count, setCount] = useState(Number(initialCount) || 0)

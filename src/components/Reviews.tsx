@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { reviewsApi, categoriesApi, winesApi } from "../services/api";
+import { reviewsApi, categoriesApi } from "../services/api";
 import { useCategoryOrder, sortCategoryNames } from "../hooks/useCategoryOrder";
 import ReviewForm from "./ReviewForm";
 import ReviewCard from "./ReviewCard";
@@ -15,6 +15,7 @@ import {
 } from "../services/searchParams";
 import type { SearchParams } from "../services/searchParams";
 import type { Review } from "../types/review";
+import type { QueryParams } from "../types/common";
 import type { RequestSignal, ReviewGroup } from "../types/api";
 import { SearchBar } from "./search";
 
@@ -163,7 +164,7 @@ function Reviews() {
       // filter: the per-category window caps each section at `per_group` rows,
       // so if drafts aren't filtered server-side they get crowded out by the
       // newest published reviews and never reach the client-side filter.
-      const params: Record<string, unknown> = {};
+      const params: QueryParams = {};
       if (searchTerm) params.query = searchTerm;
       if (statusFilter !== "all") params.status = statusFilter;
       // The grouped endpoint also backs "My Reviews" — scoped to the author — so
@@ -240,7 +241,7 @@ function Reviews() {
       await reviewsApi.updateStatus(review.id, payload);
       const patch = {
         status: newStatus,
-        published_at: payload.published_at ?? review.published_at,
+        published_at: payload.published_at ?? review.published_at ?? null,
       };
       // Patch every rendered copy in place — paginated feed and grouped view —
       // instead of refetching, so only that card re-renders (no loading
