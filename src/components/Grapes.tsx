@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { grapesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageGrapes } from "../constants/roles";
 import { errorMessage } from "../utils/errors";
+import usePagedList from "../hooks/usePagedList";
+import Pagination from "./Pagination";
 import type { GrapeDetail } from "../types/catalog";
+import type { QueryParams } from "../types/common";
 
 /**
  * The editable columns of a grape. `relevance` is a string here (it lives in a
@@ -25,9 +28,6 @@ interface GrapeForm {
 
 /** The three list-valued fields the `ArrayFieldInput` helper manages. */
 type GrapeListField = "main_regions" | "synonyms" | "notes";
-
-/** The columns the table's sort <select> offers. */
-type GrapeSortKey = "relevance" | "name" | "origin_country";
 
 const emptyForm: GrapeForm = {
   name: "",
@@ -50,12 +50,14 @@ const COLOR_OPTIONS = [
 
 function Grapes() {
   const { user } = useAuth();
-  const [sortBy, setSortBy] = useState<GrapeSortKey>("relevance");
-  const [grapes, setGrapes] = useState<GrapeDetail[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // Form-level errors (validation, save, delete); list failures come from
+  // `list.error` instead.
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const list = usePagedList<GrapeDetail>({
+    fetcher: (params: QueryParams) => grapesApi.list(params),
+  });
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<GrapeForm>(emptyForm);
@@ -65,42 +67,6 @@ function Grapes() {
   const [newNote, setNewNote] = useState("");
 
   const isWineManager = isAdmin(user) || canManageGrapes(user);
-
-  const sortedGrapes = useMemo(() => {
-    const sorted = [...grapes];
-    switch (sortBy) {
-      case "name":
-        sorted.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        break;
-      case "origin_country":
-        sorted.sort((a, b) =>
-          (a.origin_country || "").localeCompare(b.origin_country || ""),
-        );
-        break;
-      case "relevance":
-      default:
-        sorted.sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
-        break;
-    }
-    return sorted;
-  }, [grapes, sortBy]);
-
-  const loadGrapes = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await grapesApi.list();
-      setGrapes(Array.isArray(data) ? data : []);
-      setError(null);
-    } catch (err: unknown) {
-      setError(errorMessage(err, "Failed to load grapes"));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadGrapes();
-  }, [loadGrapes]);
 
   function updateField<K extends keyof GrapeForm>(
     field: K,
@@ -172,7 +138,7 @@ function Grapes() {
         setNotice(`Grape "${payload.name}" created.`);
       }
       resetForm();
-      await loadGrapes();
+      await list.reload();
     } catch (err: unknown) {
       setError(errorMessage(err, "Failed to save grape"));
     } finally {
@@ -210,7 +176,7 @@ function Grapes() {
       await grapesApi.remove(grape.id);
       setNotice(`Grape "${grape.name}" deleted.`);
       if (editingId === grape.id) resetForm();
-      await loadGrapes();
+      await list.reload();
     } catch (err: unknown) {
       setError(errorMessage(err, "Failed to delete grape"));
     }
@@ -220,7 +186,9 @@ function Grapes() {
     <div className="grapes-page">
       <h1 className="grapes-page__title">Grape Varieties</h1>
 
-      {error && <div className="flash flash--alert">{error}</div>}
+      {(error ?? list.error) && (
+        <div className="flash flash--alert">{error ?? list.error}</div>
+      )}
       {notice && <div className="flash flash--notice">{notice}</div>}
 
       {isWineManager && showForm && (
@@ -359,15 +327,6 @@ function Grapes() {
         <div className="section-header">
           <h2>All Grapes</h2>
           <div className="section-header__actions">
-            <select
-              className="sort-select"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as GrapeSortKey)}
-            >
-              <option value="relevance">Sort by Relevance</option>
-              <option value="name">Sort by Name</option>
-              <option value="origin_country">Sort by Origin Country</option>
-            </select>
             {isWineManager && (
               <button
                 type="button"
@@ -379,100 +338,112 @@ function Grapes() {
             )}
           </div>
         </div>
-        {loading ? (
+        {list.loading ? (
           <p className="loading">Loading grapes…</p>
-        ) : grapes.length === 0 ? (
+        ) : list.items.length === 0 ? (
           <p className="empty">No grapes found.</p>
         ) : (
-          <table className="grapes-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Color</th>
-                <th>Origin</th>
-                <th>Synonyms</th>
-                <th>Wines</th>
-                <th>Producers</th>
-                {isWineManager && <th>Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedGrapes.map((grape, index) => (
-                <tr
-                  key={grape.id}
-                  className={
-                    index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"
-                  }
-                >
-                  <td>
-                    <Link
-                      to={`/grapes/${grape.slug}`}
-                      className="grapes-table__link"
-                    >
-                      {grape.name}
-                    </Link>
-                  </td>
-                  <td>{grape.color || "—"}</td>
-                  <td>{grape.origin_country || "—"}</td>
-                  <td>
-                    {grape.synonyms?.length
-                      ? grape.synonyms.slice(0, 3).join(", ") +
-                        (grape.synonyms.length > 3 ? "…" : "")
-                      : "—"}
-                  </td>
-                  <td>
-                    {grape.wines_count > 0 ? (
-                      <Link
-                        to={`/grapes/${grape.slug}/wines`}
-                        className="grapes-table__link"
-                      >
-                        {`${grape.wines_count} wine${
-                          grape.wines_count !== 1 ? "s" : ""
-                        }`}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td>
-                    {grape.producers_count > 0 ? (
-                      <Link
-                        to={`/grapes/${grape.slug}/producers`}
-                        className="grapes-table__link"
-                      >
-                        {`${grape.producers_count} producer${
-                          grape.producers_count !== 1 ? "s" : ""
-                        }`}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  {isWineManager && (
-                    <td className="actions">
-                      <Link to={`/grapes/${grape.slug}`} className="btn-action">
-                        Show
-                      </Link>
-                      <button
-                        type="button"
-                        className="btn-action"
-                        onClick={() => startEdit(grape)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-action btn-action--delete"
-                        onClick={() => handleDelete(grape)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  )}
+          <>
+            <table className="grapes-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Color</th>
+                  <th>Origin</th>
+                  <th>Synonyms</th>
+                  <th>Wines</th>
+                  <th>Producers</th>
+                  {isWineManager && <th>Actions</th>}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {list.items.map((grape, index) => (
+                  <tr
+                    key={grape.id}
+                    className={
+                      index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"
+                    }
+                  >
+                    <td>
+                      <Link
+                        to={`/grapes/${grape.slug}`}
+                        className="grapes-table__link"
+                      >
+                        {grape.name}
+                      </Link>
+                    </td>
+                    <td>{grape.color || "—"}</td>
+                    <td>{grape.origin_country || "—"}</td>
+                    <td>
+                      {grape.synonyms?.length
+                        ? grape.synonyms.slice(0, 3).join(", ") +
+                          (grape.synonyms.length > 3 ? "…" : "")
+                        : "—"}
+                    </td>
+                    <td>
+                      {grape.wines_count > 0 ? (
+                        <Link
+                          to={`/grapes/${grape.slug}/wines`}
+                          className="grapes-table__link"
+                        >
+                          {`${grape.wines_count} wine${
+                            grape.wines_count !== 1 ? "s" : ""
+                          }`}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td>
+                      {grape.producers_count > 0 ? (
+                        <Link
+                          to={`/grapes/${grape.slug}/producers`}
+                          className="grapes-table__link"
+                        >
+                          {`${grape.producers_count} producer${
+                            grape.producers_count !== 1 ? "s" : ""
+                          }`}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    {isWineManager && (
+                      <td className="actions">
+                        <Link
+                          to={`/grapes/${grape.slug}`}
+                          className="btn-action"
+                        >
+                          Show
+                        </Link>
+                        <button
+                          type="button"
+                          className="btn-action"
+                          onClick={() => startEdit(grape)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-action btn-action--delete"
+                          onClick={() => handleDelete(grape)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Pagination
+              page={list.page}
+              totalPages={list.totalPages}
+              totalCount={list.totalCount}
+              onPageChange={list.setPage}
+              alwaysShow={list.totalPages > 1}
+            />
+          </>
         )}
       </section>
     </div>

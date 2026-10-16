@@ -42,8 +42,6 @@ export interface GrapeDetail {
   relevance?: number | null
   wines_count: number
   producers_count: number
-  /** Only sent by `show` and `link_wine`, not by `index` / `create` / `update`. */
-  wines?: Wine[]
 }
 
 /** One of the three "used for" flags a category can carry. */

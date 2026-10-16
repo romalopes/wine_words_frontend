@@ -508,7 +508,7 @@ export interface GrapesApi {
    * `wines` key that `show` adds — so both are `GrapeDetail` (`wines`
    * optional). `search` is a reduced projection: only these four keys.
    */
-  list(): Promise<ResourceResponse<GrapeDetail>>
+  list(params?: QueryParams): Promise<ResourceResponse<GrapeDetail>>
   search(query: string): Promise<GrapeSearchResult[]>
   show(id: string | number): Promise<GrapeDetail>
   create(payload: Record<string, unknown>): Promise<GrapeDetail>

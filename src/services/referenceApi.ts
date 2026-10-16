@@ -1,4 +1,4 @@
-import type { ResourceResponse } from "../types/common"
+import type { QueryParams, ResourceResponse } from "../types/common"
 import type {
   CategoriesApi,
   CategoryCounts,
@@ -25,7 +25,13 @@ import type {
 } from "../types/reference"
 import type { Stats } from "../types/stats"
 import type { ApiRequester } from "./apiClient"
+import { buildQuery } from "./apiClient"
 import { retryOnce } from "../utils/retry"
+
+// `?page=&per_page=` etc. for the list endpoints that accept params.
+function queryPath(path: string, params?: QueryParams): string {
+  return `${path}${buildQuery(params ?? {})}`
+}
 
 export function createTasteParametersApi(request: ApiRequester): TasteParametersApi {
   return { list: () => request<TasteParameter[]>("/taste_parameters") }
@@ -57,7 +63,8 @@ export function createCategoriesApi(request: ApiRequester): CategoriesApi {
 
 export function createGrapesApi(request: ApiRequester): GrapesApi {
   return {
-    list: () => request<ResourceResponse<GrapeDetail>>("/grapes"),
+    list: (params?) =>
+      request<ResourceResponse<GrapeDetail>>(queryPath("/grapes", params)),
     search: (query) =>
       request<GrapeSearchResult[]>(`/grapes/search?q=${encodeURIComponent(query)}`),
     show: (id) => request<GrapeDetail>(`/grapes/${id}`),

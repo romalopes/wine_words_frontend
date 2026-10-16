@@ -1,12 +1,7 @@
-import type { Wine } from "./wine"
-
 /**
- * A country as returned by `GET /api/v1/countries/:id` — the `only:` column
- * list with no computed counts.
- *
- * Note the two endpoints genuinely differ: `index` carries the counts (see
- * `CountryListItem`), while `show` inlines the full `producers` / `wines`
- * arrays (see `CountryDetail`).
+ * A country as returned by `GET /api/v1/countries` (index) and
+ * `GET /api/v1/countries/:id` (show). Both return the country's own fields
+ * only; `index` additionally carries computed counts (`CountryListItem`).
  */
 export interface Country {
   id: number
@@ -25,26 +20,12 @@ export interface CountryListItem extends Country {
 }
 
 /**
- * A producer inlined by `country_producers_json`. Deliberately *not*
- * `ProducerSummary` (the wine serializer's much smaller producer stub): this
- * payload carries the producer type, founding year, logo and a wine count.
+ * `GET /api/v1/countries/:id`. Lean by design: producers and wines are fetched
+ * separately via the paginated `/api/v1/producers?country_id=...` and
+ * `/api/v1/wines?country_id=...` lists, so the show payload carries no
+ * embedded rows.
  */
-export interface CountryProducer {
-  id: number
-  slug: string
-  name: string
-  producer_type?: string | null
-  founded_year?: number | null
-  country?: Country | null
-  wines_count: number
-  logo_url?: string | null
-}
-
-/** `GET /api/v1/countries/:id` — the country plus its inlined related rows. */
-export interface CountryDetail extends Country {
-  producers?: CountryProducer[]
-  wines?: Wine[]
-}
+export interface CountryDetail extends Country {}
 
 /**
  * A region as returned by `GET /api/v1/regions` and by the create/update
@@ -91,11 +72,11 @@ export type RegionPathCrumb =
       parent_id?: number | null | undefined
     }
 
-/** `GET /api/v1/regions/:id` — `region_json` plus the computed `full_path` and
- * the region's wines. Also returned by `link_wine`. */
+/** `GET /api/v1/regions/:id` — `region_json` plus the computed `full_path`.
+ * Also returned by `link_wine`. Wines are fetched separately via
+ * `GET /api/v1/wines?region_id=...` (paginated), so they are not embedded. */
 export interface RegionDetail extends Region {
   full_path?: RegionPathCrumb[] | null
-  wines?: Wine[]
 }
 
 /** One node of `GET /api/v1/regions/tree`. `wine_count` includes children. */

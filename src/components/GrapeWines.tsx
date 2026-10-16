@@ -11,6 +11,10 @@ import type { QueryParams } from "../types/common";
 function GrapeWines() {
   const { slug } = useParams<{ slug: string }>();
   const [grape, setGrape] = useState<GrapeDetail | null>(null);
+  // Tracked separately so the list can show a loading state while the grape
+  // itself is still resolving (list stays disabled until grape?.id exists —
+  // without this the page flashed "No wines found for this grape.").
+  const [grapeLoading, setGrapeLoading] = useState(true);
 
   const list = usePagedList<WineListItem>({
     fetcher: (params: QueryParams) =>
@@ -20,10 +24,12 @@ function GrapeWines() {
 
   useEffect(() => {
     if (!slug) return;
+    setGrapeLoading(true);
     grapesApi
       .show(slug)
       .then(setGrape)
-      .catch(() => setGrape(null));
+      .catch(() => setGrape(null))
+      .finally(() => setGrapeLoading(false));
   }, [slug]);
 
   return (
@@ -41,8 +47,12 @@ function GrapeWines() {
       {list.error && (
         <p className="wine-management__error">{list.error}</p>
       )}
-      {list.loading ? (
+      {grapeLoading || list.loading ? (
         <p className="wine-management__loading">Loading wines…</p>
+      ) : !grape ? (
+        <div className="wine-management__empty">
+          <p>Grape not found.</p>
+        </div>
       ) : list.items.length === 0 ? (
         <div className="wine-management__empty">
           <p>No wines found for this grape.</p>

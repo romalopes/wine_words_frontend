@@ -3,38 +3,45 @@ import { Link, useParams } from "react-router-dom";
 import { producersApi, winesApi } from "../services/api";
 import { errorMessage } from "../utils/errors";
 import WineTable from "./WineTable";
+import Pagination from "./Pagination";
+import usePagedList from "../hooks/usePagedList";
 import type { Producer } from "../types/producer";
 import type { WineListItem } from "../types/wine";
+import type { QueryParams } from "../types/common";
 
 function ProducerWines() {
   const { slug } = useParams<{ slug: string }>();
   const [producer, setProducer] = useState<Producer | null>(null);
-  const [wines, setWines] = useState<WineListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Tracked separately so the wine list can show a loading state while the
+  // producer itself is still resolving (list stays disabled until producer?.id
+  // exists — without this the page flashed "No wines found for this producer.").
+  const [producerLoading, setProducerLoading] = useState(true);
+  const [producerError, setProducerError] = useState<string | null>(null);
+
+  const list = usePagedList<WineListItem>({
+    fetcher: (params: QueryParams) =>
+      winesApi.list({ ...params, producer_id: producer?.id }),
+    enabled: Boolean(producer?.id),
+  });
 
   useEffect(() => {
-    loadWines();
+    if (!slug) return;
+    setProducerLoading(true);
+    setProducerError(null);
+    producersApi
+      .show(slug)
+      .then((data) => {
+        setProducer(data);
+      })
+      .catch((err: unknown) => {
+        setProducer(null);
+        setProducerError(errorMessage(err, "Failed to load producer"));
+      })
+      .finally(() => setProducerLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
-  async function loadWines() {
-    if (!slug) return;
-    try {
-      setLoading(true);
-      setError(null);
-      const producerData = await producersApi.show(slug);
-      setProducer(producerData);
-      const winesData = await winesApi.list({ producer_id: producerData.id });
-      setWines(Array.isArray(winesData) ? winesData : winesData.items);
-    } catch (err: unknown) {
-      setError(errorMessage(err, "Failed to load wines"));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loading) {
+  if (producerLoading || list.loading) {
     return (
       <div className="wine-app">
         <p className="wine-management__loading">Loading wines…</p>
@@ -42,11 +49,13 @@ function ProducerWines() {
     );
   }
 
-  if (error) {
+  if (producerError || list.error) {
     return (
       <div className="wine-app">
-        <p className="wine-management__error">{error}</p>
-        <button className="auth-form__submit" onClick={loadWines}>
+        <p className="wine-management__error">
+          {producerError ?? list.error}
+        </p>
+        <button className="auth-form__submit" onClick={() => window.location.reload()}>
           Retry
         </button>
       </div>
@@ -63,27 +72,34 @@ function ProducerWines() {
       <div className="wine-management__header">
         <div>
           <p className="wine-kicker">Cellar</p>
-          <h1>Wines of {producer ? producer.name : "Producer"}</h1>
+          <h1>Wines of {producer.name}</h1>
         </div>
       </div>
 
-      {wines.length === 0 ? (
+      {list.items.length === 0 ? (
         <div className="wine-management__empty">
           <p>No wines found for this producer.</p>
         </div>
       ) : (
-        <WineTable
-          wines={wines}
-          onDeleted={(deleted) =>
-            setWines((prev) => prev.filter((w) => w.slug !== deleted.slug))
-          }
-          linkContext={{
-            type: "producer",
-            id: producer.id,
-            name: producer.name,
-          }}
-          onWineLinked={loadWines}
-        />
+        <>
+          <WineTable
+            wines={list.items}
+            onDeleted={() => list.reload()}
+            linkContext={{
+              type: "producer",
+              id: producer.id,
+              name: producer.name,
+            }}
+            onWineLinked={() => list.reload()}
+          />
+          <Pagination
+            page={list.page}
+            totalPages={list.totalPages}
+            totalCount={list.totalCount}
+            onPageChange={list.setPage}
+            alwaysShow={list.totalPages > 1}
+          />
+        </>
       )}
     </div>
   );

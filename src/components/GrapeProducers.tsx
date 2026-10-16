@@ -12,13 +12,18 @@ import type { QueryParams } from "../types/common";
 function GrapeProducers() {
   const { slug } = useParams<{ slug: string }>();
   const [grape, setGrape] = useState<GrapeDetail | null>(null);
+  // Tracked separately so the page shows a loading state while the grape is
+  // still resolving (the list stays disabled until grape?.id exists).
+  const [grapeLoading, setGrapeLoading] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
+    setGrapeLoading(true);
     grapesApi
       .show(slug)
       .then(setGrape)
-      .catch(() => setGrape(null));
+      .catch(() => setGrape(null))
+      .finally(() => setGrapeLoading(false));
   }, [slug]);
 
   const producers = usePagedList<Producer>({
@@ -37,8 +42,10 @@ function GrapeProducers() {
         </p>
       </div>
 
-      {producers.loading ? (
+      {grapeLoading || producers.loading ? (
         <p className="grapes-page__loading">Loading producers…</p>
+      ) : !grape ? (
+        <p className="grapes-page__loading">Grape not found.</p>
       ) : (
         <>
           <ProducerTable
