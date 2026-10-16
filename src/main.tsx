@@ -21,8 +21,11 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration(), // Captures video-like session replays for crashes
     ],
-    tracesSampleRate: 1.0,
-    replaysSessionSampleRate: 0.1, // 10% of standard sessions
+    // 1. Drop performance tracing significantly
+    tracesSampleRate: 0.05, // 10% (or even 0.05 / 5% for very high traffic)
+    // 2. Keep normal session replays low to save bandwidth and storage
+    replaysSessionSampleRate: 0.01, // 1%
+    // 3. Always capture 100% of sessions when something breaks
     replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
   });
 }

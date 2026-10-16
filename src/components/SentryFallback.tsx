@@ -5,14 +5,16 @@ import { useEffect } from "react";
 export default function SentryFallback() {
   // Get error from Sentry boundary (for component errors)
   // @ts-ignore - useSentryError may not be available in all versions
-  const sentryError = (Sentry as any).useSentryError ? (Sentry as any).useSentryError() : null;
-  
+  const sentryError = (Sentry as any).useSentryError
+    ? (Sentry as any).useSentryError()
+    : null;
+
   // Get error from React Router (for loader/action errors)
   const routerError = useRouteError();
-  
+
   // Determine which error to display
   const error = sentryError || routerError;
-  
+
   // Add route context to Sentry scope for better filtering
   useEffect(() => {
     if (error) {
@@ -23,7 +25,7 @@ export default function SentryFallback() {
       }
     }
   }, [error, routerError]);
-  
+
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>Something went wrong</h1>
@@ -40,10 +42,7 @@ export default function SentryFallback() {
           )}
         </div>
       )}
-      <button 
-        onClick={() => window.location.reload()}
-        style={styles.button}
-      >
+      <button onClick={() => window.location.reload()} style={styles.button}>
         Try Again
       </button>
     </div>
