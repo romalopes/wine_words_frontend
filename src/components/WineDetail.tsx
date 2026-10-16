@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { winesApi, reviewsApi, tasteParametersApi, vintagesApi } from "../services/api";
+import {
+  winesApi,
+  reviewsApi,
+  tasteParametersApi,
+  vintagesApi,
+} from "../services/api";
 import { volumeLabel } from "../data/wineVolumes";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
@@ -76,8 +81,7 @@ function WineDetail() {
       await vintagesApi.create(slug, {
         year: parseInt(newVintage.year, 10),
         prompt: newVintage.prompt || null,
-        price:
-          newVintage.price === "" ? null : parseFloat(newVintage.price),
+        price: newVintage.price === "" ? null : parseFloat(newVintage.price),
         no_vintage: newVintage.no_vintage,
       });
       setNewVintage({ year: "", prompt: "", price: "", no_vintage: false });
@@ -211,7 +215,9 @@ function WineDetail() {
             initialCount={wine.likes_count}
             onChange={({ liked, likes_count }) =>
               setWine((prev) =>
-                prev ? { ...prev, liked_by_current_user: liked, likes_count } : prev,
+                prev
+                  ? { ...prev, liked_by_current_user: liked, likes_count }
+                  : prev,
               )
             }
           />
@@ -225,81 +231,88 @@ function WineDetail() {
 
       {wine.prompt && <p className="wine-detail__prompt">{wine.prompt}</p>}
 
-      {Array.isArray(wine.images) && wine.images.length > 0 && (
-        <div className="wine-detail__images">
-          {wine.images.map((src, i) => (
-            <AdaptiveImage key={i} src={src} alt={`${wine.name} ${i + 1}`} />
-          ))}
-        </div>
-      )}
-
       <section className="detail-card">
-        <ul className="wine-facts" aria-label="Wine details">
-        <li>
-          <strong>Producer:</strong>{" "}
-          {wine.producer ? (
-            <Link to={returnToLink(`/producers/${wine.producer.slug}`)}>
-              {wine.producer.name}
-            </Link>
-          ) : (
-            "—"
+        <div className="wine-detail__media-facts">
+          {Array.isArray(wine.images) && wine.images.length > 0 && (
+            <span className="wine-detail__images">
+              {wine.images.map((src, i) => (
+                <AdaptiveImage key={i} src={src} alt={`${wine.name} ${i + 1}`} />
+              ))}
+            </span>
           )}
-        </li>
-        <li>
-          <strong>Categories:</strong>{" "}
-          {Array.isArray(wine.categories) && wine.categories.length > 0 ? (
-            wine.categories.map((cat, i) => (
-              <span key={cat.id}>
-                <Link to={returnToLink(`/categories/${cat.slug}`)}>{cat.name}</Link>
-                {i < wine.categories.length - 1 ? ", " : ""}
-              </span>
-            ))
-          ) : (
-            "—"
-          )}
-        </li>
-        <li>
-          <strong>Color:</strong> {wine.color || "—"}
-        </li>
-        <li>
-          <strong>Sparkling:</strong> {wine.sparkling ? "Yes ✨" : "No"}
-        </li>
-        <li>
-          <strong>Closure:</strong> {wine.closure || "—"}
-        </li>
-        <li>
-          <strong>Alcohol:</strong>{" "}
-          {wine.alcohol_percentage != null ? `${wine.alcohol_percentage}%` : "—"}
-        </li>
-        <li>
-          <strong>Volume:</strong>{" "}
-          {wine.volume_ml != null
-            ? (volumeLabel(wine.volume_ml) ?? `${wine.volume_ml}ml`)
-            : "—"}
-        </li>
-        <li>
-          <strong>Grapes:</strong>{" "}
-          {Array.isArray(wine.grapes) && wine.grapes.length > 0
-            ? wine.grapes.map((grape, grapeIndex) => (
-                <span key={grape.id || grapeIndex}>
-                  {grapeIndex > 0 && ", "}
-                  <Link to={returnToLink(`/grapes/${grape.slug}`)}>{grape.name}</Link>
-                </span>
-              ))
-            : "—"}
-        </li>
-        <li>
-          <strong>Regions:</strong>{" "}
-          {Array.isArray(wine.regions) && wine.regions.length > 0
-            ? wine.regions.map((region, regionIndex) => (
-                <span key={region.id || regionIndex}>
-                  {regionIndex > 0 && ", "}
-                  <Link to={returnToLink(`/regions/${region.slug}`)}>{region.name}</Link>
-                </span>
-              ))
-            : "—"}
-        </li>
-        </ul>
+          <ul className="wine-facts" aria-label="Wine details">
+          <li>
+            <strong>Producer:</strong>{" "}
+            {wine.producer ? (
+              <Link to={returnToLink(`/producers/${wine.producer.slug}`)}>
+                {wine.producer.name}
+              </Link>
+            ) : (
+              "—"
+            )}
+          </li>
+          <li>
+            <strong>Categories:</strong>{" "}
+            {Array.isArray(wine.categories) && wine.categories.length > 0
+              ? wine.categories.map((cat, i) => (
+                  <span key={cat.id}>
+                    <Link to={returnToLink(`/categories/${cat.slug}`)}>
+                      {cat.name}
+                    </Link>
+                    {i < wine.categories.length - 1 ? ", " : ""}
+                  </span>
+                ))
+              : "—"}
+          </li>
+          <li>
+            <strong>Color:</strong> {wine.color || "—"}
+          </li>
+          <li>
+            <strong>Sparkling:</strong> {wine.sparkling ? "Yes ✨" : "No"}
+          </li>
+          <li>
+            <strong>Closure:</strong> {wine.closure || "—"}
+          </li>
+          <li>
+            <strong>Alcohol:</strong>{" "}
+            {wine.alcohol_percentage != null
+              ? `${wine.alcohol_percentage}%`
+              : "—"}
+          </li>
+          <li>
+            <strong>Volume:</strong>{" "}
+            {wine.volume_ml != null
+              ? (volumeLabel(wine.volume_ml) ?? `${wine.volume_ml}ml`)
+              : "—"}
+          </li>
+          <li>
+            <strong>Grapes:</strong>{" "}
+            {Array.isArray(wine.grapes) && wine.grapes.length > 0
+              ? wine.grapes.map((grape, grapeIndex) => (
+                  <span key={grape.id || grapeIndex}>
+                    {grapeIndex > 0 && ", "}
+                    <Link to={returnToLink(`/grapes/${grape.slug}`)}>
+                      {grape.name}
+                    </Link>
+                  </span>
+                ))
+              : "—"}
+          </li>
+          <li>
+            <strong>Regions:</strong>{" "}
+            {Array.isArray(wine.regions) && wine.regions.length > 0
+              ? wine.regions.map((region, regionIndex) => (
+                  <span key={region.id || regionIndex}>
+                    {regionIndex > 0 && ", "}
+                    <Link to={returnToLink(`/regions/${region.slug}`)}>
+                      {region.name}
+                    </Link>
+                  </span>
+                ))
+              : "—"}
+          </li>
+          </ul>
+        </div>
       </section>
 
       {canManageWines && (
@@ -528,75 +541,77 @@ function WineDetail() {
                               {review.reviewer_name}
                             </span>
                           </div>
-                          {user && (user.id === review.user_id || canManageWines) && (
-                            <div className="review-card__actions">
-                              <button
-                                type="button"
-                                className="review-card__edit"
-                                onClick={() => {
-                                  setActiveFormVintage(null);
-                                  setEditingReview({
-                                    ...review,
-                                    vintageId: vintage.id,
-                                  });
-                                }}
-                              >
-                                Edit
-                              </button>
-                              {review.status === "draft" ? (
+                          {user &&
+                            (user.id === review.user_id || canManageWines) && (
+                              <div className="review-card__actions">
                                 <button
                                   type="button"
-                                  className="review-card__publish"
-                                  onClick={async () => {
-                                    try {
-                                      await reviewsApi.update(review.id, {
-                                        status: "published",
-                                        published_at: new Date().toISOString(),
-                                      });
-                                      loadReviews(vintage.id);
-                                    } catch (err) {
-                                      alert(
-                                        err.message ||
-                                          "Failed to publish review",
-                                      );
-                                    }
+                                  className="review-card__edit"
+                                  onClick={() => {
+                                    setActiveFormVintage(null);
+                                    setEditingReview({
+                                      ...review,
+                                      vintageId: vintage.id,
+                                    });
                                   }}
                                 >
-                                  Publish
+                                  Edit
                                 </button>
-                              ) : (
+                                {review.status === "draft" ? (
+                                  <button
+                                    type="button"
+                                    className="review-card__publish"
+                                    onClick={async () => {
+                                      try {
+                                        await reviewsApi.update(review.id, {
+                                          status: "published",
+                                          published_at:
+                                            new Date().toISOString(),
+                                        });
+                                        loadReviews(vintage.id);
+                                      } catch (err) {
+                                        alert(
+                                          err.message ||
+                                            "Failed to publish review",
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    Publish
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="review-card__unpublish"
+                                    onClick={async () => {
+                                      try {
+                                        await reviewsApi.update(review.id, {
+                                          status: "draft",
+                                        });
+                                        loadReviews(vintage.id);
+                                      } catch (err) {
+                                        alert(
+                                          err.message ||
+                                            "Failed to unpublish review",
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    Unpublish
+                                  </button>
+                                )}
                                 <button
                                   type="button"
-                                  className="review-card__unpublish"
-                                  onClick={async () => {
-                                    try {
-                                      await reviewsApi.update(review.id, {
-                                        status: "draft",
-                                      });
-                                      loadReviews(vintage.id);
-                                    } catch (err) {
-                                      alert(
-                                        err.message ||
-                                          "Failed to unpublish review",
-                                      );
-                                    }
-                                  }}
+                                  className="review-card__delete"
+                                  onClick={() =>
+                                    handleDeleteReview(review.id, vintage.id)
+                                  }
+                                  title="Delete review"
                                 >
-                                  Unpublish
+                                  &times;
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                className="review-card__delete"
-                                onClick={() =>
-                                  handleDeleteReview(review.id, vintage.id)
-                                }
-                                title="Delete review"
-                              >
-                                &times;
-                              </button>
-                            </div>
-                          )}
+                              </div>
+                            )}
                         </div>
                       ))}
                     </div>

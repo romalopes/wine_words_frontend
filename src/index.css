@@ -3641,6 +3641,31 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+/* Wine detail: gallery beside the facts list */
+.wine-detail__media-facts {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.wine-detail__media-facts .wine-detail__images {
+  margin: 0;
+  flex: 0 1 auto;
+}
+
+.wine-detail__media-facts .wine-facts {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .wine-detail__media-facts {
+    flex-direction: column;
+  }
+}
+
+
 
 .detail-card .grape-facts {
   display: grid;
