@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { grapesApi } from "../services/api";
@@ -7,6 +7,8 @@ import { isAdmin, canManageGrapes } from "../constants/roles";
 import { errorMessage } from "../utils/errors";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
+import { SearchInput } from "./search";
+import { effectiveSearchTerm } from "../services/searchParams";
 import type { GrapeDetail } from "../types/catalog";
 import type { QueryParams } from "../types/common";
 
@@ -60,11 +62,30 @@ function Grapes() {
   const [notice, setNotice] = useState<string | null>(null);
   // Server-side list ordering; changing it refetches (extraParams) from page 1.
   const [sortBy, setSortBy] = useState<GrapeSortKey>("relevance");
+  // Free-text filter — debounced by SearchInput, gated to 3+ chars (shared
+  // helper), sent as ?q= so the index stays paginated.
+  const [searchValue, setSearchValue] = useState("");
+  const searchTerm = effectiveSearchTerm(searchValue);
   const list = usePagedList<GrapeDetail>({
     fetcher: (params: QueryParams) => grapesApi.list(params),
-    // Omitted for the default so the API keeps its relevance ordering.
-    extraParams: sortBy === "relevance" ? {} : { sort: sortBy },
+    extraParams: {
+      ...(sortBy === "relevance" ? {} : { sort: sortBy }),
+      // Omitted for the default so the API keeps its relevance ordering.
+      ...(searchTerm ? { q: searchTerm } : {}),
+    },
   });
+  // A new search term invalidates the current page position (same as sort).
+  // `list` is intentionally not a dep: only the term drives this reset.
+  const searchKey = searchTerm || "";
+  const prevSearchKey = useRef(searchKey);
+  const listPage = list.page;
+  const resetListPage = list.setPage;
+  useEffect(() => {
+    if (prevSearchKey.current === searchKey) return;
+    prevSearchKey.current = searchKey;
+    if (listPage !== 1) resetListPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchKey]);
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<GrapeForm>(emptyForm);
@@ -340,6 +361,11 @@ function Grapes() {
         <div className="section-header">
           <h2>All Grapes</h2>
           <div className="section-header__actions">
+            <SearchInput
+              value={searchValue}
+              onChange={setSearchValue}
+              placeholder="Search grapes by name, synonym or origin…"
+            />
             <select
               className="sort-select"
               aria-label="Sort grapes"
@@ -364,7 +390,11 @@ function Grapes() {
         {list.loading ? (
           <p className="loading">Loading grapes…</p>
         ) : list.items.length === 0 ? (
-          <p className="empty">No grapes found.</p>
+          <p className="empty">
+            {searchTerm
+              ? `No grapes match "${searchTerm}".`
+              : "No grapes found."}
+          </p>
         ) : (
           <>
             <table className="grapes-table">

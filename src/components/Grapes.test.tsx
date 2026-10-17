@@ -111,4 +111,45 @@ describe("Grapes", () => {
       expect.objectContaining({ sort: "wines_count", page: 1, per_page: 20 }),
     );
   });
+
+  // Search: gated to 3+ chars, sent as ?q= on the paginated index.
+  // SearchInput debounces 300ms internally, so these use real timers.
+  describe("search", () => {
+    async function typeSearch(value: string) {
+      renderGrapes();
+      expect(await screen.findByText("No grapes found.")).toBeInTheDocument();
+      fireEvent.change(
+        screen.getByPlaceholderText(
+          "Search grapes by name, synonym or origin…",
+        ),
+        { target: { value } },
+      );
+      // Wait out the SearchInput debounce (300ms) → extraParams → refetch.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      });
+    }
+
+    it("sends ?q= once the term reaches 3 characters", async () => {
+      await typeSearch("cha");
+      expect(grapesApi.list).toHaveBeenLastCalledWith(
+        expect.objectContaining({ q: "cha", page: 1, per_page: 20 }),
+      );
+    });
+
+    it("does not send ?q= for short input", async () => {
+      await typeSearch("ch");
+      const calls = vi.mocked(grapesApi.list).mock.calls;
+      for (const [params] of calls) {
+        expect(params).not.toHaveProperty("q");
+      }
+    });
+
+    it("shows a match-specific empty state while searching", async () => {
+      await typeSearch("zzz");
+      expect(
+        await screen.findByText('No grapes match "zzz".'),
+      ).toBeInTheDocument();
+    });
+  });
 });
