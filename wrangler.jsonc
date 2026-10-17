@@ -10,4 +10,11 @@
       "VITE_API_BASE_URL": "https://api.wine-words.beachvolleyballhub.com/api/v1",
     },
   },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+      "persist": true,
+    },
+  },
 }
