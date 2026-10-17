@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ReviewDetail from "./ReviewDetail";
 import { formatDate } from "../utils/dates";
+import { GENERAL_BOTTLE_IMAGE } from "../utils/wineImages";
 
 /** Editorial header, normalised tasting note, and kept extras (likes,
  * comments, "More reviews" footer). */
@@ -151,6 +152,15 @@ describe("ReviewDetail", () => {
     renderReview(makeReview({ status: "draft", published_at: null }));
 
     expect(await screen.findByText("Draft")).toBeInTheDocument();
+  });
+
+  it("uses the general bottle image when neither the review nor its wine has an image", async () => {
+    renderReview(makeReview());
+
+    const hero = await screen.findByRole("img", {
+      name: "Lowe Organic Zinfandel 2021 Review",
+    });
+    expect(hero).toHaveAttribute("src", GENERAL_BOTTLE_IMAGE);
   });
 
   it("normalises the tasting note into real paragraphs", async () => {

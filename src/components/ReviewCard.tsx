@@ -8,6 +8,7 @@ import ContentStatusActions, {
 import type { RoleUser } from "../constants/roles";
 import type { Review } from "../types/review";
 import { SearchHighlight } from "./search";
+import { reviewImage } from "../utils/wineImages";
 
 /** Strips HTML tags and truncates, for the plain-text excerpt on a card. */
 function excerpt(html: string | null | undefined, max = 50) {
@@ -56,13 +57,7 @@ export default function ReviewCard({
   onDelete,
   children,
 }: ReviewCardProps) {
-  const image =
-    (Array.isArray(review.images) && review.images.length > 0
-      ? review.images[0]
-      : null) ??
-    (typeof review.wine_image === "string" ? review.wine_image : null) ??
-    review.primary_image ??
-    null;
+  const image = reviewImage(review.images, review.wine_image, review.primary_image);
 
   return (
     <div
@@ -77,13 +72,11 @@ export default function ReviewCard({
         }
       }}
     >
-      {image && (
-        <img
-          src={image}
-          alt={review.title || review.wine_name || "review"}
-          className="wine-management__thumb"
-        />
-      )}
+      <img
+        src={image}
+        alt={review.title || review.wine_name || "review"}
+        className="wine-management__thumb"
+      />
       <div className="wine-management__card-header">
         <h3>
           <SearchHighlight

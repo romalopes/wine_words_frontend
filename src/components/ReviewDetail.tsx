@@ -19,6 +19,7 @@ import { formatDate } from "../utils/dates";
 import { normalizeArticleBody } from "../utils/articleHtml";
 import type { Review } from "../types/review";
 import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
+import { reviewImage } from "../utils/wineImages";
 
 /**
  * Renders a review comment, which is stored as Trix HTML: sanitised, then
@@ -50,14 +51,11 @@ function ReviewDetail() {
   const [statusBusy, setStatusBusy] = useState(false);
 
   // Hero image resolution is needed before the early returns below so the
-  // orientation hook is always called (rules of hooks). When the review has no
-  // image, fall back to the reviewed wine's image (`wine_image`).
-  const hero =
-    review?.primary_image ??
-    (Array.isArray(review?.images) ? review.images[0] : null) ??
-    (typeof review?.wine_image === "string" && review.wine_image.length > 0
-      ? review.wine_image
-      : null);
+  // orientation hook is always called (rules of hooks). Review imagery wins,
+  // then the reviewed wine's image, then the bundled bottle fallback.
+  const hero = review
+    ? reviewImage(review.images, review.wine_image, review.primary_image)
+    : null;
   const { orientation: heroOrientation, handleLoad: handleHeroLoad } =
     useImageOrientation(hero);
 

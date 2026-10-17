@@ -20,6 +20,7 @@ import {
   effectiveSearchTerm,
   MIN_SEARCH_LENGTH,
 } from "../services/searchParams";
+import { wineImage } from "../utils/wineImages";
 
 /**
  * Shared wine card used by every listing on this page (advanced search,
@@ -59,9 +60,9 @@ function WineCard({
         }
       }}
     >
-      {showImage && Array.isArray(wine.images) && wine.images.length > 0 && (
+      {showImage && (
         <img
-          src={wine.images[0]}
+          src={wineImage(wine.images, wine.primary_image)}
           alt={wine.name}
           className="wine-management__thumb"
         />

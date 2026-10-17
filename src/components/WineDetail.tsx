@@ -19,6 +19,7 @@ import AdaptiveImage from "./AdaptiveImage";
 import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
 import type { Wine } from "../types/wine";
 import type { Review } from "../types/review";
+import { wineImageGallery } from "../utils/wineImages";
 
 function RichComment({ html }: { html: string }) {
   return (
@@ -67,6 +68,7 @@ function WineDetail() {
   const [loadingReviews, setLoadingReviews] = useState<
     Record<number, boolean>
   >({});
+  const images = wineImageGallery(wine?.images);
 
   // Inline "add vintage" form (any signed-in user; enforced by the API too).
   const [showVintageForm, setShowVintageForm] = useState(false);
@@ -245,9 +247,9 @@ function WineDetail() {
 
       <section className="detail-card">
         <div className="wine-detail__media-facts">
-          {Array.isArray(wine.images) && wine.images.length > 0 && (
+          {images.length > 0 && (
             <span className="wine-detail__images">
-              {wine.images.map((src, i) => (
+              {images.map((src, i) => (
                 <AdaptiveImage key={i} src={src} alt={`${wine.name} ${i + 1}`} />
               ))}
             </span>
