@@ -6,6 +6,7 @@ import type { TasteParameter } from "../types/catalog";
 import type { UserWineProfile } from "../types/user";
 import type { Wine } from "../types/wine";
 import { errorMessage } from "../utils/errors";
+import { toStringList } from "../utils/stringList";
 
 /** Slug -> score, the shape `calculateMatch` scores against. */
 type ScoreMap = Record<string, number>;
@@ -57,9 +58,7 @@ function toScoreMap(hit: QuizHit): ScoreMap {
  * fixes that and leaves profile hits unchanged.
  */
 function toRegionNames(hit: QuizHit): string[] {
-  return (hit.regions ?? []).map((region) =>
-    typeof region === "string" ? region : region.name,
-  );
+  return toStringList(hit.regions);
 }
 
 function calculateMatch(
@@ -158,7 +157,7 @@ function Quiz() {
       name: hit.name ?? null,
       color: hit.color ?? null,
       regions: toRegionNames(hit),
-      notes: Array.isArray(hit.notes) ? hit.notes : hit.notes ? [hit.notes] : [],
+      notes: toStringList(hit.notes),
       scores: toScoreMap(hit),
     });
 

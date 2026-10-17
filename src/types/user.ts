@@ -15,12 +15,12 @@ export interface UserWineProfile {
   user_id?: number | null
   name?: string | null
   /** JSON text column — a list of grape names. */
-  grapes?: string[]
+  grapes?: string[] | string | null
   /** JSON text column — a list of region names. */
-  regions?: string[]
+  regions?: string[] | string | null
   color?: string | null
   /** Free-text tasting note (a single string, not a list). */
-  notes?: string | null
+  notes?: string[] | string | null
   serving?: string | null
   /** `{ acidity: 4, body: 2, ... }` — keyed by taste-parameter slug. */
   parameters?: Record<string, number>
