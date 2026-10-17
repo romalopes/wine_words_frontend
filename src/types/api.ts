@@ -303,6 +303,7 @@ export interface ShipmentTrackingsApi {
 
 export interface NotificationsApi {
   list(params?: QueryParams): Promise<ResourceResponse<Notification>>
+  unreadCount(): Promise<{ unread_count: number }>
   markRead(id: string | number): Promise<Notification>
   markAllRead(): Promise<{ marked: number }>
 }

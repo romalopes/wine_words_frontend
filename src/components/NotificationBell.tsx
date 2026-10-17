@@ -5,9 +5,9 @@ import { onNotificationsChanged } from "../services/notificationEvents";
 
 // Unread reminders count for the header.
 //
-// Deliberately a plain fetch rather than `usePagedList`: that hook mirrors the
-// page number into the URL, which would rewrite the query string of whatever
-// page the header happens to be rendered on.
+// Uses the dedicated `unread_count` endpoint (a single COUNT query) rather than
+// the paginated list: it exists exactly for badge display, and `usePagedList`
+// would mirror the page number into the URL of whatever page the header is on.
 function NotificationBell() {
   const [unread, setUnread] = useState(0);
   const location = useLocation();
@@ -17,17 +17,9 @@ function NotificationBell() {
 
     async function load() {
       try {
-        const data = await notificationsApi.list({
-          unread: "true",
-          page: 1,
-          per_page: 1,
-        });
+        const data = await notificationsApi.unreadCount();
         if (cancelled) return;
-        // Paginated envelope when `page` is honoured, plain array otherwise.
-        const count = Array.isArray(data)
-          ? data.length
-          : (data.total_count ?? 0);
-        setUnread(count);
+        setUnread(data.unread_count ?? 0);
       } catch {
         // A missing/expired session must never break the header.
         if (!cancelled) setUnread(0);

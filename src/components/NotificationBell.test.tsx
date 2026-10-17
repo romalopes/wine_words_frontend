@@ -4,12 +4,11 @@ import type { Mock } from "vitest";
 import { MemoryRouter, Routes, Route, Link } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import { emitNotificationsChanged } from "../services/notificationEvents";
-import type { QueryParams } from "../types/common";
 
-const mockList: Mock = vi.fn();
+const mockUnreadCount: Mock = vi.fn();
 
 vi.mock("../services/api", () => ({
-  notificationsApi: { list: (params?: QueryParams) => mockList(params) },
+  notificationsApi: { unreadCount: () => mockUnreadCount() },
 }));
 
 function renderBell() {
@@ -26,13 +25,7 @@ describe("NotificationBell", () => {
   });
 
   it("links to the notifications page", async () => {
-    mockList.mockResolvedValue({
-      items: [],
-      page: 1,
-      per_page: 1,
-      total_count: 0,
-      total_pages: 0,
-    });
+    mockUnreadCount.mockResolvedValue({ unread_count: 0 });
     renderBell();
 
     expect(
@@ -40,32 +33,16 @@ describe("NotificationBell", () => {
     ).toHaveAttribute("href", "/notifications");
   });
 
-  it("shows the unread count from the paginated envelope", async () => {
-    mockList.mockResolvedValue({
-      items: [{}],
-      page: 1,
-      per_page: 1,
-      total_count: 3,
-      total_pages: 3,
-    });
+  it("shows the unread count from the dedicated count endpoint", async () => {
+    mockUnreadCount.mockResolvedValue({ unread_count: 3 });
     renderBell();
 
     expect(await screen.findByText("3")).toBeInTheDocument();
-    expect(mockList).toHaveBeenCalledWith({
-      unread: "true",
-      page: 1,
-      per_page: 1,
-    });
+    expect(mockUnreadCount).toHaveBeenCalledTimes(1);
   });
 
   it("shows no badge when everything is read", async () => {
-    mockList.mockResolvedValue({
-      items: [],
-      page: 1,
-      per_page: 1,
-      total_count: 0,
-      total_pages: 0,
-    });
+    mockUnreadCount.mockResolvedValue({ unread_count: 0 });
     renderBell();
 
     await screen.findByRole("link", { name: /Notifications/ });
@@ -73,7 +50,7 @@ describe("NotificationBell", () => {
   });
 
   it("stays usable when the request fails", async () => {
-    mockList.mockRejectedValue(new Error("unauthorised"));
+    mockUnreadCount.mockRejectedValue(new Error("unauthorised"));
     renderBell();
 
     expect(
@@ -84,21 +61,9 @@ describe("NotificationBell", () => {
 
   it("re-checks the count when notifications change elsewhere", async () => {
     // Initially 3 unread, then everything read (e.g. after "Mark all read").
-    mockList
-      .mockResolvedValueOnce({
-        items: [{}],
-        page: 1,
-        per_page: 1,
-        total_count: 3,
-        total_pages: 3,
-      })
-      .mockResolvedValue({
-        items: [],
-        page: 1,
-        per_page: 1,
-        total_count: 0,
-        total_pages: 0,
-      });
+    mockUnreadCount
+      .mockResolvedValueOnce({ unread_count: 3 })
+      .mockResolvedValue({ unread_count: 0 });
     renderBell();
 
     expect(await screen.findByText("3")).toBeInTheDocument();
@@ -110,18 +75,12 @@ describe("NotificationBell", () => {
     await waitFor(() =>
       expect(screen.queryByText("3")).not.toBeInTheDocument(),
     );
-    expect(mockList).toHaveBeenCalledTimes(2);
+    expect(mockUnreadCount).toHaveBeenCalledTimes(2);
   });
 
   it("re-checks the count when navigating between pages", async () => {
     const user = userEvent.setup();
-    mockList.mockResolvedValue({
-      items: [],
-      page: 1,
-      per_page: 1,
-      total_count: 0,
-      total_pages: 0,
-    });
+    mockUnreadCount.mockResolvedValue({ unread_count: 0 });
     render(
       <MemoryRouter>
         <Routes>
@@ -141,6 +100,6 @@ describe("NotificationBell", () => {
     await screen.findByRole("link", { name: /Notifications/ });
     await user.click(screen.getByRole("link", { name: "elsewhere" }));
 
-    await waitFor(() => expect(mockList).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mockUnreadCount).toHaveBeenCalledTimes(2));
   });
 });

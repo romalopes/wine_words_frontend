@@ -100,6 +100,9 @@ export function createNotificationsApi(request: ApiRequester): NotificationsApi 
     list(params) {
       return request<ResourceResponse<Notification>>(queryPath("/notifications", params), { auth: true })
     },
+    unreadCount() {
+      return request<{ unread_count: number }>("/notifications/unread_count", { auth: true })
+    },
     markRead(id) {
       return request<Notification>(`/notifications/${id}/mark_read`, { method: "PATCH", auth: true })
     },
