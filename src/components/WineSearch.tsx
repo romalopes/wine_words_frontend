@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, type ChangeEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { wineProfilesApi } from "../services/api";
+import { toStringList } from "../utils/stringList";
 import { errorMessage } from "../utils/errors";
 import type { Wine } from "../types/wine";
 import type { WineProfileSearchResponse } from "../types/api";
@@ -70,15 +71,7 @@ function WineSearch() {
   }
 
   function getVarietyGrapes(profile: UserWineProfile) {
-    try {
-      const grapes =
-        typeof profile.grapes === "string"
-          ? JSON.parse(profile.grapes)
-          : profile.grapes;
-      return Array.isArray(grapes) ? grapes.join(", ") : "";
-    } catch {
-      return "";
-    }
+    return toStringList(profile.grapes).join(", ");
   }
 
   const llm = results ? asLlmInterpretation(results.llm_interpreted) : null;
@@ -230,10 +223,7 @@ function WineSearch() {
                     {profile.regions && (
                       <p className="wine-search__detail">
                         <strong>Regions:</strong>{" "}
-                        {(Array.isArray(profile.regions)
-                          ? profile.regions
-                          : JSON.parse(profile.regions || "[]")
-                        ).join(", ")}
+                        {toStringList(profile.regions).join(", ")}
                       </p>
                     )}
                     <div className="wine-search__card-footer">
@@ -264,3 +254,4 @@ function WineSearch() {
 }
 
 export default WineSearch;
+

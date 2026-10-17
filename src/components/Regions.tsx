@@ -158,10 +158,40 @@ function Regions() {
   // Active highlight follows the row sent into the edit form (null = none).
   const [targetRegionId, setTargetRegionId] = useState<string | null>(null);
   const [showOnlyWithWines, setShowOnlyWithWines] = useState(true);
+  const [query, setQuery] = useState("");
 
-  const displayTree = showOnlyWithWines
-    ? treeData.filter((c) => (c.wine_count || 0) > 0)
-    : treeData;
+  let displayTree = treeData ?? [];
+  if (showOnlyWithWines) {
+    displayTree = displayTree.filter((c) => (c.wine_count || 0) > 0);
+  }
+  const queryTrimmed = query.trim();
+  if (queryTrimmed !== "") {
+    const lowerQuery = queryTrimmed.toLowerCase();
+    function filterCountry(country: CountryRegionNode): CountryRegionNode | null {
+      const countryMatch = country.name.toLowerCase().includes(lowerQuery);
+      const filteredRegions = country.regions
+        .map(filterRegion)
+        .filter((r): r is RegionTreeNodeData => r !== null);
+      if (countryMatch || filteredRegions.length > 0) {
+        return { ...country, regions: filteredRegions };
+      }
+      return null;
+    }
+    function filterRegion(region: RegionTreeNodeData): RegionTreeNodeData | null {
+      const regionMatch = region.name.toLowerCase().includes(lowerQuery);
+      const filteredChildren = region.children
+        .map(filterRegion)
+        .filter((c): c is RegionTreeNodeData => c !== null);
+      if (regionMatch || filteredChildren.length > 0) {
+        return { ...region, children: filteredChildren };
+      }
+      return null;
+    }
+    const filteredBySearch = displayTree
+      .map(filterCountry)
+      .filter((c): c is CountryRegionNode => c !== null);
+    displayTree = filteredBySearch;
+  }
 
   const loadTreeData = useCallback(async () => {
     try {
@@ -420,6 +450,12 @@ function Regions() {
           </section>
         )}
 
+        <div className="region-tree-search">
+          <label>
+            Search regions: <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Type to search regions..." />
+          </label>
+        </div>
+
         <div className="region-tree-filter">
           <label className="region-tree-filter__label">
             <input
@@ -434,9 +470,17 @@ function Regions() {
         {loading ? (
           <p className="grapes-page__loading">Loading regions…</p>
         ) : displayTree.length === 0 ? (
-          <p className="grapes-page__empty">
-            No countries or regions with wines found.
-          </p>
+          queryTrimmed !== "" ? (
+            <p className="grapes-page__empty">No regions match your search.</p>
+          ) : showOnlyWithWines ? (
+            <p className="grapes-page__empty">
+              No countries or regions with wines found.
+            </p>
+          ) : (
+            <p className="grapes-page__empty">
+              No countries or regions found.
+            </p>
+          )
         ) : (
           <div className="region-tree-container">
             {displayTree.map((country) => {
