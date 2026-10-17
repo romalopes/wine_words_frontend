@@ -116,6 +116,7 @@ function Header() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [counts, setCounts] = useState<CategoryCounts>({});
 
@@ -171,6 +172,10 @@ function Header() {
   function handleExitTestAccess() {
     exitTestAccess();
     navigate("/test-access");
+  }
+
+  function handleCloseMenu() {
+    setMenuOpen(false);
   }
 
   // Display names come from Account; email is the fallback for incomplete profiles.
@@ -230,7 +235,29 @@ function Header() {
           </p>
         </div>
       </NavLink>
-      <nav aria-label="Primary navigation">
+      <button
+        type="button"
+        className="site-header__menu-btn"
+        aria-expanded={menuOpen}
+        aria-controls="primary-navigation"
+        aria-label={menuOpen ? "Close menu" : "Open menu"}
+        onClick={() => setMenuOpen((open) => !open)}
+      >
+        {menuOpen ? (
+          <svg width="1.2rem" height="1.2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="6" />
+            <line x1="18" y1="12" x2="6" y2="12" />
+            <line x1="18" y1="18" x2="6" y2="18" />
+          </svg>
+        ) : (
+          <svg width="1.2rem" height="1.2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        )}
+      </button>
+      <nav id="primary-navigation" className={menuOpen ? "site-header__nav--open" : undefined} aria-label="Primary navigation">
         <NavDropdown
           label="Wines"
           items={[
@@ -258,11 +285,6 @@ function Header() {
             ...navCategories("for_article", "sort_order_article"),
           ]}
         />
-        {canSeePackages && <NavLink to="/wine-packages">Wine Packages</NavLink>}
-        {canSeeArticleProjects && (
-          <NavLink to="/article-projects">Article Projects</NavLink>
-        )}
-        {canSeeAnalytics && <NavLink to="/analytics">Analytics</NavLink>}
         <div
           className="settings-menu"
           onMouseEnter={() => setExtrasOpen(true)}
@@ -279,22 +301,39 @@ function Header() {
           </button>
           {extrasOpen && (
             <div className="settings-menu__dropdown">
-              <NavLink to="/finder" onClick={() => setExtrasOpen(false)}>
+              {canSeePackages && (
+                <NavLink to="/wine-packages" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+                  Wine Packages
+                </NavLink>
+              )}
+              {canSeeArticleProjects && (
+                <NavLink to="/article-projects" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+                  Article Projects
+                </NavLink>
+              )}
+              {canSeeAnalytics && (
+                <NavLink to="/analytics" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+                  Analytics
+                </NavLink>
+              )}
+              <NavLink to="/finder" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
                 Finder
               </NavLink>
-              <NavLink to="/quiz" onClick={() => setExtrasOpen(false)}>
+              <NavLink to="/quiz" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
                 Quiz
               </NavLink>
-              <NavLink to="/search" onClick={() => setExtrasOpen(false)}>
+              <NavLink to="/search" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
                 Search
               </NavLink>
-              <NavLink to="/archive" onClick={() => setExtrasOpen(false)}>
+              <NavLink to="/archive" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
                 Archive
               </NavLink>
             </div>
           )}
         </div>
-        <NavLink to="/about">About</NavLink>
+        <NavLink to="/about" onClick={handleCloseMenu}>
+          About
+        </NavLink>
         {canManageSettings && (
           <div
             className="settings-menu"
@@ -312,25 +351,25 @@ function Header() {
             </button>
             {settingsOpen && (
               <div className="settings-menu__dropdown">
-                <NavLink to="/producers" onClick={() => setSettingsOpen(false)}>
+                <NavLink to="/producers" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
                   Producers
                 </NavLink>
-                <NavLink to="/sources" onClick={() => setSettingsOpen(false)}>
+                <NavLink to="/sources" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
                   Sources
                 </NavLink>
                 <NavLink
                   to="/categories"
-                  onClick={() => setSettingsOpen(false)}
+                  onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}
                 >
                   Categories
                 </NavLink>
-                <NavLink to="/grapes" onClick={() => setSettingsOpen(false)}>
+                <NavLink to="/grapes" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
                   Grapes
                 </NavLink>
-                <NavLink to="/countries" onClick={() => setSettingsOpen(false)}>
+                <NavLink to="/countries" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
                   Countries
                 </NavLink>
-                <NavLink to="/regions" onClick={() => setSettingsOpen(false)}>
+                <NavLink to="/regions" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
                   Regions
                 </NavLink>
               </div>
@@ -354,27 +393,27 @@ function Header() {
             </button>
             {adminOpen && (
               <div className="settings-menu__dropdown">
-                <NavLink to="/users" onClick={() => setAdminOpen(false)}>
+                <NavLink to="/users" onClick={() => { setAdminOpen(false); handleCloseMenu(); }}>
                   Users &amp; Roles
                 </NavLink>
                 <NavLink
                   to="/admin/api-health"
-                  onClick={() => setAdminOpen(false)}
+                  onClick={() => { setAdminOpen(false); handleCloseMenu(); }}
                 >
                   API Health
                 </NavLink>
                 <NavLink
                   to="/subscriptions"
-                  onClick={() => setAdminOpen(false)}
+                  onClick={() => { setAdminOpen(false); handleCloseMenu(); }}
                 >
                   Subscriptions
                 </NavLink>
-                <NavLink to="/admin/logs" onClick={() => setAdminOpen(false)}>
+                <NavLink to="/admin/logs" onClick={() => { setAdminOpen(false); handleCloseMenu(); }}>
                   Logs
                 </NavLink>
                 <NavLink
                   to="/admin/configuration"
-                  onClick={() => setAdminOpen(false)}
+                  onClick={() => { setAdminOpen(false); handleCloseMenu(); }}
                 >
                   Configuration
                 </NavLink>

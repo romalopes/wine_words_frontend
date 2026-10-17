@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Header from "./Header";
 import type { User } from "../types/authentication";
@@ -59,28 +59,59 @@ function renderHeader() {
 }
 
 describe("Header Analytics link", () => {
+  function openExtrasMenu() {
+    fireEvent.click(screen.getByRole("button", { name: "Extras" }));
+  }
+
   it.each([["Reviewer"], ["Editor"], ["Admin"]])(
-    "shows Analytics for %s role",
+    "shows Analytics in Extras for %s role",
     (role) => {
       authState.user = makeUserWithRoles([role]);
       renderHeader();
+      openExtrasMenu();
       expect(screen.getByRole("link", { name: "Analytics" })).toBeInTheDocument();
     },
   );
 
   it.each([[[]], [["Reader"]], [["Guest"]]])(
-    "hides Analytics for non-privileged roles %s",
+    "hides Analytics in Extras for non-privileged roles %s",
     (roles) => {
       authState.user = makeUserWithRoles(roles);
       renderHeader();
+      openExtrasMenu();
       expect(screen.queryByRole("link", { name: "Analytics" })).not.toBeInTheDocument();
     },
   );
 
-  it("hides Analytics for logged-out visitors", () => {
+  it("hides Analytics in Extras for logged-out visitors", () => {
     authState.user = null;
     renderHeader();
+    openExtrasMenu();
     expect(screen.queryByRole("link", { name: "Analytics" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Header Extras links", () => {
+  function openExtrasMenu() {
+    fireEvent.click(screen.getByRole("button", { name: "Extras" }));
+  }
+
+  it("hidden for logged-out visitors (content stays gated)", () => {
+    authState.user = null;
+    renderHeader();
+    openExtrasMenu();
+    expect(screen.queryByRole("link", { name: "Wine Packages" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Article Projects" })).not.toBeInTheDocument();
+  });
+
+  it("shows gated links but keeps role exemptions when user is Reviewer", () => {
+    authState.user = makeUserWithRoles(["Reviewer"]);
+    renderHeader();
+    openExtrasMenu();
+    expect(screen.getByRole("link", { name: "Wine Packages" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Article Projects" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Analytics" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Users" })).not.toBeInTheDocument();
   });
 });
 
@@ -107,5 +138,47 @@ describe("Header Subscribe CTA", () => {
     authState.user = makeUser("Consumer");
     renderHeader();
     expect(screen.queryByRole("link", { name: "Subscribe" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Header mobile menu", () => {
+  it("starts collapsed with aria-expanded=false", () => {
+    renderHeader();
+    const menuBtn = screen.getByRole("button", { name: "Open menu" });
+    expect(menuBtn).toBeInTheDocument();
+    expect(menuBtn).toHaveAttribute("aria-expanded", "false");
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
+    expect(nav).not.toHaveClass("site-header__nav--open");
+  });
+
+  it("expands the menu when the button is clicked", () => {
+    renderHeader();
+    const menuBtn = screen.getByRole("button", { name: "Open menu" });
+    fireEvent.click(menuBtn);
+    expect(menuBtn).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: "Close menu" })).toBeInTheDocument();
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
+    expect(nav).toHaveClass("site-header__nav--open");
+  });
+
+  it("collapses the menu when the button is clicked again", () => {
+    renderHeader();
+    const menuBtn = screen.getByRole("button", { name: "Open menu" });
+    fireEvent.click(menuBtn);
+    fireEvent.click(menuBtn);
+    expect(menuBtn).toHaveAttribute("aria-expanded", "false");
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
+    expect(nav).not.toHaveClass("site-header__nav--open");
+  });
+
+  it("closes the menu when a navigation link is clicked", () => {
+    renderHeader();
+    const menuBtn = screen.getByRole("button", { name: "Open menu" });
+    fireEvent.click(menuBtn);
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
+    expect(nav).toHaveClass("site-header__nav--open");
+    fireEvent.click(screen.getByRole("link", { name: "About" }));
+    expect(menuBtn).toHaveAttribute("aria-expanded", "false");
+    expect(nav).not.toHaveClass("site-header__nav--open");
   });
 });

@@ -137,6 +137,26 @@ textarea {
   color: #fff8f2;
 }
 
+/* Mobile menu toggle — hidden on desktop, shown below 560px. */
+.site-header__menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #4f4440;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.site-header__menu-btn svg {
+  display: block;
+}
+.site-header__menu-btn:hover,
+.site-header__menu-btn[aria-expanded="true"] {
+  color: #681a2a;
+}
+
 .wine-app,
 .about-page {
   margin: 0 auto;
@@ -757,29 +777,76 @@ textarea {
     flex-direction: column;
   }
 
-  .site-header nav,
-  .site-header__actions {
+  .site-header__menu-btn {
+    display: inline-flex;
+    order: 2;
+  }
+
+  .site-header nav {
     width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    border-top: 1px solid #e4d9cd;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .site-header nav.site-header__nav--open {
+    display: flex;
+  }
+
+  .site-header nav > a,
+  .site-header nav .settings-menu {
+    width: 100%;
+    flex: none;
   }
 
   .site-header nav > a {
-    text-align: center;
-    flex: 1;
+    text-align: left;
+    padding: 10px 4px;
+    border-bottom: 1px solid #e4d9cd;
   }
 
-  .site-header nav .settings-menu {
-    flex: 1;
+  .site-header nav > a.active,
+  .site-header nav > a:hover {
+    background: #f7f3ec;
+    border-bottom-color: #681a2a;
   }
 
   .site-header nav .settings-menu__toggle {
     width: 100%;
-    text-align: center;
+    text-align: left;
+    justify-content: space-between;
+    padding: 10px 4px;
+    border-bottom: 1px solid #e4d9cd;
+  }
+
+  .site-header nav .settings-menu__dropdown {
+    position: static;
+    width: 100%;
+    box-shadow: none;
+    border: 0;
+    background: transparent;
+  }
+
+  .site-header nav .settings-menu__dropdown a {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 4px 8px 20px;
+    border-bottom: 1px solid #e4d9cd;
   }
 
   .site-header__actions {
+    width: 100%;
     justify-content: center;
     border-top: 1px solid #eee4db;
     padding-top: 10px;
+    margin-top: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
   }
 
   .site-header__user {
