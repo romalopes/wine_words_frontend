@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { grapesApi } from "../services/api";
 import Grapes from "./Grapes";
@@ -92,6 +92,23 @@ describe("Grapes", () => {
     expect(await screen.findByText("Chardonnay")).toBeInTheDocument();
     expect(grapesApi.list).toHaveBeenCalledWith(
       expect.objectContaining({ page: 1, per_page: 20 }),
+    );
+  });
+
+  // Server-side ordering: changing the select refetches with ?sort=; the
+  // relevance default sends no sort param (API default).
+  it("requests the server-sorted page when the sort select changes", async () => {
+    renderGrapes();
+    expect(await screen.findByText("No grapes found.")).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.change(screen.getByRole("combobox", { name: "Sort grapes" }), {
+        target: { value: "wines_count" },
+      });
+    });
+
+    expect(grapesApi.list).toHaveBeenCalledWith(
+      expect.objectContaining({ sort: "wines_count", page: 1, per_page: 20 }),
     );
   });
 });

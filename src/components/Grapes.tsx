@@ -29,6 +29,9 @@ interface GrapeForm {
 /** The three list-valued fields the `ArrayFieldInput` helper manages. */
 type GrapeListField = "main_regions" | "synonyms" | "notes";
 
+/** The list's server-side orderings (`?sort=` on GET /api/v1/grapes). */
+type GrapeSortKey = "relevance" | "wines_count" | "producers_count";
+
 const emptyForm: GrapeForm = {
   name: "",
   color: "",
@@ -55,8 +58,12 @@ function Grapes() {
   // `list.error` instead.
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Server-side list ordering; changing it refetches (extraParams) from page 1.
+  const [sortBy, setSortBy] = useState<GrapeSortKey>("relevance");
   const list = usePagedList<GrapeDetail>({
     fetcher: (params: QueryParams) => grapesApi.list(params),
+    // Omitted for the default so the API keeps its relevance ordering.
+    extraParams: sortBy === "relevance" ? {} : { sort: sortBy },
   });
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [showForm, setShowForm] = useState(false);
@@ -94,6 +101,12 @@ function Grapes() {
     setNewNote("");
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleSortChange(next: GrapeSortKey) {
+    setSortBy(next);
+    // A different ordering invalidates the current page position.
+    if (list.page !== 1) list.setPage(1);
   }
 
   function addArrayField(
@@ -327,6 +340,16 @@ function Grapes() {
         <div className="section-header">
           <h2>All Grapes</h2>
           <div className="section-header__actions">
+            <select
+              className="sort-select"
+              aria-label="Sort grapes"
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value as GrapeSortKey)}
+            >
+              <option value="relevance">Sort by Relevance</option>
+              <option value="wines_count">Sort by Wines</option>
+              <option value="producers_count">Sort by Producers</option>
+            </select>
             {isWineManager && (
               <button
                 type="button"
