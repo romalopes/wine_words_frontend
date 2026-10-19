@@ -23,7 +23,7 @@ In Cloudflare Workers Builds, use this frontend directory as the root, with:
 - Preview deploy command: `npx wrangler@4.149.0 preview`
 - Production deploy command: `npx wrangler@4.149.0 deploy`
 
-Set `VITE_API_BASE_URL=https://wine-words-api.onrender.com/api/v1` in the
+Set `VITE_API_BASE_URL=https://wine-words.com/api/v1` in the
 Cloudflare **build environment** for the preview build. Vite embeds this value
 while building; Wrangler's `previews.vars` does not rewrite the built browser
 bundle. Set other public `VITE_*` login configuration there as needed.
@@ -31,7 +31,7 @@ bundle. Set other public `VITE_*` login configuration there as needed.
 To build and publish a branch preview locally, run from this directory:
 
 ```bash
-VITE_API_BASE_URL=https://wine-words-api.onrender.com/api/v1 npm run build
+VITE_API_BASE_URL=https://wine-words.com/api/v1 npm run build
 npx wrangler@4.149.0 preview
 ```
 
