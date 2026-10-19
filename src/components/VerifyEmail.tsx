@@ -3,6 +3,22 @@ import { Link, useSearchParams } from "react-router-dom";
 import { emailVerificationsApi } from "../services/api";
 import { errorData, errorMessage } from "../utils/errors";
 
+type VerificationResult = Awaited<ReturnType<typeof emailVerificationsApi.verify>>;
+
+// A verification URL consumes a one-time token. React Strict Mode deliberately
+// recreates effects in development, so mounts for the same token must share the
+// request rather than submit the token twice.
+const verificationRequests = new Map<string, Promise<VerificationResult>>();
+
+function verifyOnce(token: string): Promise<VerificationResult> {
+  const existingRequest = verificationRequests.get(token);
+  if (existingRequest) return existingRequest;
+
+  const request = emailVerificationsApi.verify(token);
+  verificationRequests.set(token, request);
+  return request;
+}
+
 // /verify-email?token=... — the page the verification email links to. Consumes
 // the token on mount and reports success/expired/invalid, offering a resend
 // (with a fresh 24-hour window) when the link can no longer be used.
@@ -26,8 +42,7 @@ function VerifyEmail() {
       return;
     }
     let cancelled = false;
-    emailVerificationsApi
-      .verify(token)
+    verifyOnce(token)
       .then((result) => {
         if (cancelled) return;
         setState({

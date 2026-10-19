@@ -586,7 +586,7 @@ function Header() {
               )}
             </div>
             <NavLink className="site-header__auth" to="/account">
-              {displayName}
+              {initials}
             </NavLink>
             <button
               className="site-header__auth"

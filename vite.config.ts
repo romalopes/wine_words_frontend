@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    setupFiles: "./src/setupTests.js",
+    setupFiles: "./src/setupTests.ts",
     include: ["src/**/*.{test,spec}.{js,mjs,jsx,ts,tsx}"],
   },
   // Bind both IPv4 and IPv6 loopback: Node binds only the first address it
