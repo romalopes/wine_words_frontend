@@ -10,6 +10,7 @@ import ImageManager from "./ImageManager";
 import ProducerSearch from "./ProducerSearch";
 import GrapeSearch, { type SelectedGrape } from "./GrapeSearch";
 import RegionSearch, { type SelectedRegion } from "./RegionSearch";
+import TasteParameterSliders from "./TasteParameterSliders";
 import {
   VOLUMES,
   DEFAULT_VOLUME,
@@ -353,9 +354,9 @@ function WineForm() {
         <h1>{isEditing ? "Edit Wine" : "Add New Wine"}</h1>
       </div>
       {error && <p className="auth-form__error">{error}</p>}
-      <form onSubmit={handleSubmit} className="wine-form">
-        <div className="wine-form__fields">
-          <div className="auth-form__field">
+      <form onSubmit={handleSubmit} className="wine-form wine-catalog-form">
+        <div className="wine-form__fields wine-catalog-form__fields">
+          <div className="auth-form__field wine-catalog-form__field--wide">
             <ProducerSearch
               value={formData.producer_name}
               onChange={handleProducerChange}
@@ -377,7 +378,7 @@ function WineForm() {
               onChange={setSelectedGrapes}
             />
           </div>
-          <label className="auth-form__field">
+          <label className="auth-form__field wine-catalog-form__field--wide">
             <span>Name *</span>
             <input
               type="text"
@@ -388,10 +389,7 @@ function WineForm() {
               readOnly={autoName}
             />
           </label>
-          <label
-            className="auth-form__field"
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
-          >
+          <label className="auth-form__field wine-catalog-form__auto-name">
             <input
               type="checkbox"
               checked={autoName}
@@ -423,7 +421,7 @@ function WineForm() {
             />
             <span>Fortified 🍷</span>
           </label>
-          <div className="auth-form__field">
+          <div className="auth-form__field wine-catalog-form__field--wide">
             <span>Categories</span>
             <div className="category-checkboxes">
               {wineCategories.map((cat) => (
@@ -481,7 +479,7 @@ function WineForm() {
               <option value="Agglomerate">Agglomerate</option>
             </select>
           </label>
-          <div className="wine-form__row">
+          <div className="wine-form__row wine-catalog-form__field--wide">
             <label className="auth-form__field wine-form__row-item">
               <span>Alcohol % *</span>
               <input
@@ -512,7 +510,7 @@ function WineForm() {
               </select>
             </label>
           </div>
-          <label className="auth-form__field">
+          <label className="auth-form__field wine-catalog-form__field--wide">
             <span>Prompt (optional)</span>
             <textarea
               name="prompt"
@@ -524,35 +522,11 @@ function WineForm() {
           </label>
         </div>
 
-        <div className="wine-form__section">
-          <div className="wine-form__vintages-header">
-            <h2>Taste Parameters</h2>
-          </div>
-          <div className="wine-form__params">
-            {tasteParams.map((tp, index) => {
-              const currentScore = tasteScores[index]?.score ?? 3;
-              return (
-                <label className="wine-slider" key={tp.slug}>
-                  <span className="wine-slider__top">
-                    <strong>{tp.label}</strong>
-                    <output>{currentScore}</output>
-                  </span>
-                  <input
-                    max="5"
-                    min="1"
-                    type="range"
-                    value={currentScore}
-                    onChange={(e) => handleTasteChange(index, e.target.value)}
-                  />
-                  <span className="wine-slider__scale">
-                    <small>{tp.low}</small>
-                    <small>{tp.high}</small>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
+        <TasteParameterSliders
+          parameters={tasteParams}
+          getScore={(_, index) => tasteScores[index]?.score ?? 3}
+          onScoreChange={(_, index, score) => handleTasteChange(index, String(score))}
+        />
 
         <div className="wine-form__vintages">
           <div className="wine-form__vintages-header">

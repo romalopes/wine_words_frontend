@@ -468,7 +468,8 @@ function ReviewForm({
           )}
         </div>
       )}
-      <div className="review-form__field">
+      <div className="review-form__metadata-grid">
+      <div className="review-form__field review-form__field--wide">
         <label htmlFor="review-title">Title</label>
         <input
           id="review-title"
@@ -479,10 +480,7 @@ function ReviewForm({
           placeholder="Give your review a short title"
           readOnly={autoName}
         />
-        <label
-          className="auth-form__field"
-          style={{ display: "flex", alignItems: "center", gap: 6 }}
-        >
+        <label className="review-form__auto-name">
           <input
             type="checkbox"
             checked={autoName}
@@ -492,7 +490,7 @@ function ReviewForm({
         </label>
       </div>
 
-      <div className="review-form__field">
+      <div className="review-form__field review-form__field--wide">
         <label htmlFor="review-score">Score</label>
         <div className="review-form__score-row">
           <input
@@ -534,10 +532,7 @@ function ReviewForm({
           />
         </div>
       </div>
-      <div
-        className="review-form__field"
-        style={{ display: "flex", alignItems: "center", gap: 8 }}
-      >
+      <div className="review-form__field review-form__field--wide review-form__drink-plus">
         <input
           id="review-drink-plus"
           type="checkbox"
@@ -548,7 +543,7 @@ function ReviewForm({
           Drinking window can be extended (+)
         </label>
       </div>
-      <div className="review-form__field">
+      <div className="review-form__field review-form__field--wide">
         <span>Categories</span>
         <div className="category-checkboxes">
           {categories.map((category) => (
@@ -570,6 +565,7 @@ function ReviewForm({
             </label>
           ))}
         </div>
+      </div>
       </div>
       <div className="review-form__field">
         <span className="image-manager__label">Comment</span>

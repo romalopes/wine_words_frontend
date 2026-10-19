@@ -61,10 +61,10 @@ function RegionSearch({ selected, onChange, countryId }: RegionSearchProps) {
 
   function handleSelect(region: Region) {
     if (!selected.some((r) => r.id === region.id)) {
-      const label =
-        region.name +
-        (region.country?.flag_emoji ? ` ${region.country.flag_emoji}` : "");
-      onChange([...selected, { id: region.id, name: label }]);
+      // Keep the selected value equal to the canonical catalogue name. Consumers
+      // such as WineProfileForm submit this field to APIs that resolve regions
+      // by name, so display-only country metadata must not become part of it.
+      onChange([...selected, { id: region.id, name: region.name }]);
     }
     setQuery("");
   }

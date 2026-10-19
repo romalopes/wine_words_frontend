@@ -612,6 +612,8 @@ export interface WineProfileSearchResponse {
 }
 
 export interface WineProfilesApi {
+  create(profile: Partial<UserWineProfile>): Promise<UserWineProfile>
+  update(slug: string, profile: Partial<UserWineProfile>): Promise<UserWineProfile>
   list(): Promise<UserWineProfile[]>
   show(id: string): Promise<UserWineProfile>
   search(query: string, limit?: number): Promise<WineProfileSearchResponse>

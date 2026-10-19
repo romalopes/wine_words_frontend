@@ -15,6 +15,9 @@ import WineList from "./WineList";
 import WineDetail from "./WineDetail";
 import WineForm from "./WineForm";
 import WineSearch from "./WineSearch";
+import WineProfileList from "./WineProfileList";
+import WineProfileDetail from "./WineProfileDetail";
+import WineProfileForm from "./WineProfileForm";
 import ProducerList from "./ProducerList";
 import ProducerDetail from "./ProducerDetail";
 import ProducerForm from "./ProducerForm";
@@ -98,6 +101,10 @@ function AppRoutes() {
         <Route element={<CountryDetail />} path="/countries/:slug" />
         <Route element={<Regions />} path="/regions" />
         <Route element={<RegionDetail />} path="/regions/:slug" />
+        <Route element={<WineProfileList />} path="/wine-profiles" />
+        <Route element={<WineProfileForm />} path="/wine-profiles/new" />
+        <Route element={<WineProfileDetail />} path="/wine-profiles/:slug" />
+        <Route element={<WineProfileForm />} path="/wine-profiles/:slug/edit" />
         <Route element={<ApiHealth />} path="/admin/api-health" />
         <Route element={<Subscribe />} path="/subscribe" />
         <Route element={<SubscriptionAdmin />} path="/subscriptions" />

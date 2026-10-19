@@ -244,20 +244,42 @@ function Header() {
         onClick={() => setMenuOpen((open) => !open)}
       >
         {menuOpen ? (
-          <svg width="1.2rem" height="1.2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="1.2rem"
+            height="1.2rem"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="18" y1="6" x2="6" y2="6" />
             <line x1="18" y1="12" x2="6" y2="12" />
             <line x1="18" y1="18" x2="6" y2="18" />
           </svg>
         ) : (
-          <svg width="1.2rem" height="1.2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="1.2rem"
+            height="1.2rem"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="3" y1="12" x2="21" y2="12" />
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         )}
       </button>
-      <nav id="primary-navigation" className={menuOpen ? "site-header__nav--open" : undefined} aria-label="Primary navigation">
+      <nav
+        id="primary-navigation"
+        className={menuOpen ? "site-header__nav--open" : undefined}
+        aria-label="Primary navigation"
+      >
         <NavDropdown
           label="Wines"
           items={[
@@ -302,30 +324,72 @@ function Header() {
           {extrasOpen && (
             <div className="settings-menu__dropdown">
               {canSeePackages && (
-                <NavLink to="/wine-packages" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/wine-packages"
+                  onClick={() => {
+                    setExtrasOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Wine Packages
                 </NavLink>
               )}
               {canSeeArticleProjects && (
-                <NavLink to="/article-projects" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/article-projects"
+                  onClick={() => {
+                    setExtrasOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Article Projects
                 </NavLink>
               )}
               {canSeeAnalytics && (
-                <NavLink to="/analytics" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/analytics"
+                  onClick={() => {
+                    setExtrasOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Analytics
                 </NavLink>
               )}
-              <NavLink to="/finder" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+              <NavLink
+                to="/finder"
+                onClick={() => {
+                  setExtrasOpen(false);
+                  handleCloseMenu();
+                }}
+              >
                 Finder
               </NavLink>
-              <NavLink to="/quiz" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+              <NavLink
+                to="/quiz"
+                onClick={() => {
+                  setExtrasOpen(false);
+                  handleCloseMenu();
+                }}
+              >
                 Quiz
               </NavLink>
-              <NavLink to="/search" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+              <NavLink
+                to="/search"
+                onClick={() => {
+                  setExtrasOpen(false);
+                  handleCloseMenu();
+                }}
+              >
                 Search
               </NavLink>
-              <NavLink to="/archive" onClick={() => { setExtrasOpen(false); handleCloseMenu(); }}>
+              <NavLink
+                to="/archive"
+                onClick={() => {
+                  setExtrasOpen(false);
+                  handleCloseMenu();
+                }}
+              >
                 Archive
               </NavLink>
             </div>
@@ -351,26 +415,68 @@ function Header() {
             </button>
             {settingsOpen && (
               <div className="settings-menu__dropdown">
-                <NavLink to="/producers" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/producers"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Producers
                 </NavLink>
-                <NavLink to="/sources" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/sources"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Sources
                 </NavLink>
                 <NavLink
                   to="/categories"
-                  onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
                 >
                   Categories
                 </NavLink>
-                <NavLink to="/grapes" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/grapes"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Grapes
                 </NavLink>
-                <NavLink to="/countries" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/countries"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Countries
                 </NavLink>
-                <NavLink to="/regions" onClick={() => { setSettingsOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/regions"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Regions
+                </NavLink>
+                <NavLink
+                  to="/wine-profiles"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Wine Profiles
                 </NavLink>
               </div>
             )}
@@ -393,27 +499,48 @@ function Header() {
             </button>
             {adminOpen && (
               <div className="settings-menu__dropdown">
-                <NavLink to="/users" onClick={() => { setAdminOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/users"
+                  onClick={() => {
+                    setAdminOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Users &amp; Roles
                 </NavLink>
                 <NavLink
                   to="/admin/api-health"
-                  onClick={() => { setAdminOpen(false); handleCloseMenu(); }}
+                  onClick={() => {
+                    setAdminOpen(false);
+                    handleCloseMenu();
+                  }}
                 >
                   API Health
                 </NavLink>
                 <NavLink
                   to="/subscriptions"
-                  onClick={() => { setAdminOpen(false); handleCloseMenu(); }}
+                  onClick={() => {
+                    setAdminOpen(false);
+                    handleCloseMenu();
+                  }}
                 >
                   Subscriptions
                 </NavLink>
-                <NavLink to="/admin/logs" onClick={() => { setAdminOpen(false); handleCloseMenu(); }}>
+                <NavLink
+                  to="/admin/logs"
+                  onClick={() => {
+                    setAdminOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
                   Logs
                 </NavLink>
                 <NavLink
                   to="/admin/configuration"
-                  onClick={() => { setAdminOpen(false); handleCloseMenu(); }}
+                  onClick={() => {
+                    setAdminOpen(false);
+                    handleCloseMenu();
+                  }}
                 >
                   Configuration
                 </NavLink>
@@ -433,11 +560,10 @@ function Header() {
         {user && <NotificationBell />}
         {user ? (
           <div className="site-header__user">
-            <span className="site-header__avatar" aria-hidden="true">
+            {/* <span className="site-header__avatar" aria-hidden="true">
               {initials}
-            </span>
+            </span> */}
             <div className="site-header__user-info">
-              <span className="site-header__user-name">{displayName}</span>
               {user.roles && user.roles.length > 0 && (
                 <span className="site-header__user-roles" aria-label="Roles">
                   {user.roles.map((role) => (
@@ -460,7 +586,7 @@ function Header() {
               )}
             </div>
             <NavLink className="site-header__auth" to="/account">
-              Account
+              {displayName}
             </NavLink>
             <button
               className="site-header__auth"

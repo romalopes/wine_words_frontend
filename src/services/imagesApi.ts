@@ -26,6 +26,8 @@ export function createImagesApi(request: ApiRequester): ImagesApi {
 
 export function createWineProfilesApi(request: ApiRequester): WineProfilesApi {
   return {
+    create: (profile) => request<UserWineProfile>("/wine_profiles", { method: "POST", auth: true, body: { wine_profile: profile } }),
+    update: (slug, profile) => request<UserWineProfile>(`/wine_profiles/${encodeURIComponent(slug)}`, { method: "PATCH", auth: true, body: { wine_profile: profile } }),
     list: () => request<UserWineProfile[]>("/wine_profiles"),
     show: (id) => request<UserWineProfile>(`/wine_profiles/${id}`),
     search: (query, limit = 10) => request<WineProfileSearchResponse>(`/wine_profiles/search?q=${encodeURIComponent(query)}&limit=${limit}`),

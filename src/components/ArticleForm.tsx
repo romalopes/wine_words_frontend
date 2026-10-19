@@ -319,11 +319,12 @@ function ArticleForm({ article, onSaved, onCancel }: ArticleFormProps) {
   }
 
   return (
-    <form className="review-form" onSubmit={handleSubmit}>
+    <form className="review-form article-form" onSubmit={handleSubmit}>
       <WritingDraftNotice draft={writingDraft} onRestore={(fields) => {
         setForm((prev) => ({ ...prev, title: fields.title ?? prev.title, abstract: fields.abstract ?? prev.abstract, body: fields.body ?? prev.body }));
       }} />
-      <div className="review-form__field">
+      <div className="article-form__metadata-grid">
+      <div className="review-form__field article-form__field--wide">
         <label htmlFor="article-title">Title</label>
         <input
           id="article-title"
@@ -346,26 +347,7 @@ function ArticleForm({ article, onSaved, onCancel }: ArticleFormProps) {
         />
       </div>
 
-      <div className="review-form__field">
-        <span className="image-manager__label">Body</span>
-        <RichTextEditor
-          label="Article body"
-          large
-          onUploadingChange={setUploadingInline}
-          uploadImage={article ? (file) => uploadInlineImage("article", article.id, file, (uploaded) => {
-            const withUrls = uploaded.filter((image) => Boolean(image.url));
-            setExistingImages(withUrls.map((image) => image.url!));
-            setExistingImageIds(withUrls.map((image) => image.id));
-          }) : undefined}
-          value={form.body}
-          onChange={(html) =>
-            setForm((prev) => ({ ...prev, body: html }))
-          }
-          placeholder="Write your story…"
-        />
-      </div>
-
-      <div className="review-form__field">
+      <div className="review-form__field article-form__field--wide">
         <span>Categories</span>
         <div className="category-checkboxes">
           {categories.map((category) => (
@@ -397,6 +379,26 @@ function ArticleForm({ article, onSaved, onCancel }: ArticleFormProps) {
           value={form.tag_names}
           onChange={updateField("tag_names")}
           placeholder="wine, region, vintage"
+        />
+      </div>
+      </div>
+
+      <div className="review-form__field">
+        <span className="image-manager__label">Body</span>
+        <RichTextEditor
+          label="Article body"
+          large
+          onUploadingChange={setUploadingInline}
+          uploadImage={article ? (file) => uploadInlineImage("article", article.id, file, (uploaded) => {
+            const withUrls = uploaded.filter((image) => Boolean(image.url));
+            setExistingImages(withUrls.map((image) => image.url!));
+            setExistingImageIds(withUrls.map((image) => image.id));
+          }) : undefined}
+          value={form.body}
+          onChange={(html) =>
+            setForm((prev) => ({ ...prev, body: html }))
+          }
+          placeholder="Write your story…"
         />
       </div>
 
