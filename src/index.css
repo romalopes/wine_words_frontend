@@ -6207,3 +6207,13 @@ textarea {
   .wine-profile-detail__layout { grid-template-columns: 1fr; }
   .wine-profile-detail__origins { position: static; }
 }
+
+.social-sign-in-dialog {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: calc(100vw - 32px);
+}
+.social-sign-in-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+.social-sign-in-dialog h2 { margin: 0 0 20px; font-size: 1.25rem; }
+.social-sign-in-dialog > button { margin-top: 20px; }

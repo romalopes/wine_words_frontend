@@ -1,117 +1,75 @@
-// Tests for the Google Identity Services reason → error mapping in
-// socialProviders.ts. The GSI SDK itself is faked: the "script load" is
-// resolved by intercepting the <script> injection, and a fake
-// `google.accounts.id` object records the notification listener so each test
-// can replay a prompt moment (not-displayed reason) synchronously.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { GooglePromptMoment, GoogleSdk } from "../types/socialAuth";
-import {
-  ProviderCancelledError,
-  ProviderConfigurationError,
-  signInWithGoogle,
-} from "./socialProviders";
+import type { GoogleInitializeConfig, GoogleSdk } from "../types/socialAuth";
 
-/** The prompt-moment state a given test wants to simulate. */
-interface NotificationFixture {
-  notDisplayed?: boolean;
-  reason?: string;
-  skipped?: boolean;
-}
+let config: GoogleInitializeConfig;
+let google: GoogleSdk;
 
-function fakeNotification({
-  notDisplayed,
-  reason,
-  skipped,
-}: NotificationFixture): GooglePromptMoment {
-  return {
-    isNotDisplayed: () => Boolean(notDisplayed),
-    getNotDisplayedReason: () => reason,
-    isSkippedMoment: () => Boolean(skipped),
-    isDismissedMoment: () => false,
-  };
-}
-
-let promptListener: ((notification: GooglePromptMoment) => void) | null;
-
-beforeEach(async () => {
+beforeEach(() => {
   vi.resetModules();
-  vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "test-client-id.apps.googleusercontent.com");
-
-  // Resolve the injected GSI <script> immediately — jsdom never fetches it.
+  vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "test-client.apps.googleusercontent.com");
   vi.spyOn(document.head, "appendChild").mockImplementation((element) => {
-    (element as HTMLScriptElement).dataset.loaded = "true";
-    setTimeout(() => element.dispatchEvent(new Event("load")), 0);
+    queueMicrotask(() => element.dispatchEvent(new Event("load")));
     return element;
   });
-
-  promptListener = null;
-  const fakeGoogle: GoogleSdk = {
-    accounts: {
-      id: {
-        initialize: vi.fn(),
-        prompt: vi.fn((listener) => {
-          promptListener = listener;
-        }),
-      },
-    },
-  };
-  window.google = fakeGoogle;
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute("open", ""); } });
+  google = { accounts: { id: {
+    initialize: vi.fn((value) => { config = value; }),
+    renderButton: vi.fn(),
+    prompt: vi.fn(),
+  } } };
+  window.google = google;
 });
 
 afterEach(() => {
+  document.body.innerHTML = "";
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
   delete window.google;
 });
 
-function promptWith(notification: GooglePromptMoment) {
-  const promise = signInWithGoogle();
-  setTimeout(() => promptListener?.(notification), 0);
-  return promise;
+async function start() {
+  const module = await import("./socialProviders");
+  const result = module.signInWithGoogle();
+  // Attach rejection handling before a cancel/error event.
+  const outcome = result.then(value => ({ value }), error => ({ error }));
+  await vi.waitFor(() => expect(google.accounts.id.renderButton).toHaveBeenCalled());
+  return { outcome, module };
 }
 
-describe("signInWithGoogle prompt-moment handling", () => {
-  it("surfaces unregistered_origin as a configuration error", async () => {
-    await expect(
-      promptWith(fakeNotification({ notDisplayed: true, reason: "unregistered_origin" })),
-    ).rejects.toBeInstanceOf(ProviderConfigurationError);
-    await expect(
-      promptWith(fakeNotification({ notDisplayed: true, reason: "unregistered_origin" })),
-    ).rejects.toThrow(/Authorized JavaScript origins/);
+describe("explicit Google sign-in", () => {
+  it("uses the official button instead of suppressible One Tap and returns the token", async () => {
+    const { outcome } = await start();
+    expect(google.accounts.id.prompt).not.toHaveBeenCalled();
+    expect(document.querySelector('dialog[open]')).not.toBeNull();
+    config.callback({ credential: "provider-issued-id-token" });
+    expect(await outcome).toEqual({ value: { credential: "provider-issued-id-token" } });
+    expect(document.querySelector("dialog")).toBeNull();
   });
 
-  it("surfaces invalid_client as a configuration error", async () => {
-    await expect(
-      promptWith(fakeNotification({ notDisplayed: true, reason: "invalid_client" })),
-    ).rejects.toThrow(ProviderConfigurationError);
+  it("cancels cleanly and ignores a late provider callback", async () => {
+    const { outcome, module } = await start();
+    document.querySelector<HTMLButtonElement>("dialog > button")!.click();
+    expect(await outcome).toEqual({ error: expect.any(module.ProviderCancelledError) });
+    config.callback({ credential: "late-token" });
+    expect(document.querySelector("dialog")).toBeNull();
   });
 
-  it("surfaces missing_client_id as a configuration error", async () => {
-    await expect(
-      promptWith(fakeNotification({ notDisplayed: true, reason: "missing_client_id" })),
-    ).rejects.toThrow(ProviderConfigurationError);
+  it("handles Escape cancellation", async () => {
+    const { outcome, module } = await start();
+    document.querySelector("dialog")!.dispatchEvent(new Event("cancel", { cancelable: true }));
+    expect(await outcome).toEqual({ error: expect.any(module.ProviderCancelledError) });
   });
 
-  it("stays silent (cancelled) for non-configuration not-displayed reasons", async () => {
-    await expect(
-      promptWith(fakeNotification({ notDisplayed: true, reason: "suppressed_by_user" })),
-    ).rejects.toBeInstanceOf(ProviderCancelledError);
+  it("rejects an empty provider response", async () => {
+    const { outcome, module } = await start();
+    config.callback({});
+    expect(await outcome).toEqual({ error: expect.any(module.ProviderCancelledError) });
   });
 
-  it("stays silent (cancelled) for skipped moments", async () => {
-    await expect(
-      promptWith(fakeNotification({ skipped: true })),
-    ).rejects.toBeInstanceOf(ProviderCancelledError);
-  });
-
-  it("passes the configured client id to GSI initialize", async () => {
-    const promise = signInWithGoogle();
-    setTimeout(() => promptListener?.(fakeNotification({ skipped: true })), 0);
-    await expect(promise).rejects.toBeInstanceOf(ProviderCancelledError);
-    const google = window.google;
-    if (!google) throw new Error("the GSI fake was not installed");
-    expect(google.accounts.id.initialize).toHaveBeenCalledWith(
-      expect.objectContaining({ client_id: "test-client-id.apps.googleusercontent.com" }),
-    );
+  it("does not launch an unconfigured provider", async () => {
+    vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "  ");
+    const module = await import("./socialProviders");
+    await expect(module.signInWithGoogle()).rejects.toBeInstanceOf(module.ProviderUnavailableError);
+    expect(google.accounts.id.initialize).not.toHaveBeenCalled();
   });
 });

@@ -41,6 +41,12 @@ export interface GoogleInitializeConfig {
 
 export interface GoogleAccountsId {
   initialize: (config: GoogleInitializeConfig) => void
+  renderButton: (parent: HTMLElement, options: {
+    type: "standard"
+    theme: "outline"
+    size: "large"
+    text: "continue_with"
+  }) => void
   prompt: (listener: (notification: GooglePromptMoment) => void) => void
 }
 

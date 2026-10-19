@@ -201,8 +201,8 @@ export function isConfigured(provider: SocialProvider): boolean {
 }
 
 function requireClientId(provider: string, value: string | undefined): string {
-  if (!value) throw new ProviderUnavailableError(provider);
-  return value;
+  if (!value?.trim()) throw new ProviderUnavailableError(provider);
+  return value.trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -236,6 +236,7 @@ function loadScript(url: string): Promise<void> {
     });
     script.addEventListener("error", () => {
       scriptPromises.delete(url);
+      script.remove();
       reject(new ProviderUnavailableError("This"));
     });
 
@@ -301,92 +302,55 @@ async function sha256Hex(value: string): Promise<string> {
 // Google — Google Identity Services (One Tap / button credential)
 // ---------------------------------------------------------------------------
 //
-// `initialize` + `prompt` yields an ID token (a JWT signed by Google). The API
-// verifies the signature against Google's JWKS and re-checks issuer, audience,
-// expiry and the email_verified claim. The email shown in the browser is never
-// treated as proof of anything.
-//
-// Values of GSI's `getNotDisplayedReason()` that mean the *client
-// configuration* is wrong (checked before any account chooser appears).
-// Everything else — `browser_not_supported`, `suppressed_by_user`,
-// `opt_out_or_no_session`, … — is an environment/personal choice, not a bug in
-// our setup.
-const GOOGLE_CONFIG_ERRORS: Record<string, string> = {
-  unregistered_origin:
-    "The page's address isn't authorised for this Google client ID — add " +
-    "it under 'Authorized JavaScript origins' in Google Cloud Console " +
-    "(exact scheme + host + port, no trailing slash). Changes can take a " +
-    "few hours to propagate.",
-  invalid_client:
-    "The Google client ID is invalid or its OAuth client was deleted — " +
-    "check VITE_GOOGLE_CLIENT_ID and the Google Cloud credentials page.",
-  missing_client_id:
-    "No Google client ID was passed to the sign-in prompt — check " +
-    "VITE_GOOGLE_CLIENT_ID and restart the dev server.",
-};
-
+// Use Google's official button for explicit sign-in. One Tap can be suppressed
+// by browser settings or cooldowns and is not a reliable click-to-sign-in flow.
+// A native dialog also lets cancellation settle the promise without depending
+// on prompt-moment notifications that FedCM no longer always delivers.
 export async function signInWithGoogle(): Promise<SocialCredential> {
-  const config = publicConfig.google();
-  const clientId = requireClientId("Google", config.clientId);
-
+  const clientId = requireClientId("Google", publicConfig.google().clientId);
   await loadScript(GOOGLE_SDK_URL);
   const google = (await waitForGlobal("google")) as GoogleSdk;
 
   return new Promise<SocialCredential>((resolve, reject) => {
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const dialog = document.createElement("dialog");
+    dialog.className = "social-sign-in-dialog";
+    dialog.setAttribute("aria-label", "Sign in with Google");
+    const heading = document.createElement("h2");
+    heading.textContent = "Sign in with Google";
+    const buttonHost = document.createElement("div");
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+    dialog.append(heading, buttonHost, cancel);
     let settled = false;
-
-    console.log("Google OAuth configuration:", {
-      origin: window.location.origin,
-      clientId,
-      mode: import.meta.env.MODE,
-    });
-
-    google.accounts.id.initialize({
-      client_id: clientId,
-      // The API re-validates everything, so nothing here is trusted.
-      callback: (response) => {
-        settled = true;
-        if (!response?.credential) {
-          reject(new ProviderCancelledError("Google"));
-          return;
-        }
-        resolve({ credential: response.credential });
-      },
-      cancel_on_tap_outside: true,
-    });
-
-    google.accounts.id.prompt((notification) => {
-      // The person dismissed One Tap without choosing an account.
+    const finish = (credential?: string | null, error?: unknown) => {
       if (settled) return;
-      if (notification?.isNotDisplayed?.()) {
-        // The prompt never showed. Distinguish "user did nothing" from
-        // "our Google Cloud client is misconfigured" — the latter must be
-        // visible, the former must be silent (a 403 from
-        // accounts.google.com/gsi/ plus `unregistered_origin` is exactly the
-        // "origin not allowed for the given client ID" console error).
-        const reason = notification.getNotDisplayedReason?.();
-        if (reason && GOOGLE_CONFIG_ERRORS[reason]) {
-          settled = true;
-          reject(
-            new ProviderConfigurationError(
-              "Google",
-              GOOGLE_CONFIG_ERRORS[reason],
-            ),
-          );
-        } else {
-          settled = true;
-          reject(new ProviderCancelledError("Google"));
-        }
-        return;
-      }
-      if (
-        notification?.isSkippedMoment?.() ||
-        notification?.isDismissedMoment?.()
-      ) {
-        settled = true;
-        reject(new ProviderCancelledError("Google"));
-      }
+      settled = true;
+      dialog.remove();
+      previousFocus?.focus();
+      if (credential) resolve({ credential });
+      else reject(error ?? new ProviderCancelledError("Google"));
+    };
+    cancel.addEventListener("click", () => finish());
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      finish();
     });
+    dialog.addEventListener("close", () => finish());
+    try {
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response) => finish(response?.credential),
+      });
+      document.body.appendChild(dialog);
+      dialog.showModal();
+      google.accounts.id.renderButton(buttonHost, {
+        type: "standard", theme: "outline", size: "large", text: "continue_with",
+      });
+    } catch (error) {
+      finish(undefined, error);
+    }
   });
 }
 
