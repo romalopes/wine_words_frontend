@@ -35,6 +35,7 @@ VITE_API_BASE_URL=https://wine-words.com/api/v1 npm run build
 npx wrangler@4.149.0 preview
 ```
 
+TEST
 Preview URLs have a different origin from the production frontend. Add the exact
 preview origin to the Rails CORS allowlist and applicable OAuth provider settings
 before testing API requests or social login. This preview API URL uses the existing
