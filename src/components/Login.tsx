@@ -23,11 +23,11 @@ type AuthMode = "signIn" | "signUp" | "forgot";
 
 /** The four fields the card edits, shared by all three modes. */
 interface LoginForm {
-  email: string
-  password: string
-  password_confirmation: string
-  first_name: string
-  last_name: string
+  email: string;
+  password: string;
+  password_confirmation: string;
+  first_name: string;
+  last_name: string;
 }
 
 const initialForm: LoginForm = {
@@ -43,15 +43,15 @@ const initialForm: LoginForm = {
  * account exists but is not email-verified, so no session was issued.
  */
 interface VerificationNotice {
-  email: string
-  expired: boolean
-  deadline: string | null
+  email: string;
+  expired: boolean;
+  deadline: string | null;
 }
 
 /** Progress of the "resend verification email" button. */
 interface ResendState {
-  status: "idle" | "sending" | "sent"
-  message: string | null
+  status: "idle" | "sending" | "sent";
+  message: string | null;
 }
 
 /**
@@ -61,9 +61,11 @@ interface ResendState {
  * `User` carries an index signature, so this reads the field rather than
  * narrowing on `in` — which would collapse to `{}`.
  */
-function readEmailVerification(result: User | SignUpResponse): EmailVerification | null {
-  const verification = (result as SignUpResponse).email_verification
-  return verification ?? null
+function readEmailVerification(
+  result: User | SignUpResponse,
+): EmailVerification | null {
+  const verification = (result as SignUpResponse).email_verification;
+  return verification ?? null;
 }
 
 // Minimal brand marks, sized by .auth-card__social-btn svg. Kept inline so the
@@ -125,10 +127,16 @@ function Login() {
   // Set when the backend says the account exists but is not email-verified:
   // { email, expired, deadline } → the "check your inbox" banner replaces the
   // form and offers a resend.
-  const [verificationNotice, setVerificationNotice] = useState<VerificationNotice | null>(null);
-  const [resendState, setResendState] = useState<ResendState>({ status: "idle", message: null });
+  const [verificationNotice, setVerificationNotice] =
+    useState<VerificationNotice | null>(null);
+  const [resendState, setResendState] = useState<ResendState>({
+    status: "idle",
+    message: null,
+  });
   // Provider whose popup is currently open, so only that button shows as busy.
-  const [pendingProvider, setPendingProvider] = useState<SocialProvider | null>(null);
+  const [pendingProvider, setPendingProvider] = useState<SocialProvider | null>(
+    null,
+  );
 
   const isSignUp = mode === "signUp";
   const isForgot = mode === "forgot";
@@ -168,7 +176,8 @@ function Login() {
     setSuccess(null);
 
     try {
-      const { email, password, password_confirmation, first_name, last_name } = form;
+      const { email, password, password_confirmation, first_name, last_name } =
+        form;
 
       if (isForgot) {
         if (!email) {
@@ -189,8 +198,13 @@ function Login() {
         setFormError("First name and last name are required.");
         return;
       }
-      if (isSignUp && (first_name.trim().length > 80 || last_name.trim().length > 80)) {
-        setFormError("First name and last name must each be 80 characters or fewer.");
+      if (
+        isSignUp &&
+        (first_name.trim().length > 80 || last_name.trim().length > 80)
+      ) {
+        setFormError(
+          "First name and last name must each be 80 characters or fewer.",
+        );
         return;
       }
       if (isSignUp && password.length < 6) {
@@ -254,30 +268,41 @@ function Login() {
     if (!verificationNotice?.email) return;
     setResendState({ status: "sending", message: null });
     try {
-      const result = await emailVerificationsApi.resend(verificationNotice.email);
+      const result = await emailVerificationsApi.resend(
+        verificationNotice.email,
+      );
       // A fresh link was issued, so the notice is live again. Read from the
       // already-narrowed value rather than the updater's `prev`, which is
       // nullable (the banner can be dismissed while the request is in flight).
       setVerificationNotice({ ...verificationNotice, expired: false });
       setResendState({
         status: "sent",
-        message: result.message || "A new verification email has been sent. Check your inbox — you have 24 hours to click the link.",
+        message:
+          result.message ||
+          "A new verification email has been sent. Check your inbox — you have 24 hours to click the link.",
       });
     } catch (err) {
-      setResendState({ status: "idle", message: errorMessage(err, "Could not send the email.") });
+      setResendState({
+        status: "idle",
+        message: errorMessage(err, "Could not send the email."),
+      });
     }
   }
 
   // Human-readable time remaining until the verification deadline.
   function describeTimeRemaining(deadline: string | null): string {
     if (!deadline) return "24 hours";
-    const secondsLeft = Math.floor((new Date(deadline).getTime() - Date.now()) / 1000);
+    const secondsLeft = Math.floor(
+      (new Date(deadline).getTime() - Date.now()) / 1000,
+    );
     if (secondsLeft <= 0) return "the link has expired";
     const hours = Math.floor(secondsLeft / 3600);
     const minutes = Math.floor((secondsLeft % 3600) / 60);
-    return hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}${minutes ? ` and ${minutes} min` : ""}` : `${minutes} min`;
+    return hours > 0
+      ? `${hours} hour${hours === 1 ? "" : "s"}${minutes ? ` and ${minutes} min` : ""}`
+      : `${minutes} min`;
   }
-// "Continue with <provider>": run the provider's popup, then hand the
+  // "Continue with <provider>": run the provider's popup, then hand the
   // provider-issued credential to the API. The API verifies it and returns the
   // same session payload as email/password, so nothing after this point needs
   // to know how the person signed in.
@@ -327,7 +352,8 @@ function Login() {
               really you.
             </p>
             <p className="auth-card__status">
-              We sent a verification link to <strong>{verificationNotice.email}</strong>.
+              We sent a verification link to{" "}
+              <strong>{verificationNotice.email}</strong>.
               {verificationNotice.expired
                 ? " Your previous link has expired, so the account is locked until you verify."
                 : ` You have ${describeTimeRemaining(verificationNotice.deadline)} to click the link — after that the account is locked until you verify.`}
@@ -346,18 +372,30 @@ function Login() {
               onClick={handleResendVerification}
               type="button"
             >
-              {resendState.status === "sending" ? "Sending..." : "Resend verification email"}
+              {resendState.status === "sending"
+                ? "Sending..."
+                : "Resend verification email"}
             </button>
             {resendState.message && (
               <p
-                className={resendState.status === "sent" ? "auth-card__status" : "auth-form__error"}
+                className={
+                  resendState.status === "sent"
+                    ? "auth-card__status"
+                    : "auth-form__error"
+                }
                 role={resendState.status === "sent" ? "status" : "alert"}
               >
                 {resendState.message}
               </p>
             )}
             <p className="auth-card__switch">
-              <button onClick={() => { setVerificationNotice(null); setResendState({ status: "idle", message: null }); }} type="button">
+              <button
+                onClick={() => {
+                  setVerificationNotice(null);
+                  setResendState({ status: "idle", message: null });
+                }}
+                type="button"
+              >
                 Back to sign in
               </button>
             </p>
@@ -394,11 +432,27 @@ function Login() {
                   <>
                     <label className="auth-form__field">
                       <span>First name</span>
-                      <input autoComplete="given-name" name="first_name" onChange={updateField("first_name")} type="text" value={form.first_name} maxLength={80} required />
+                      <input
+                        autoComplete="given-name"
+                        name="first_name"
+                        onChange={updateField("first_name")}
+                        type="text"
+                        value={form.first_name}
+                        maxLength={80}
+                        required
+                      />
                     </label>
                     <label className="auth-form__field">
                       <span>Last name</span>
-                      <input autoComplete="family-name" name="last_name" onChange={updateField("last_name")} type="text" value={form.last_name} maxLength={80} required />
+                      <input
+                        autoComplete="family-name"
+                        name="last_name"
+                        onChange={updateField("last_name")}
+                        type="text"
+                        value={form.last_name}
+                        maxLength={80}
+                        required
+                      />
                     </label>
                   </>
                 ) : null}
