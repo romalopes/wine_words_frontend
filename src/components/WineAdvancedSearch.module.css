@@ -28,6 +28,7 @@
 }
 
 .sectionTitle {
+  display: block;
   grid-column: 1 / -1;
   font-size: 0.8rem;
   font-weight: 600;
@@ -37,11 +38,90 @@
   margin: 0.5rem 0 0.25rem;
 }
 
+/* The short, self-contained fields of the "Wine" section sit side by side. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.85rem 1rem;
   align-items: end;
+}
+
+/* Every range (vintage year, price, score, drink window, ...) gets its own
+   full-width row. The row is a grid with fixed columns:
+
+     [ label ] [ Min ] [ min input ] [ Max ] [ max input ] [ free ]
+
+   The same column template is used by every row, so the min and max inputs
+   line up in two clean vertical columns and the eye can scan straight down
+   the values. Rows that hold something else (dates, a search box) reuse the
+   same template and place their controls in the input columns.
+
+   `.rowInputs` uses `display: contents` so that its children become grid
+   items of the row itself and can be placed in those shared columns. */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 12rem 2.75rem 9rem 2.75rem 9rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rowLabel {
+  grid-column: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+}
+
+/* `display: contents` lets the controls of a row become grid items of the
+   row itself, so they can be placed in the shared columns. */
+.rowInputs {
+  display: contents;
+}
+
+.miniMin {
+  grid-column: 2;
+}
+
+.miniMax {
+  grid-column: 4;
+}
+
+.inputMin {
+  grid-column: 3;
+}
+
+.inputMax {
+  grid-column: 5;
+}
+
+/* The arrow between the two date inputs sits in the "Max" column. */
+.rowInputs > .dateSeparator {
+  grid-column: 4;
+  justify-self: center;
+}
+
+/* Controls that are not a min/max pair (the region and grape pickers, the
+   sparkling / fortified selects) span the whole input area. */
+.wideControl {
+  grid-column: 2 / -1;
+  min-width: 0;
+}
+
+.wideControl input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.miniLabel {
+  font-size: 0.75rem;
+  color: #999;
+  font-weight: 500;
 }
 
 .field {
@@ -49,10 +129,6 @@
   flex-direction: column;
   gap: 0.25rem;
   min-width: 0;
-}
-
-.fieldWide {
-  grid-column: 1 / -1;
 }
 
 .label {
@@ -84,30 +160,10 @@
   border-color: #8a5a44;
 }
 
-/* Date range: visually paired native calendar inputs */
-.dateRange {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.dateRange .input {
-  font-family: inherit;
-}
-
+/* The arrow between the two date inputs. */
 .dateSeparator {
   color: #999;
   font-weight: 600;
-}
-
-.rangePair {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.rangePair .input {
-  min-width: 0;
 }
 
 .checkboxRow {
@@ -130,21 +186,35 @@
   margin-left: 0.25rem;
 }
 
+/* Taste parameters: one block per parameter, the name and the current range
+   on the same line, the slider spanning the full width underneath. */
+.tasteSection {
+  margin-top: 0.5rem;
+}
+
 .tasteGrid {
-  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 0.75rem 1rem;
 }
 
 .tasteItem {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.5rem;
   border: 1px solid #eee;
   border-radius: 8px;
-  padding: 0.6rem 0.7rem;
+  padding: 0.6rem 0.75rem 0.9rem;
   background: #faf8f6;
+  /* Prevent overflow of the slider thumbs */
+  min-height: 5.5rem;
+}
+
+.tasteHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .tasteName {
@@ -153,22 +223,15 @@
   color: #444;
 }
 
-.tasteInputs {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.tasteInputs input[type="range"] {
-  flex: 1;
-  accent-color: #8a5a44;
+.tasteActive {
+  color: #8a5a44;
 }
 
 .tasteValue {
   font-size: 0.75rem;
   color: #777;
-  min-width: 4.4rem;
-  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .actions {
@@ -225,8 +288,110 @@
   color: #fff;
 }
 
+/* nouislider overrides for taste parameters.
+
+   The `noUi-*` classes come from the third-party stylesheet, so they must be
+   marked `:global` — otherwise CSS Modules would hash them and they would
+   never match the markup nouislider generates.
+
+   nouislider turns the element it is given into the `.noUi-target` element
+   itself, so `.tasteSlider` and `.noUi-target` are the *same* element. The
+   track rules therefore have to be written as a compound selector
+   (`.tasteSlider.noUi-target`) — a descendant selector would never match.
+   Using a compound selector also raises the specificity above the vendor
+   stylesheet, which is emitted after this module. */
+.tasteSlider {
+  width: 100%;
+}
+
+/* The track. The default stylesheet gives it a raised, boxed look that does
+   not fit here. The target element *is* the track, so its height, background
+   and border are set here. A small horizontal inset keeps the round thumbs,
+   which overhang the track by half their width, inside the card. */
+.tasteSlider:global(.noUi-target) {
+  height: 6px;
+  background: #ddd;
+  border: none;
+  border-radius: 3px;
+  box-shadow: none;
+  margin: 0.15rem 0.6rem 0;
+}
+
+/* The filled section between the two handles */
+.tasteSlider :global(.noUi-connect) {
+  background: #8a5a44;
+}
+
+/* Round thumbs, sized to sit centred on the 4px track.
+   The handles are direct descendants of the target element, which is itself
+   the `.noUi-horizontal` element — so they are matched as descendants of
+   `.tasteSlider`, not of `.noUi-horizontal`.
+   The compound `.tasteSlider.noUi-horizontal` also raises the specificity
+   above the vendor rule `.noUi-horizontal .noUi-handle`, which would
+   otherwise win on source order. */
+.tasteSlider:global(.noUi-horizontal) :global(.noUi-handle) {
+  width: 16px;
+  height: 16px;
+  right: -8px;
+  top: -5px;
+  background: #fff;
+  border: 2px solid #8a5a44;
+  border-radius: 50%;
+  box-shadow: none;
+  cursor: grab;
+}
+
+.tasteSlider:global(.noUi-horizontal) :global(.noUi-handle):active {
+  background: #8a5a44;
+  cursor: grabbing;
+}
+
+/* The default stylesheet draws two stripes on each handle — not wanted here. */
+.tasteSlider :global(.noUi-handle)::before,
+.tasteSlider :global(.noUi-handle)::after {
+  display: none;
+}
+
+/* Hide the default tooltips — the current range is shown next to the slider. */
+.tasteSlider :global(.noUi-tooltip) {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  /* On narrow screens the fixed label column would squeeze the inputs, so
+     every row collapses: the label on top, the controls below it. The rows
+     switch from grid to flex, so the `grid-column` placements of the shared
+     column template are ignored and the controls simply flow in order. */
+  .row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.3rem;
+  }
+
+  .rowInputs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /* The inputs are `width: 100%` for the regular grid layout; in the
+     collapsed layout they must size to their content again. */
+  .rowInputs .input {
+    width: auto;
+    flex: 0 1 8rem;
+  }
+
+  .wideControl {
+    flex: 1 1 100%;
+  }
+
+  .tasteGrid {
+    grid-template-columns: 1fr;
   }
 }
