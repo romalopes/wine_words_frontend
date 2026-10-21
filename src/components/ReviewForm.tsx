@@ -49,6 +49,12 @@ interface ReviewFormState {
   drink_from: number | "";
   drink_to: number | "";
   drink_plus: boolean;
+  /**
+   * Issue #185 publication deadline. A date-only string (`YYYY-MM-DD`) so the
+   * value the browser submits is exactly what the API stores — no timezone
+   * shifting. Empty means "let the API choose its default".
+   */
+  deadline: string;
   category_ids: number[];
   /** Only present when editing — create fixes the vintage from the props. */
   vintage_id?: number | null;
@@ -112,6 +118,7 @@ function ReviewForm({
           drink_from: review.drink_from ?? "",
           drink_to: review.drink_to ?? "",
           drink_plus: Boolean(review.drink_plus),
+          deadline: review.deadline ?? "",
           category_ids: (review.categories || []).map((c) => c.id),
           vintage_id: review.vintage_id ?? null,
         }
@@ -124,6 +131,7 @@ function ReviewForm({
           drink_from: "",
           drink_to: "",
           drink_plus: false,
+          deadline: "",
           category_ids: [],
         },
   );
@@ -257,7 +265,7 @@ function ReviewForm({
   }, []);
 
   /** Builds the onChange handler for a text/number/checkbox field. */
-  function updateField(field: "drink_plus" | NumericField | "title" | "comment" | "status" | "source") {
+  function updateField(field: "drink_plus" | NumericField | "title" | "comment" | "status" | "source" | "deadline") {
     return (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const target = e.target as HTMLInputElement;
       let value: ReviewFormState[typeof field];
@@ -290,6 +298,9 @@ function ReviewForm({
         drink_from: form.drink_from === "" ? null : Number(form.drink_from),
         drink_to: form.drink_to === "" ? null : Number(form.drink_to),
         drink_plus: Boolean(form.drink_plus),
+        // Date-only: an empty input means "use the API default / inherited
+        // package deadline", so it is omitted rather than sent as null.
+        deadline: form.deadline || null,
       };
 
       if (isEditing && review) {
@@ -542,6 +553,20 @@ function ReviewForm({
         <label htmlFor="review-drink-plus" style={{ margin: 0 }}>
           Drinking window can be extended (+)
         </label>
+      </div>
+      <div className="review-form__field review-form__field--wide">
+        <label htmlFor="review-deadline">Deadline</label>
+        <input
+          id="review-deadline"
+          type="date"
+          value={form.deadline}
+          onChange={updateField("deadline")}
+        />
+        <p className="review-card__comment">
+          Leave blank to inherit the wine package&apos;s deadline, or default to
+          14 days from today. Published and archived reviews keep the date but
+          are never flagged overdue.
+        </p>
       </div>
       <div className="review-form__field review-form__field--wide">
         <span>Categories</span>

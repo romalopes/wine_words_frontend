@@ -3,6 +3,7 @@ import CommentLink from "./comments/CommentLink";
 import ContentStatusActions, {
   type ContentStatus,
 } from "./ContentStatusActions";
+import DeadlineBadge from "./DeadlineBadge";
 import type { RoleUser } from "../constants/roles";
 import type { Article } from "../types/article";
 import { SearchHighlight } from "./search";
@@ -89,6 +90,15 @@ export default function ArticleCard({
           {excerpt(article.abstract || article.body)}
         </p>
       )}
+      {/* Issue #185: drafts only. The badge renders nothing for published or
+          archived content, and it prefers the API's overdue / day count so
+          the card can never disagree with the server. */}
+      <DeadlineBadge
+        deadline={article.deadline}
+        status={article.status}
+        overdue={article.overdue}
+        daysUntilDeadline={article.days_until_deadline}
+      />
       <div
         className="wine-management__card-meta"
         onClick={(e) => e.stopPropagation()}

@@ -13,6 +13,21 @@ export interface Article {
   body?: string | null
   status: string
   published_at?: string | null
+  /**
+   * Issue #185 publication deadline, sent as a date-only ISO string
+   * (`YYYY-MM-DD`). Always present for records created after the change;
+   * legacy rows may be null.
+   *
+   * `undefined` is part of the type because the project compiles with
+   * `exactOptionalPropertyTypes`: an omitted field and an explicitly
+   * `undefined` field are different, and callers build these objects from
+   * partial API responses.
+   */
+  deadline?: string | null | undefined
+  /** True only while the article is a draft past its deadline. */
+  overdue?: boolean | undefined
+  /** Signed days until the deadline (negative once overdue); null when none. */
+  days_until_deadline?: number | null | undefined
   user_id?: number | null
   /** Byline, computed by the Rails serializers (`display_name` else `email`). */
   author_name?: string | null

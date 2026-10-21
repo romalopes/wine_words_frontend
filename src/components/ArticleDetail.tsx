@@ -18,6 +18,7 @@ import { errorMessage } from "../utils/errors";
 import { formatDate } from "../utils/dates";
 import { normalizeArticleBody } from "../utils/articleHtml";
 import BackToSource from "./BackToSource";
+import DeadlineBadge from "./DeadlineBadge";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
 
@@ -225,6 +226,12 @@ function ArticleDetail() {
               {article.status === "draft" && (
                 <span className="article-page__badge">Draft</span>
               )}
+              <DeadlineBadge
+                deadline={article.deadline}
+                status={article.status}
+                overdue={article.overdue}
+                daysUntilDeadline={article.days_until_deadline}
+              />
               {article.status === "archived" && (
                 <span className="article-page__badge">Archived</span>
               )}

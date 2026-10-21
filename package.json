@@ -11,7 +11,7 @@
     "typecheck": "tsc -b",
     "preview": "vite preview",
     "test": "vitest",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc -b --noEmit",
     "wrangler-deploy": "wrangler deploy",
     "wrangler-dev": "wrangler dev"
   },

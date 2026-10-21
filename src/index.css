@@ -4106,6 +4106,34 @@ textarea {
   color: #dc3545;
 }
 
+/* Publication deadline badges (issue #185). Text + icon carry the meaning;
+   colour is only a supporting cue. Drafts only. */
+.deadline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  white-space: nowrap;
+}
+
+.deadline-badge--upcoming {
+  background: #eef4ea;
+  color: #33502a;
+}
+
+.deadline-badge--today {
+  background: #fdf3d8;
+  color: #7a5a13;
+}
+
+.deadline-badge--overdue {
+  background: #fbe4e4;
+  color: #8a1f1f;
+}
+
 .form-actions {
   display: flex;
   gap: 1rem;

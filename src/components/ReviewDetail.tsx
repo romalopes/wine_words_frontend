@@ -20,6 +20,7 @@ import { normalizeArticleBody } from "../utils/articleHtml";
 import type { Review } from "../types/review";
 import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
 import { reviewImage } from "../utils/wineImages";
+import DeadlineBadge from "./DeadlineBadge";
 
 /**
  * Renders a review comment, which is stored as Trix HTML: sanitised, then
@@ -249,6 +250,12 @@ function ReviewDetail() {
               {review.status === "draft" && (
                 <span className="article-page__badge">Draft</span>
               )}
+              <DeadlineBadge
+                deadline={review.deadline}
+                status={review.status}
+                overdue={review.overdue}
+                daysUntilDeadline={review.days_until_deadline}
+              />
               {review.status === "archived" && (
                 <span className="article-page__badge">Archived</span>
               )}

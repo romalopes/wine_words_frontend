@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import LinkReviewDialog from "./LinkReviewDialog";
+import DeadlineBadge from "./DeadlineBadge";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import type { Review } from "../types/review";
 
@@ -13,9 +14,9 @@ import type { Review } from "../types/review";
  * would let a call site pass e.g. "grape" and have it silently ignored.
  */
 export interface ReviewLinkContext {
-  type: "category"
-  id: number
-  name?: string | null
+  type: "category";
+  id: number;
+  name?: string | null;
 }
 
 interface ReviewTableProps {
@@ -29,14 +30,20 @@ interface ReviewTableProps {
 // Reviewer and Status. Rows navigate to the review detail page.
 // When `linkContext` is provided, shows a "+ Link a Review" button that opens
 // a dialog to search and link reviews to the given entity.
-function ReviewTable({ reviews, linkContext, onReviewLinked }: ReviewTableProps) {
+function ReviewTable({
+  reviews,
+  linkContext,
+  onReviewLinked,
+}: ReviewTableProps) {
   const { user } = useAuth();
   const canManage = canManageWinesRole(user);
   const navigate = useNavigate();
   const returnToLink = useReturnToLink();
   const [dialogOpen, setDialogOpen] = useState(false);
   const excludeIds = Array.isArray(reviews)
-    ? reviews.flatMap((r) => [r.id, r.slug].filter(Boolean) as (number | string)[])
+    ? reviews.flatMap(
+        (r) => [r.id, r.slug].filter(Boolean) as (number | string)[],
+      )
     : [];
 
   const linkButton = canManage && linkContext && (
@@ -83,13 +90,16 @@ function ReviewTable({ reviews, linkContext, onReviewLinked }: ReviewTableProps)
             <th>Vintage</th>
             <th>Reviewer</th>
             <th>Status</th>
+            <th>Deadline</th>
           </tr>
         </thead>
         <tbody>
           {reviews.map((review, index) => (
             <tr
               key={review.slug || review.id}
-              className={index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"}
+              className={
+                index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"
+              }
               onClick={() => navigate(returnToLink(`/reviews/${review.slug}`))}
               style={{ cursor: "pointer" }}
             >
@@ -112,6 +122,14 @@ function ReviewTable({ reviews, linkContext, onReviewLinked }: ReviewTableProps)
               <td>{review.vintage_year ?? "—"}</td>
               <td>{review.reviewer_name || "—"}</td>
               <td>{review.status || "—"}</td>
+              <td>
+                <DeadlineBadge
+                  deadline={review.deadline}
+                  status={review.status}
+                  overdue={review.overdue}
+                  daysUntilDeadline={review.days_until_deadline}
+                />
+              </td>
             </tr>
           ))}
         </tbody>

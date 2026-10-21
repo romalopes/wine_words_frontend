@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import LinkArticleDialog from "./LinkArticleDialog";
+import DeadlineBadge from "./DeadlineBadge";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import type { Article } from "../types/article";
 
@@ -82,6 +83,7 @@ function ArticleTable({ articles, linkContext, onArticleLinked }: ArticleTablePr
             <th>Title</th>
             <th>Author</th>
             <th>Status</th>
+            <th>Deadline</th>
             <th>Published</th>
           </tr>
         </thead>
@@ -104,6 +106,14 @@ function ArticleTable({ articles, linkContext, onArticleLinked }: ArticleTablePr
               </td>
               <td>{article.author_name || "—"}</td>
               <td>{article.status || "—"}</td>
+              <td>
+                <DeadlineBadge
+                  deadline={article.deadline}
+                  status={article.status}
+                  overdue={article.overdue}
+                  daysUntilDeadline={article.days_until_deadline}
+                />
+              </td>
               <td>
                 {article.published_at
                   ? new Date(article.published_at).toLocaleDateString()

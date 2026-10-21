@@ -38,6 +38,8 @@ interface ArticleFormState {
   producer_ids: number[];
   status: string;
   source: string;
+  /** Issue #185 publication deadline as a date-only `YYYY-MM-DD` string. */
+  deadline: string;
 }
 
 /** Reviews per selected vintage; a missing key means "still loading". */
@@ -61,6 +63,7 @@ function ArticleForm({ article, onSaved, onCancel }: ArticleFormProps) {
     producer_ids: article?.producers?.map((p) => p.id) || [],
     status: article?.status || "draft",
     source: article?.source || "manual",
+    deadline: article?.deadline ?? "",
   });
   // Selected vintages keep the wine context so reviews can be listed per vintage.
   const [selectedVintages, setSelectedVintages] = useState<SelectedVintage[]>(
@@ -241,7 +244,7 @@ function ArticleForm({ article, onSaved, onCancel }: ArticleFormProps) {
     }));
   }
 
-  function updateField<K extends "title" | "abstract" | "tag_names">(
+  function updateField<K extends "title" | "abstract" | "tag_names" | "deadline">(
     field: K,
   ) {
     return (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -269,6 +272,8 @@ function ArticleForm({ article, onSaved, onCancel }: ArticleFormProps) {
       vintage_ids: selectedVintages.map((v) => v.id),
       review_ids: linkedReviewIds,
       producer_ids: form.producer_ids,
+      // Date-only (`YYYY-MM-DD`). Empty means "use the API default".
+      deadline: form.deadline || null,
     };
   }
 
@@ -279,6 +284,7 @@ function ArticleForm({ article, onSaved, onCancel }: ArticleFormProps) {
     formData.append("article[body]", form.body);
     formData.append("article[status]", form.status);
     formData.append("article[source]", form.source);
+    if (form.deadline) formData.append("article[deadline]", form.deadline);
     (form.category_ids || []).forEach((id) =>
       formData.append("article[category_ids][]", String(id)),
     );
@@ -563,6 +569,21 @@ function ArticleForm({ article, onSaved, onCancel }: ArticleFormProps) {
             setExistingImageIds(reloaded.image_ids || []);
           }}
         />
+      </div>
+
+      <div className="review-form__field review-form__field--wide">
+        <label htmlFor="article-deadline">Deadline</label>
+        <input
+          id="article-deadline"
+          type="date"
+          value={form.deadline}
+          onChange={updateField("deadline")}
+        />
+        <p className="review-card__comment">
+          Leave blank to default to 14 days from today. Drafts past their
+          deadline are flagged overdue; published and archived articles keep the
+          date but are never flagged.
+        </p>
       </div>
 
       {canSeeSource(user) && (

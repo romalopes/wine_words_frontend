@@ -5,6 +5,7 @@ import CommentLink from "./comments/CommentLink";
 import ContentStatusActions, {
   type ContentStatus,
 } from "./ContentStatusActions";
+import DeadlineBadge from "./DeadlineBadge";
 import type { RoleUser } from "../constants/roles";
 import type { Review } from "../types/review";
 import { SearchHighlight } from "./search";
@@ -116,6 +117,15 @@ export default function ReviewCard({
           {excerpt(review.comment)}
         </p>
       )}
+      {/* Issue #185: drafts only. The badge renders nothing for published or
+          archived content, and it prefers the API's overdue / day count so
+          the card can never disagree with the server. */}
+      <DeadlineBadge
+        deadline={review.deadline}
+        status={review.status}
+        overdue={review.overdue}
+        daysUntilDeadline={review.days_until_deadline}
+      />
 
       <div
         className="wine-management__card-meta"

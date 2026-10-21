@@ -171,6 +171,8 @@ export interface ReviewWritePayload {
   status?: string
   /** Only sent with status transitions (`updateStatus`). */
   published_at?: string | null
+  /** Issue #185: date-only ISO string (`YYYY-MM-DD`); null clears it. */
+  deadline?: string | null
   category_ids?: number[]
   [key: string]: unknown
 }
@@ -210,6 +212,8 @@ export interface ArticleWritePayload {
   status?: string
   /** Only sent with status transitions (`updateStatus`). */
   published_at?: string | null
+  /** Issue #185: date-only ISO string (`YYYY-MM-DD`); null clears it. */
+  deadline?: string | null
   [key: string]: unknown
 }
 

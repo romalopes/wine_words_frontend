@@ -38,6 +38,21 @@ export interface Review {
   wine_image?: string | null
   /** Content origin: manual | substack | wine_front. Visible to Admin/Editor only. */
   source?: string | null
+  /**
+   * Issue #185 publication deadline, sent as a date-only ISO string
+   * (`YYYY-MM-DD`). Drafts past their deadline are flagged overdue; published
+   * and archived records keep the date but are never overdue.
+   *
+   * `undefined` is part of the type because the project compiles with
+   * `exactOptionalPropertyTypes`: an omitted field and an explicitly
+   * `undefined` field are different, and callers build these objects from
+   * partial API responses.
+   */
+  deadline?: string | null | undefined
+  /** True only while the review is a draft past its deadline. */
+  overdue?: boolean | undefined
+  /** Signed days until the deadline (negative once overdue); null when none. */
+  days_until_deadline?: number | null | undefined
   published_at?: string | null
   created_at?: string | null
   updated_at?: string | null
