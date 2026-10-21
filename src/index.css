@@ -2950,6 +2950,22 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* Two-column layout for the producer create/edit form. */
+.producer-form__fields {
+  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.producer-form__field--wide {
+  grid-column: 1 / -1;
+}
+
+/* The Active toggle shares a row with the neighbouring field. */
+.producer-form__active {
+  align-self: end;
+  min-height: 46px;
+}
+
 .wine-catalog-form__field--wide {
   grid-column: 1 / -1;
 }
@@ -3017,7 +3033,8 @@ textarea {
   .wine-profile-form__field-grid,
   .wine-profile-form__field-grid--identity,
   .wine-profile-form__field-grid--description,
-  .wine-catalog-form__fields {
+  .wine-catalog-form__fields,
+  .producer-form__fields {
     grid-template-columns: 1fr;
   }
 

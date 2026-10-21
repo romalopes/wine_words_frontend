@@ -307,8 +307,8 @@ function ProducerForm() {
         <h1>{isEditing ? "Edit Producer" : "Add New Producer"}</h1>
       </div>
       {error && <p className="auth-form__error">{error}</p>}
-      <form onSubmit={handleSubmit} className="wine-form">
-        <div className="wine-form__fields">
+      <form onSubmit={handleSubmit} className="wine-form producer-form">
+        <div className="wine-form__fields producer-form__fields">
           <label className="auth-form__field">
             <span>Name *</span>
             <input
@@ -476,15 +476,7 @@ function ProducerForm() {
               placeholder="Page name or full URL"
             />
           </label>
-          <label
-            className="auth-form__field"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexDirection: "row",
-            }}
-          >
+          <label className="auth-form__field auth-form__field--checkbox producer-form__active">
             <input
               type="checkbox"
               name="active"
@@ -493,7 +485,7 @@ function ProducerForm() {
             />
             <span>Active</span>
           </label>
-          <label className="auth-form__field" style={{ gridColumn: "1 / -1" }}>
+          <label className="auth-form__field producer-form__field--wide">
             <span>Description</span>
             <textarea
               name="description"
@@ -505,7 +497,7 @@ function ProducerForm() {
           </label>
         </div>
 
-        <div className="auth-form__field" style={{ gridColumn: "1 / -1" }}>
+        <div className="auth-form__field producer-form__field--wide">
           <span>Logo</span>
           {existingLogoUrl && !logoRemoved && !logoFile && (
             <div style={{ marginBottom: 8 }}>
@@ -543,7 +535,7 @@ function ProducerForm() {
           <small>PNG, JPEG, GIF, WEBP or SVG — max 10 MB.</small>
         </div>
 
-        <div className="auth-form__field" style={{ gridColumn: "1 / -1" }}>
+        <div className="auth-form__field producer-form__field--wide">
           <RegionSearch
             selected={selectedRegions}
             onChange={setSelectedRegions}
@@ -553,14 +545,14 @@ function ProducerForm() {
           />
         </div>
 
-        <div className="auth-form__field" style={{ gridColumn: "1 / -1" }}>
+        <div className="auth-form__field producer-form__field--wide">
           <GrapeSearch
             selected={selectedGrapes}
             onChange={setSelectedGrapes}
           />
         </div>
 
-        <label className="auth-form__field">
+        <label className="auth-form__field producer-form__field--wide">
           <span>Images (you can select several)</span>
           <input
             type="file"
