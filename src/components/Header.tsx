@@ -425,6 +425,24 @@ function Header() {
                   Producers
                 </NavLink>
                 <NavLink
+                  to="/settings/reviews"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Reviews
+                </NavLink>
+                <NavLink
+                  to="/settings/articles"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Articles
+                </NavLink>
+                <NavLink
                   to="/sources"
                   onClick={() => {
                     setSettingsOpen(false);
