@@ -25,6 +25,8 @@ function Configuration() {
   const [savedTestEmail, setSavedTestEmail] = useState(
     "romalopes@yahoo.com.br",
   );
+  const [mailTransport, setMailTransport] = useState("auto");
+  const [savedMailTransport, setSavedMailTransport] = useState("auto");
 
   const [customSettings, setCustomSettings] = useState<Setting[]>([]);
   const [savedCustomSettings, setSavedCustomSettings] = useState<Setting[]>([]);
@@ -51,6 +53,8 @@ function Configuration() {
         setSavedUseTestEmail(data?.use_test_email === true);
         setTestEmail(data?.test_email || "romalopes@yahoo.com.br");
         setSavedTestEmail(data?.test_email || "romalopes@yahoo.com.br");
+        setMailTransport(data?.mail_transport || "auto");
+        setSavedMailTransport(data?.mail_transport || "auto");
         const settings = Array.isArray(data?.settings) ? data.settings : [];
         setCustomSettings(settings);
         setSavedCustomSettings(settings);
@@ -83,9 +87,11 @@ function Configuration() {
   const logsDirty = logsSaved !== savedLogsSaved;
   const emailDirty =
     useTestEmail !== savedUseTestEmail || testEmail !== savedTestEmail;
+  const mailTransportDirty = mailTransport !== savedMailTransport;
   const customDirty =
     JSON.stringify(customSettings) !== JSON.stringify(savedCustomSettings);
-  const dirty = logsDirty || emailDirty || customDirty;
+  const dirty =
+    logsDirty || emailDirty || mailTransportDirty || customDirty;
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,6 +104,7 @@ function Configuration() {
         payload.use_test_email = useTestEmail;
         payload.test_email = testEmail;
       }
+      if (mailTransportDirty) payload.mail_transport = mailTransport;
       if (customDirty) {
         // `savedCustomSettings` is the snapshot from the last successful load:
         // every row in it is either updated to the current value or, when the
@@ -132,6 +139,8 @@ function Configuration() {
       setSavedUseTestEmail(data?.use_test_email === true);
       setTestEmail(data?.test_email || "romalopes@yahoo.com.br");
       setSavedTestEmail(data?.test_email || "romalopes@yahoo.com.br");
+      setMailTransport(data?.mail_transport || "auto");
+      setSavedMailTransport(data?.mail_transport || "auto");
       const settings = Array.isArray(data?.settings) ? data.settings : [];
       setCustomSettings(settings);
       setSavedCustomSettings(settings);
@@ -330,6 +339,78 @@ function Configuration() {
                 >
                   When enabled, all outgoing mail is redirected to this address
                   with a [TEST] subject prefix.
+                </p>
+              </div>
+              <div
+                style={{
+                  border: "1px solid #ccc",
+                  borderRadius: 6,
+                  padding: 16,
+                  background: "#fafafa",
+                }}
+              >
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: "#333",
+                    marginBottom: 10,
+                  }}
+                >
+                  Mail transport
+                </h2>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 8,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 13,
+                      color: "#555",
+                      flexGrow: 1,
+                      flexShrink: 1,
+                      flexBasis: "0%",
+                    }}
+                  >
+                    Delivery method
+                  </span>
+                  <select
+                    value={mailTransport}
+                    onChange={(e) => setMailTransport(e.target.value)}
+                    disabled={saving}
+                    style={{
+                      width: 260,
+                      padding: "3px 6px",
+                      fontSize: 13,
+                      border: "1px solid #ccc",
+                      borderRadius: 3,
+                      background: "#fff",
+                    }}
+                  >
+                    <option value="auto">
+                      Auto (Brevo → Resend → SMTP → File)
+                    </option>
+                    <option value="brevo">Brevo</option>
+                    <option value="resend">Resend</option>
+                    <option value="smtp">SMTP</option>
+                    <option value="file">File</option>
+                  </select>
+                </label>
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: "#888",
+                    margin: "6px 0 0 0",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Chooses the ActionMailer delivery method. "auto" selects the
+                  first available of Brevo, Resend, SMTP, or File.
                 </p>
               </div>
             </div>

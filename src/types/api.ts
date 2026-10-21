@@ -312,6 +312,7 @@ export interface ConfigurationUpdatePayload {
   logs_saved_to_database?: boolean
   use_test_email?: boolean
   test_email?: string | null
+  mail_transport?: string | null
   [key: string]: unknown
 }
 
