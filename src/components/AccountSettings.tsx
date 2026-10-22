@@ -13,6 +13,7 @@ import type { SocialProvider } from "../types/socialAuth";
 import type { PasswordChange } from "../types/account";
 import type { Identity } from "../types/authentication";
 import type { CountryListItem } from "../types/reference";
+import type { ProducerSummary } from "../types/producer";
 import { useAnalyticsOptOut } from "../hooks/useAnalyticsOptOut";
 
 /** The editable profile form. Every field is a string so the inputs stay controlled. */
@@ -124,10 +125,21 @@ export default function AccountSettings() {
     useState<SocialProvider | null>(null);
   const [disconnectingId, setDisconnectingId] = useState<number | null>(null);
 
+  // My linked producers
+  const [myProducers, setMyProducers] = useState<ProducerSummary[]>([]);
+  const [myProducersLoading, setMyProducersLoading] = useState(true);
+  const [myProducersError, setMyProducersError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
-    Promise.all([accountApi.show(), countriesApi.list().catch(() => [])])
-      .then(([account, countryList]) => {
+    setMyProducersLoading(true);
+    setMyProducersError(null);
+    Promise.all([
+      accountApi.show(),
+      countriesApi.list().catch(() => []),
+      accountApi.myProducers().catch(() => []),
+    ])
+      .then(([account, countryList, producers]) => {
         if (cancelled) return;
         setForm({
           first_name: str(account.first_name),
@@ -143,16 +155,23 @@ export default function AccountSettings() {
           },
         });
         setCountries(Array.isArray(countryList) ? countryList : []);
+        setMyProducers(Array.isArray(producers) ? producers : []);
       })
       .catch((err: unknown) => {
         if (!cancelled) {
           setProfileError(
             err instanceof Error ? err.message : "Failed to load account.",
           );
+          setMyProducersError(
+            err instanceof Error ? err.message : "Failed to load producers.",
+          );
         }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setMyProducersLoading(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -599,6 +618,42 @@ export default function AccountSettings() {
                     </>
                   )}
                 </>
+              )}
+            </div>
+          </section>
+
+          {/* My Producers section */}
+          <section className="account-card">
+            <div className="auth-form">
+              <h2 className="account-card__title">My Producers</h2>
+              {myProducersLoading ? (
+                <p className="wine-management__loading">Loading producers...</p>
+              ) : myProducersError ? (
+                <p className="review-form__error">{myProducersError}</p>
+              ) : myProducers.length === 0 ? (
+                <p className="account-card__lede">
+                  You are not linked to any producers yet. Contact an administrator to link
+                  your account to a producer.
+                </p>
+              ) : (
+                <ul className="producer-links">
+                  {myProducers.map((producer) => (
+                    <li key={producer.id} className="producer-link-item">
+                      <Link to={`/producers/${producer.slug}`} className="producer-link">
+                        <strong>{producer.name}</strong>
+                        <span className="producer-link__meta">
+                          {producer.country || "No country"}
+                        </span>
+                      </Link>
+                      <Link
+                        to={`/producers/${producer.slug}/edit`}
+                        className="btn btn-secondary btn-sm"
+                      >
+                        Edit
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
           </section>

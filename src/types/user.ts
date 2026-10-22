@@ -127,3 +127,27 @@ export interface ImpersonationResponse {
   real_user: User | null
 }
 
+/** Producer membership linking a user to a producer. */
+export interface ProducerMembership {
+  id: number
+  user: {
+    id: number
+    display_name: string | null
+    email: string
+  }
+  producer: {
+    id: number
+    name: string
+    slug: string
+    country: string | null
+  }
+  created_by: { id: number; display_name: string } | null
+  created_at: string
+}
+
+/** Detailed user info returned by GET /api/v1/users/:id (admin only). */
+export interface UserDetail extends AdminUser {
+  analytics_opt_out: boolean
+  producer_memberships: ProducerMembership[]
+}
+

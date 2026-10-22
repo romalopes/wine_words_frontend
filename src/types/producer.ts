@@ -98,3 +98,14 @@ export interface SubscriptionFeature {
   id: number
   name: string
 }
+
+/** Lightweight producer summary for /account/producers endpoint. */
+export interface ProducerSummary {
+  id: number
+  name: string
+  slug: string
+  country: string | null
+  email: string | null
+  producer_type: string | null
+  founded_year: number | null
+}

@@ -15,7 +15,9 @@ import type {
 } from "../types/api"
 import type { Account } from "../types/account"
 import type { User } from "../types/authentication"
+import type { ProducerSummary } from "../types/producer"
 import type { Subscription } from "../types/subscription"
+import type { UserDetail, ProducerMembership } from "../types/user"
 import type { Vintage } from "../types/wine"
 import type { ApiRequester } from "./apiClient"
 
@@ -29,6 +31,12 @@ export function createUsersApi(request: ApiRequester): UsersApi {
     search: (q, page = 1) => request(`/users/search?q=${encodeURIComponent(q)}&page=${page}`, { auth: true }),
     assignRoles: (userId, roleIds) => request(`/users/${userId}/assign_roles`, { method: "PATCH", auth: true, body: { role_ids: roleIds } }),
     assignSubscription: (userId, subscriptionId) => request(`/users/${userId}/assign_subscription`, { method: "PATCH", auth: true, body: { subscription_id: subscriptionId } }),
+    show: (userId) => request<UserDetail>(`/users/${userId}`, { auth: true }),
+    producerMemberships: {
+      list: (userId) => request<ProducerMembership[]>(`/users/${userId}/producer_memberships`, { auth: true }),
+      create: (userId, producerId) => request<ProducerMembership>(`/users/${userId}/producer_memberships`, { method: "POST", auth: true, body: { producer_id: producerId } }),
+      destroy: (userId, membershipId) => request(`/users/${userId}/producer_memberships/${membershipId}`, { method: "DELETE", auth: true }),
+    },
   }
 }
 
@@ -53,6 +61,7 @@ export function createAccountApi(request: ApiRequester): AccountApi {
         auth: true,
         body: { analytics_opt_out: optOut },
       }),
+    myProducers: () => request<ProducerSummary[]>("/account/producers", { auth: true }),
   }
 }
 

@@ -25,6 +25,7 @@ import SourceList from "./SourceList";
 import SourceDetail from "./SourceDetail";
 import ProducerWines from "./ProducerWines";
 import UserRoles from "./UserRoles";
+import UserDetail from "./UserDetail";
 import Categories from "./Categories";
 import CategoryDetail from "./CategoryDetail";
 import Grapes from "./Grapes";
@@ -95,6 +96,7 @@ function AppRoutes() {
         <Route element={<ProducerForm />} path="/producers/new" />
         <Route element={<ProducerForm />} path="/producers/:slug/edit" />
         <Route element={<UserRoles />} path="/users" />
+        <Route element={<UserDetail />} path="/users/:id" />
         <Route element={<Categories />} path="/categories" />
         <Route element={<CategoryDetail />} path="/categories/:slug" />
         <Route element={<Grapes />} path="/grapes" />

@@ -37,6 +37,11 @@ export function canSeeSource(user: RoleUser | null | undefined): boolean {
   return user?.roles?.some((role) => role === ROLES.ADMIN || role === ROLES.EDITOR) ?? false
 }
 
+/** Admins and Editors only — can access user management pages and manage producer memberships. */
+export function canManageUsers(user: RoleUser | null | undefined): boolean {
+  return user?.roles?.some((role) => role === ROLES.ADMIN || role === ROLES.EDITOR) ?? false
+}
+
 export function canAccessPackages(user: RoleUser | null | undefined): boolean {
   return canManageWinesRole(user)
 }
@@ -48,3 +53,12 @@ export function canAccessAnalytics(user: RoleUser | null | undefined): boolean {
 }
 
 export const canAccessArticleProjects = canManageWinesRole
+
+/** Role options for admin UI checkboxes. */
+export const USER_ROLE_OPTIONS = [
+  { id: 1, name: "Admin" },
+  { id: 2, name: "Editor" },
+  { id: 3, name: "Reviewer" },
+  { id: 4, name: "Reader" },
+  { id: 5, name: "Guest" },
+] as const

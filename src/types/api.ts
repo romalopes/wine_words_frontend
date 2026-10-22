@@ -70,12 +70,12 @@ import type {
 } from "./reference"
 import type { Notification } from "./notification"
 import type { Stats } from "./stats"
-import type { Producer, ProducerSearchResult } from "./producer"
+import type { Producer, ProducerSearchResult, ProducerSummary } from "./producer"
 import type { Subscription, SubscriptionWritePayload } from "./subscription"
 import type { Review } from "./review"
 import type { ShipmentTracking } from "./shipmentTracking"
 import type { ImageableType, ImageListResponse, ImageUploadResponse } from "./image"
-import type { AdminUser, RoleOption } from "./user"
+import type { AdminUser, RoleOption, UserDetail, ProducerMembership } from "./user"
 import type { Vintage, Wine, WineListItem } from "./wine"
 import type { WinePackage, WinePackageItem, WinePackageListItem } from "./winePackage"
 import type { ArticleProject, ArticleProjectDetail, ArticleProjectLookupItem, ArticleProjectLookupKind, ArticleProjectNotebook, ArticleProjectWritePayload } from "./articleProject"
@@ -144,6 +144,7 @@ export interface ProducerApi {
   uploadLogo(id: string | number, file: File): Promise<unknown>
   removeLogo(id: string | number): Promise<unknown>
   linkWine(id: string | number, wineId: string | number): Promise<Producer>
+  getMemberships(id: string | number): Promise<ProducerMembership[]>
 }
 
 /** One content source (manual / substack / wine_front) with its item counts. */
@@ -336,6 +337,7 @@ export interface AccountApi {
   update(payload: AccountUpdatePayload): Promise<Account>
   changePassword(payload: PasswordUpdatePayload): Promise<unknown>
   updateAnalyticsOptOut(optOut: boolean): Promise<{ analytics_opt_out: boolean }>
+  myProducers(): Promise<ProducerSummary[]>
 }
 
 export interface UserApi {
@@ -352,6 +354,12 @@ export interface UsersApi {
   search(query: string, page?: number): Promise<ResourceResponse<AdminUser>>
   assignRoles(userId: number, roleIds: number[]): Promise<AdminUser>
   assignSubscription(userId: number, subscriptionId: number | null): Promise<AdminUser>
+  show(userId: number): Promise<UserDetail>
+  producerMemberships: {
+    list(userId: number): Promise<ProducerMembership[]>
+    create(userId: number, producerId: number): Promise<ProducerMembership>
+    destroy(userId: number, membershipId: number): Promise<unknown>
+  }
 }
 
 export interface SubscriptionsApi {

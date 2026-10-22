@@ -16,6 +16,7 @@ import type {
 } from "../types/api"
 import type { Article } from "../types/article"
 import type { Producer, ProducerSearchResult } from "../types/producer"
+import type { ProducerMembership } from "../types/user"
 import type { Review } from "../types/review"
 import type { Wine, WineListItem } from "../types/wine"
 import type { ApiRequester } from "./apiClient"
@@ -108,6 +109,10 @@ export function createProducersApi(request: ApiRequester): ProducerApi {
     },
     linkWine(id, wineId) {
       return request<Producer>(`/producers/${id}/link_wine`, { method: "POST", auth: true, body: { wine_id: String(wineId) } })
+    },
+    /** Get users linked to this producer (producer memberships) */
+    getMemberships(id) {
+      return request<ProducerMembership[]>(`/producers/${id}/memberships`, { auth: true })
     },
   }
 }

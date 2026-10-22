@@ -15,6 +15,7 @@ vi.mock("../services/api", () => ({
   accountApi: {
     show: vi.fn().mockResolvedValue({ first_name: "Élodie", last_name: "Smith", phone: null, date_of_birth: null, address: null }),
     update: vi.fn().mockResolvedValue({}),
+    myProducers: vi.fn().mockResolvedValue([]),
   },
   countriesApi: { list: vi.fn().mockResolvedValue([]) },
   identitiesApi: { list: vi.fn().mockResolvedValue({ identities: [], password_authentication: true }) },

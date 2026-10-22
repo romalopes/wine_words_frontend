@@ -5058,6 +5058,28 @@ textarea {
   cursor: pointer;
 }
 
+.admin-user-roles .role-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: #4a3540;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* User cards double as row links to /users/:id, so strip anchor styling. */
+a.admin-user-card {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.admin-user-card:hover {
+  border-color: #d9c9bf;
+  box-shadow: 0 2px 6px rgba(74, 16, 32, 0.08);
+}
+
 .admin-user-subscription {
   display: flex;
   align-items: center;
@@ -5074,6 +5096,27 @@ textarea {
   border: 1px solid #d9c9bf;
   border-radius: 6px;
   background: #fff;
+}
+
+.admin-user-search {
+  max-width: 420px;
+  margin: 0 0 1.5rem;
+}
+
+.admin-user-search__input {
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.9rem;
+  color: #4a3540;
+  border: 1px solid #d9c9bf;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-user-error {
+  color: #8a1c2e;
+  font-size: 0.875rem;
+  margin: 0 0 1rem;
 }
 
 .admin-user-actions .admin-pagination__btn {
@@ -5109,6 +5152,167 @@ textarea {
 .admin-pagination__btn:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* ===== UserDetail page: role checkboxes (reuses admin-user-roles styling) ===== */
+.role-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.role-checkboxes .checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: #4a3540;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.role-checkboxes .checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  accent-color: #681a2a;
+}
+
+/* ===== UserDetail page: producer search results ===== */
+.producer-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.producer-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #4a3540;
+  background: #fff;
+  border: 1px solid #e5ddd5;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.producer-search-item:hover:not(:disabled) {
+  background: #faf7f2;
+  border-color: #d9c9bf;
+}
+
+.producer-search-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== UserDetail page: membership list ===== */
+.membership-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.membership-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e5ddd5;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.membership-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.membership-info strong {
+  font-size: 0.9rem;
+  color: #4a1020;
+  word-break: break-word;
+}
+
+.membership-info .text-muted {
+  font-size: 0.8rem;
+  color: #7a6a60;
+}
+
+.membership-item .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ===== ProducerDetail page: linked users list ===== */
+.linked-users-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.linked-user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e5ddd5;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.linked-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.linked-user-info strong {
+  font-size: 0.9rem;
+  color: #4a1020;
+  word-break: break-word;
+}
+
+.linked-user-info .text-muted {
+  font-size: 0.8rem;
+  color: #7a6a60;
+}
+
+.linked-user-item .user-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.linked-user-item .role-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem;
+  background: #f6e8ea;
+  color: #4a1020;
+  border: 1px solid #e8cfd5;
+  border-radius: 999px;
 }
 
 /* ===== ImageManager (wine, article, review, wine-package images) ===== */
