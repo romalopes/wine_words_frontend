@@ -111,15 +111,15 @@ export interface CategoryDetail {
 }
 
 /**
- * A tasting dimension the API stores. `low`/`high` are the scale-end labels
- * ("Soft" / "Sharp") shown under the quiz sliders — string columns in Rails,
- * and rendered directly as text.
+ * A tasting dimension the API stores. `labels` is the server-authoritative
+ * description for each integer score on the shared 1–5 tasting scale.
  */
 export interface TasteParameter {
   id: number
   slug: string
   label: string
-  low: string
-  high: string
+  labels: Record<string, string>
+  low?: string
+  high?: string
   help?: string | null
 }

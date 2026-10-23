@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { tasteScoreText } from "../utils/tasteParameters";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   winesApi,
@@ -109,18 +110,18 @@ function WineDetail() {
   const [editingReview, setEditingReview] = useState<
     (Review & { vintageId: number }) | null
   >(null);
-  const [tasteLabels, setTasteLabels] = useState<Record<string, string>>({});
+  const [tasteParameters, setTasteParameters] = useState<Record<string, import("../types/catalog").TasteParameter>>({});
 
   // Map taste parameter slug -> human label for the detail view.
   useEffect(() => {
     tasteParametersApi
       .list()
       .then((params) => {
-        const map: Record<string, string> = {};
+        const map: Record<string, import("../types/catalog").TasteParameter> = {};
         (Array.isArray(params) ? params : []).forEach((p) => {
-          if (p?.slug) map[p.slug] = p.label || p.slug;
+          if (p?.slug) map[p.slug] = p;
         });
-        setTasteLabels(map);
+        setTasteParameters(map);
       })
       .catch(() => {});
   }, []);
@@ -300,15 +301,18 @@ function WineDetail() {
               <p className="wine-profile-detail__eyebrow">Taste profile</p>
               <h2>On the palate</h2>
               <div className="wine-profile-detail__params">
-                {wine.parameters.map((param) => (
-                  <div key={param.id || param.taste_parameter_id} className="wine-profile-detail__param">
-                    <div className="wine-profile-detail__param-heading">
-                      <span>{tasteLabels[param.taste_parameter_slug] || param.taste_parameter_slug}</span>
-                      <strong>{param.score}<small>/5</small></strong>
-                    </div>
-                    <div className="wine-meter" aria-label={`${tasteLabels[param.taste_parameter_slug] || param.taste_parameter_slug}: ${param.score} out of 5`}><span style={{ width: `${(param.score / 5) * 100}%` }} /></div>
-                  </div>
-                ))}
+                  {wine.parameters.map((param) => {
+                    const tasteParameter = tasteParameters[param.taste_parameter_slug];
+                    return (
+                      <div key={param.id || param.taste_parameter_id} className="wine-profile-detail__param">
+                        <div className="wine-profile-detail__param-heading">
+                          <span>{tasteParameter?.label || param.taste_parameter_slug}</span>
+                          <strong>{tasteParameter ? tasteScoreText(tasteParameter, param.score) : `${param.score} / 5`}</strong>
+                        </div>
+                        <div className="wine-meter" aria-label={`${tasteParameter?.label || param.taste_parameter_slug}: ${param.score} out of 5`}><span style={{ width: `${(param.score / 5) * 100}%` }} /></div>
+                      </div>
+                    );
+                  })}
               </div>
             </section>
           )}

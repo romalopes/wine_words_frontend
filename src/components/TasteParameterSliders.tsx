@@ -1,4 +1,5 @@
 import type { TasteParameter } from "../types/catalog";
+import { tasteEndpoints, tasteScoreText } from "../utils/tasteParameters";
 
 interface TasteParameterSlidersProps {
   parameters: TasteParameter[];
@@ -27,11 +28,12 @@ function TasteParameterSliders({
       <div className="wine-form__params">
         {parameters.map((parameter, index) => {
           const score = getScore(parameter, index);
+          const [low, high] = tasteEndpoints(parameter);
           return (
             <label className="wine-slider" key={parameter.slug}>
               <span className="wine-slider__top">
                 <strong>{parameter.label}</strong>
-                <output>{score}</output>
+                <output>{tasteScoreText(parameter, score)}</output>
               </span>
               <input
                 max="5"
@@ -43,8 +45,8 @@ function TasteParameterSliders({
                 }
               />
               <span className="wine-slider__scale">
-                <small>{parameter.low}</small>
-                <small>{parameter.high}</small>
+                <small>{low}</small>
+                <small>{high}</small>
               </span>
             </label>
           );

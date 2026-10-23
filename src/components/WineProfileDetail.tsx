@@ -4,6 +4,8 @@ import { wineProfilesApi, tasteParametersApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import type { UserWineProfile } from "../types/user";
+import type { TasteParameter } from "../types/catalog";
+import { tasteScoreText } from "../utils/tasteParameters";
 
 function asList(value: string[] | string | null | undefined): string[] {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -17,7 +19,7 @@ export default function WineProfileDetail() {
   const [profile, setProfile] = useState<UserWineProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tasteLabels, setTasteLabels] = useState<Record<string, string>>({});
+  const [tasteParameters, setTasteParameters] = useState<Record<string, TasteParameter>>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -27,9 +29,9 @@ export default function WineProfileDetail() {
           tasteParametersApi.list(),
         ]);
         setProfile(profileRes);
-        setTasteLabels(labelsRes.reduce<Record<string, string>>((labels, parameter) => {
-          labels[parameter.slug] = parameter.label;
-          return labels;
+        setTasteParameters(labelsRes.reduce<Record<string, TasteParameter>>((parameters, parameter) => {
+          parameters[parameter.slug] = parameter;
+          return parameters;
         }, {}));
       } catch (err) {
         console.error(err);
@@ -99,8 +101,8 @@ export default function WineProfileDetail() {
                 <div className="wine-profile-detail__params">
                   {parameters.map(([parameterSlug, score]) => (
                     <div key={parameterSlug} className="wine-profile-detail__param">
-                      <div className="wine-profile-detail__param-heading"><span>{tasteLabels[parameterSlug] || parameterSlug}</span><strong>{score}<small>/5</small></strong></div>
-                      <div className="wine-meter" aria-label={`${tasteLabels[parameterSlug] || parameterSlug}: ${score} out of 5`}><span style={{ width: `${(score / 5) * 100}%` }} /></div>
+                      <div className="wine-profile-detail__param-heading"><span>{tasteParameters[parameterSlug]?.label || parameterSlug}</span><strong>{tasteParameters[parameterSlug] ? tasteScoreText(tasteParameters[parameterSlug], score) : `${score} / 5`}</strong></div>
+                      <div className="wine-meter" aria-label={`${tasteParameters[parameterSlug]?.label || parameterSlug}: ${score} out of 5`}><span style={{ width: `${(score / 5) * 100}%` }} /></div>
                     </div>
                   ))}
                 </div>

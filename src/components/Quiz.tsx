@@ -7,6 +7,7 @@ import type { UserWineProfile } from "../types/user";
 import type { Wine } from "../types/wine";
 import { errorMessage } from "../utils/errors";
 import { toStringList } from "../utils/stringList";
+import { tasteEndpoints, tasteScoreText } from "../utils/tasteParameters";
 
 /** Slug -> score, the shape `calculateMatch` scores against. */
 type ScoreMap = Record<string, number>;
@@ -305,27 +306,31 @@ function Quiz() {
         {selectedWine && (
           <div className="wine-test__grid">
             <div className="wine-sliders">
-              {tasteParams.map((param) => (
-                <label className="wine-slider" key={param.slug}>
-                  <span className="wine-slider__top">
-                    <strong>{param.label}</strong>
-                    <output>{testTaste[param.slug]}</output>
-                  </span>
-                  <input
-                    max="5"
-                    min="1"
-                    onChange={(event) =>
-                      handleTestTasteChange(param.slug, event.target.value)
-                    }
-                    type="range"
-                    value={testTaste[param.slug]}
-                  />
-                  <span className="wine-slider__scale">
-                    <small>{param.low}</small>
-                    <small>{param.high}</small>
-                  </span>
-                </label>
-              ))}
+              {tasteParams.map((param) => {
+                const [low, high] = tasteEndpoints(param);
+                const score = testTaste[param.slug] ?? 3;
+                return (
+                  <label className="wine-slider" key={param.slug}>
+                    <span className="wine-slider__top">
+                      <strong>{param.label}</strong>
+                      <output>{tasteScoreText(param, score)}</output>
+                    </span>
+                    <input
+                      max="5"
+                      min="1"
+                      onChange={(event) =>
+                        handleTestTasteChange(param.slug, event.target.value)
+                      }
+                      type="range"
+                      value={score}
+                    />
+                    <span className="wine-slider__scale">
+                      <small>{low}</small>
+                      <small>{high}</small>
+                    </span>
+                  </label>
+                );
+              })}
             </div>
 
             <aside className="wine-test-result" aria-live="polite">
