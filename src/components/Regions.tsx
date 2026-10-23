@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { regionsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageGrapes } from "../constants/roles";
@@ -138,6 +138,8 @@ function RegionTreeNode({
 }
 
 function Regions() {
+  const { slug: editSlug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const canManage = isAdmin(user) || canManageGrapes(user);
   // The tree response is the only payload carrying both the country columns the
@@ -219,6 +221,41 @@ function Regions() {
     // carry it. So the tree response is the single source for that select.
   }, [loadTreeData]);
 
+  useEffect(() => {
+    const slug = editSlug;
+    if (!slug) return;
+
+    let cancelled = false;
+
+    async function loadRegionForEdit() {
+      try {
+        setError(null);
+        const region = await regionsApi.show(slug);
+        if (cancelled) return;
+
+        setMode("edit");
+        setTargetRegionId(String(region.id));
+        setEditingId(region.id);
+        setForm({
+          name: region.name,
+          country_id: region.country_id == null ? "" : String(region.country_id),
+          parent_id: region.parent_id == null ? "" : String(region.parent_id),
+          is_state: Boolean(region.is_state),
+          is_appellation: Boolean(region.is_appellation),
+        });
+        setShowForm(true);
+      } catch (err) {
+        if (!cancelled) setError(errorMessage(err, "Failed to load region"));
+      }
+    }
+
+    void loadRegionForEdit();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [editSlug]);
+
   function updateField<K extends keyof RegionFormValues>(
     field: K,
     value: RegionFormValues[K],
@@ -232,6 +269,7 @@ function Regions() {
     setTargetRegionId(null);
     setShowForm(false);
     setForm(emptyForm);
+    if (editSlug) navigate("/regions");
   }
 
   function openCreateForm() {

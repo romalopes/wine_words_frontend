@@ -8,6 +8,10 @@ import { canManageWinesRole } from "../constants/roles";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
 import { SearchHighlight, SearchInput } from "../components/search";
+import WineProfileTable from "./WineProfileTable";
+import styles from "./WineProfileList.module.css";
+
+type ViewMode = "cards" | "list";
 
 function WineProfileCard({
   profile,
@@ -90,6 +94,7 @@ export default function WineProfileList() {
   const { user } = useAuth();
   const canManageWines = canManageWinesRole(user);
   const [searchValue, setSearchValue] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
 
   const effectiveSearchTerm = searchValue.trim();
 
@@ -144,25 +149,47 @@ export default function WineProfileList() {
         )}
       </div>
 
-      <div style={{ marginBottom: "1rem" }}>
-        <SearchInput
-          value={searchValue}
-          onChange={(value) => { setSearchValue(value); setPage(1); }}
-          placeholder="Search wine profiles by name, notes, grapes, or regions…"
-        />
-        <p
-          style={{
-            fontSize: "0.8rem",
-            color: "#666",
-            margin: "0.35rem 0 0",
-          }}
-        >
-          Matches wine profile names, notes, grapes, and regions
-          {searchValue.trim() !== "" &&
-            searchValue.trim().length < 3 && // MIN_SEARCH_LENGTH from searchParams
-              ` — keep typing (at least 3 characters)`}
-          .
-        </p>
+      <div className={styles.resultsToolbar}>
+        <div className={styles.searchArea}>
+          <SearchInput
+            value={searchValue}
+            onChange={(value) => { setSearchValue(value); setPage(1); }}
+            placeholder="Search wine profiles by name, notes, grapes, or regions…"
+          />
+          <p
+            style={{
+              fontSize: "0.8rem",
+              color: "#666",
+              margin: "0.35rem 0 0",
+            }}
+          >
+            Matches wine profile names, notes, grapes, and regions
+            {searchValue.trim() !== "" &&
+              searchValue.trim().length < 3 &&
+                ` — keep typing (at least 3 characters)`}
+            .
+          </p>
+        </div>
+
+        <div className={styles.viewToggle} aria-label="Wine profile view">
+          <span className={styles.viewToggleLabel}>View</span>
+          <button
+            type="button"
+            className={`${styles.viewToggleButton} ${viewMode === "cards" ? styles.viewToggleButtonActive : ""}`}
+            aria-pressed={viewMode === "cards"}
+            onClick={() => setViewMode("cards")}
+          >
+            Cards
+          </button>
+          <button
+            type="button"
+            className={`${styles.viewToggleButton} ${viewMode === "list" ? styles.viewToggleButtonActive : ""}`}
+            aria-pressed={viewMode === "list"}
+            onClick={() => setViewMode("list")}
+          >
+            List
+          </button>
+        </div>
       </div>
 
       {wineProfiles.length === 0 ? (
@@ -178,11 +205,19 @@ export default function WineProfileList() {
           )}
         </div>
       ) : (
-        <div className="content-grid">
-          {wineProfiles.map((profile) => (
-            <WineProfileCard key={profile.slug} profile={profile} query={effectiveSearchTerm} />
-          ))}
-        </div>
+        viewMode === "cards" ? (
+          <div className="content-grid">
+            {wineProfiles.map((profile) => (
+              <WineProfileCard key={profile.slug} profile={profile} query={effectiveSearchTerm} />
+            ))}
+          </div>
+        ) : (
+          <WineProfileTable
+            profiles={wineProfiles}
+            canManage={canManageWines}
+            query={effectiveSearchTerm}
+          />
+        )
       )}
 
       <Pagination

@@ -106,6 +106,7 @@ function AppRoutes() {
         <Route element={<Countries />} path="/countries" />
         <Route element={<CountryDetail />} path="/countries/:slug" />
         <Route element={<Regions />} path="/regions" />
+        <Route element={<Regions />} path="/regions/:slug/edit" />
         <Route element={<RegionDetail />} path="/regions/:slug" />
         <Route element={<WineProfileList />} path="/wine-profiles" />
         <Route element={<WineProfileForm />} path="/wine-profiles/new" />

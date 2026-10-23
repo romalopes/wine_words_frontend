@@ -1,0 +1,69 @@
+.resultsToolbar {
+  align-items: flex-end;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.searchArea {
+  flex: 1;
+  min-width: 0;
+}
+
+.viewToggle {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.viewToggleLabel {
+  color: #5d514b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.viewToggleButton {
+  background: #fff;
+  border: 1px solid #d7c8bb;
+  border-radius: 4px;
+  color: #4f4440;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+}
+
+.viewToggleButton:hover {
+  background: #f5f0eb;
+}
+
+.viewToggleButtonActive {
+  background: #27615e;
+  border-color: #27615e;
+  color: #fff;
+}
+
+.viewToggleButtonActive:hover {
+  background: #1e4e4b;
+}
+
+.viewToggleButton:focus-visible {
+  outline: 3px solid rgba(39, 97, 94, 0.3);
+  outline-offset: 2px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+  .resultsToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .viewToggle {
+    justify-content: flex-end;
+  }
+}
