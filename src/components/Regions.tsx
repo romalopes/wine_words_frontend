@@ -222,7 +222,7 @@ function Regions() {
   }, [loadTreeData]);
 
   useEffect(() => {
-    const slug = editSlug;
+    const slug = editSlug ?? "";
     if (!slug) return;
 
     let cancelled = false;

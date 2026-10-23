@@ -212,125 +212,39 @@ function WineDetail() {
 
   if (!wine) return null;
 
+  const colorClass = wine.color?.toLowerCase().replace(/\s+/g, "-") || "unknown";
+  const categories = Array.isArray(wine.categories) ? wine.categories : [];
+  const grapes = Array.isArray(wine.grapes) ? wine.grapes : [];
+  const regions = Array.isArray(wine.regions) ? wine.regions : [];
+
   return (
-    <div className="wine-app">
+    <div className="wine-app wine-detail-page">
       <BackToSource />
       <Link to="/wines" className="wine-detail__back">
         &larr; Back to Wines
       </Link>
-      <div className="wine-detail__header">
+      <header className="wine-detail-page__hero">
         <div>
-          <p className="wine-kicker">{wine.producer?.name}</p>
-          <h1>{wine.name}</h1>
+          <p className="wine-kicker">{wine.producer?.name || "Wine"}</p>
+          <div className="wine-detail-page__title-row">
+            <h1>{wine.name}</h1>
+            {wine.color && <span className={`wine-profile-detail__color wine-profile-detail__color--${colorClass}`}>{wine.color}</span>}
+          </div>
+          <p className="wine-detail-page__intro">
+            {wine.prompt || "Explore this bottle’s origins, style, and tasting profile."}
+          </p>
           <LikeButton
             kind="wine"
             identifier={wine.slug || wine.id}
             initialLiked={wine.liked_by_current_user}
             initialCount={wine.likes_count}
             onChange={({ liked, likes_count }) =>
-              setWine((prev) =>
-                prev
-                  ? { ...prev, liked_by_current_user: liked, likes_count }
-                  : prev,
-              )
+              setWine((prev) => prev ? { ...prev, liked_by_current_user: liked, likes_count } : prev)
             }
           />
         </div>
-        <span
-          className={`wine-management__color-badge wine-management__color-badge--${wine.color?.toLowerCase()}`}
-        >
-          {wine.color}
-        </span>
-      </div>
-
-      {wine.prompt && <p className="wine-detail__prompt">{wine.prompt}</p>}
-
-      <section className="detail-card">
-        <div className="wine-detail__media-facts">
-          {images.length > 0 && (
-            <span className="wine-detail__images">
-              {images.map((src, i) => (
-                <AdaptiveImage key={i} src={src} alt={`${wine.name} ${i + 1}`} />
-              ))}
-            </span>
-          )}
-          <ul className="wine-facts" aria-label="Wine details">
-          <li>
-            <strong>Producer:</strong>{" "}
-            {wine.producer ? (
-              <Link to={returnToLink(`/producers/${wine.producer.slug}`)}>
-                {wine.producer.name}
-              </Link>
-            ) : (
-              "—"
-            )}
-          </li>
-          <li>
-            <strong>Categories:</strong>{" "}
-            {Array.isArray(wine.categories) && wine.categories.length > 0
-              ? wine.categories.map((cat, i) => (
-                  <span key={cat.id}>
-                    <Link to={returnToLink(`/categories/${cat.slug}`)}>
-                      {cat.name}
-                    </Link>
-                    {i < (wine.categories?.length ?? 0) - 1 ? ", " : ""}
-                  </span>
-                ))
-              : "—"}
-          </li>
-          <li>
-            <strong>Color:</strong> {wine.color || "—"}
-          </li>
-          <li>
-            <strong>Sparkling:</strong> {wine.sparkling ? "Yes ✨" : "No"}
-          </li>
-          <li>
-            <strong>Closure:</strong> {wine.closure || "—"}
-          </li>
-          <li>
-            <strong>Alcohol:</strong>{" "}
-            {wine.alcohol_percentage != null
-              ? `${wine.alcohol_percentage}%`
-              : "—"}
-          </li>
-          <li>
-            <strong>Volume:</strong>{" "}
-            {wine.volume_ml != null
-              ? (volumeLabel(wine.volume_ml) ?? `${wine.volume_ml}ml`)
-              : "—"}
-          </li>
-          <li>
-            <strong>Grapes:</strong>{" "}
-            {Array.isArray(wine.grapes) && wine.grapes.length > 0
-              ? wine.grapes.map((grape, grapeIndex) => (
-                  <span key={grape.id || grapeIndex}>
-                    {grapeIndex > 0 && ", "}
-                    <Link to={returnToLink(`/grapes/${grape.slug}`)}>
-                      {grape.name}
-                    </Link>
-                  </span>
-                ))
-              : "—"}
-          </li>
-          <li>
-            <strong>Regions:</strong>{" "}
-            {Array.isArray(wine.regions) && wine.regions.length > 0
-              ? wine.regions.map((region, regionIndex) => (
-                  <span key={region.id || regionIndex}>
-                    {regionIndex > 0 && ", "}
-                    <Link to={returnToLink(`/regions/${region.slug}`)}>
-                      {region.name}
-                    </Link>
-                  </span>
-                ))
-              : "—"}
-          </li>
-          </ul>
-        </div>
-      </section>
-
-      {canManageWines && (
-        <div className="wine-detail__actions">
+        {canManageWines && (
+          <div className="wine-detail-page__hero-actions">
           <Link to={`/wines/${wine.slug}/edit`} className="auth-form__submit">
             Edit Wine
           </Link>
@@ -355,10 +269,70 @@ function WineDetail() {
           >
             Delete Wine
           </button>
-        </div>
-      )}
+          </div>
+        )}
+      </header>
 
-      <div className="wine-detail__section">
+      <div className="wine-detail-page__layout">
+        <div className="wine-detail-page__main">
+          <section className="wine-detail-page__card">
+            <p className="wine-profile-detail__eyebrow">Bottle details</p>
+            <h2>About this wine</h2>
+            <div className="wine-detail-page__bottle">
+              {images.length > 0 && (
+                <span className="wine-detail__images">
+                  {images.map((src, i) => <AdaptiveImage key={i} src={src} alt={`${wine.name} ${i + 1}`} />)}
+                </span>
+              )}
+              <dl className="wine-detail-page__specs">
+                <div><dt>Producer</dt><dd>{wine.producer ? <Link to={returnToLink(`/producers/${wine.producer.slug}`)}>{wine.producer.name}</Link> : "Not specified"}</dd></div>
+                <div><dt>Color</dt><dd>{wine.color || "Not specified"}</dd></div>
+                <div><dt>Style</dt><dd>{wine.sparkling ? "Sparkling" : wine.fortified ? "Fortified" : "Still"}</dd></div>
+                <div><dt>Closure</dt><dd>{wine.closure || "Not specified"}</dd></div>
+                <div><dt>Alcohol</dt><dd>{wine.alcohol_percentage != null ? `${wine.alcohol_percentage}%` : "Not specified"}</dd></div>
+                <div><dt>Volume</dt><dd>{wine.volume_ml != null ? (volumeLabel(wine.volume_ml) ?? `${wine.volume_ml}ml`) : "Not specified"}</dd></div>
+              </dl>
+            </div>
+          </section>
+
+          {wine.parameters && wine.parameters.length > 0 && (
+            <section className="wine-detail-page__card">
+              <p className="wine-profile-detail__eyebrow">Taste profile</p>
+              <h2>On the palate</h2>
+              <div className="wine-profile-detail__params">
+                {wine.parameters.map((param) => (
+                  <div key={param.id || param.taste_parameter_id} className="wine-profile-detail__param">
+                    <div className="wine-profile-detail__param-heading">
+                      <span>{tasteLabels[param.taste_parameter_slug] || param.taste_parameter_slug}</span>
+                      <strong>{param.score}<small>/5</small></strong>
+                    </div>
+                    <div className="wine-meter" aria-label={`${tasteLabels[param.taste_parameter_slug] || param.taste_parameter_slug}: ${param.score} out of 5`}><span style={{ width: `${(param.score / 5) * 100}%` }} /></div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        <aside className="wine-detail-page__origins" aria-label="Wine origins and categories">
+          <div className="wine-detail-page__origin-group">
+            <p className="wine-profile-detail__eyebrow">Categories</p>
+            {categories.length > 0 ? <div className="wine-profile-detail__chips">{categories.map((category) => <Link key={category.id} to={returnToLink(`/categories/${category.slug}`)} className="wine-profile-detail__chip">{category.name}</Link>)}</div> : <p className="wine-profile-detail__empty">Not specified</p>}
+          </div>
+          <div className="wine-profile-detail__origin-divider" />
+          <div className="wine-detail-page__origin-group">
+            <p className="wine-profile-detail__eyebrow">Grapes</p>
+            {grapes.length > 0 ? <div className="wine-profile-detail__chips">{grapes.map((grape) => <Link key={grape.id} to={returnToLink(`/grapes/${grape.slug}`)} className="wine-profile-detail__chip">{grape.name}</Link>)}</div> : <p className="wine-profile-detail__empty">Not specified</p>}
+          </div>
+          <div className="wine-profile-detail__origin-divider" />
+          <div className="wine-detail-page__origin-group">
+            <p className="wine-profile-detail__eyebrow">Regions</p>
+            {regions.length > 0 ? <div className="wine-profile-detail__chips">{regions.map((region) => <Link key={region.id} to={returnToLink(`/regions/${region.slug}`)} className="wine-profile-detail__chip wine-profile-detail__chip--region">{region.name}</Link>)}</div> : <p className="wine-profile-detail__empty">Not specified</p>}
+          </div>
+        </aside>
+      </div>
+
+      <div className="wine-detail__section wine-detail-page__vintages-section">
         <h2>Vintages</h2>
         {canManageWines &&
           (showVintageForm ? (
@@ -681,29 +655,6 @@ function WineDetail() {
       </div>
 
       <CommentSection kind="wine" identifier={wine.slug || wine.id} />
-
-      {wine.parameters && wine.parameters.length > 0 && (
-        <div className="wine-detail__section">
-          <h2>Taste Parameters</h2>
-          <div className="wine-detail__params">
-            {wine.parameters.map((param) => (
-              <div
-                key={param.id || param.taste_parameter_id}
-                className="wine-detail__param"
-              >
-                <span className="wine-detail__param-label">
-                  {tasteLabels[param.taste_parameter_slug] ||
-                    param.taste_parameter_slug}
-                </span>
-                <div className="wine-meter">
-                  <span style={{ width: `${(param.score / 5) * 100}%` }} />
-                </div>
-                <span className="wine-detail__param-score">{param.score}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
