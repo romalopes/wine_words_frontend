@@ -69,6 +69,48 @@ it("loads the account names, saves changes without username, and refreshes the h
   expect(vi.mocked(accountApi.update).mock.calls[0]![0]).not.toHaveProperty("display_name");
 });
 
+describe("My Producers", () => {
+  it("shows membership badges and only offers Edit when the API allows it", async () => {
+    authState.user = makeUser(null);
+    vi.mocked(accountApi.myProducers).mockResolvedValueOnce([
+      {
+        id: 7,
+        name: "Domaines Ott",
+        slug: "domaines-ott",
+        country: "France",
+        email: null,
+        producer_type: "winery",
+        founded_year: 1896,
+        membership_id: 11,
+        membership_type: "owner",
+        can_edit: true,
+      },
+      {
+        id: 8,
+        name: "Casa Nova",
+        slug: "casa-nova",
+        country: "Portugal",
+        email: null,
+        producer_type: "winery",
+        founded_year: null,
+        membership_id: 12,
+        membership_type: "contributor",
+        can_edit: false,
+      },
+    ]);
+
+    renderPage();
+
+    expect(await screen.findByText("Domaines Ott")).toBeInTheDocument();
+    expect(screen.getByText("Owner")).toBeInTheDocument();
+    expect(screen.getByText("Contributor")).toBeInTheDocument();
+
+    const editLinks = screen.getAllByRole("link", { name: "Edit" });
+    expect(editLinks).toHaveLength(1);
+    expect(editLinks[0]).toHaveAttribute("href", "/producers/domaines-ott/edit");
+  });
+});
+
 describe("Membership card", () => {
   it("shows the paid plan name with a manage link to /subscribe", async () => {
     authState.user = makeUser("Consumer");

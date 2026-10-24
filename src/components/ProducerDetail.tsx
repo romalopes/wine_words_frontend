@@ -1,31 +1,50 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import DetailHero from "./DetailHero";
-import { producersApi, winesApi } from "../services/api";
+import { producersApi, usersApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
-import { canManageWinesRole } from "../constants/roles";
+import {
+  canManageWinesRole,
+  canDeleteProducers,
+  PRODUCER_MEMBERSHIP_TYPES,
+  producerMembershipLabel,
+} from "../constants/roles";
 import WineTable from "./WineTable";
 import RegionSearch, { type SelectedRegion } from "./RegionSearch";
 import GrapeSearch, { type SelectedGrape } from "./GrapeSearch";
 import BackToSource from "./BackToSource";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
-import type { Producer } from "../types/producer";
+import type { Producer, ProducerMembershipType } from "../types/producer";
 import type { WineListItem } from "../types/wine";
-import type { QueryParams } from "../types/common";
-import type { ProducerMembership } from "../types/user";
+import { responseItems, type QueryParams } from "../types/common";
+import type { AdminUser, ProducerMembership } from "../types/user";
+import { errorMessage, errorText } from "../utils/errors";
+import { canManageProducerMembership } from "../constants/roles";
 
 function ProducerDetail() {
   const { slug = "" } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  // Admins, Reviewers and Editors may manage producers / link wines.
-  const canManageProducers = canManageWinesRole(user);
   const [producer, setProducer] = useState<Producer | null>(null);
+  // Admins, Reviewers and Editors may manage producers / link wines. Owners and
+  // managers of this producer also get the edit affordances (issue #191); the
+  // API's `can_edit` is authoritative, the role check only covers the window
+  // before the producer payload arrives.
+  const canManageProducers = canManageWinesRole(user) || producer?.can_edit === true;
+  const canDeleteProducer = canDeleteProducers(user);
+  const canManageMemberships = canManageProducerMembership(user);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [memberships, setMemberships] = useState<ProducerMembership[]>([]);
   const [membershipsLoading, setMembershipsLoading] = useState(false);
+  const [userQuery, setUserQuery] = useState("");
+  const [userResults, setUserResults] = useState<AdminUser[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [linkingUserId, setLinkingUserId] = useState<number | null>(null);
+  const [membershipError, setMembershipError] = useState<string | null>(null);
+  const [newMembershipType, setNewMembershipType] =
+    useState<ProducerMembershipType>("manager");
 
   // Inline wine search for linking wines to this producer.
   const [wineQuery, setWineQuery] = useState("");
@@ -85,6 +104,109 @@ function ProducerDetail() {
       mounted = false;
     };
   }, [producer?.id]);
+
+  // Debounced user search for Admins/Editors linking users from the producer
+  // page. `usersApi.search` returns a pagination envelope because it sends a
+  // page parameter, so normalise it with `responseItems`.
+  useEffect(() => {
+    if (!canManageMemberships) return;
+
+    const query = userQuery.trim();
+    if (!query) {
+      setUserResults([]);
+      setSearchingUsers(false);
+      return;
+    }
+
+    let cancelled = false;
+    setSearchingUsers(true);
+    const timer = window.setTimeout(() => {
+      setMembershipError(null);
+      usersApi
+        .search(query)
+        .then((data) => {
+          if (!cancelled) setUserResults(responseItems(data));
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            setUserResults([]);
+            setMembershipError(errorMessage(err, "Failed to search users"));
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setSearchingUsers(false);
+        });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [canManageMemberships, userQuery]);
+
+  const linkedUserIds = new Set(memberships.map((membership) => membership.user.id));
+  const availableUserResults = userResults.filter((result) => !linkedUserIds.has(result.id));
+
+  async function handleAddMembership(targetUser: AdminUser) {
+    if (!producer) return;
+
+    setLinkingUserId(targetUser.id);
+    setMembershipError(null);
+    try {
+      const membership = await usersApi.producerMemberships.create(
+        targetUser.id,
+        producer.id,
+        newMembershipType,
+      );
+      setMemberships((current) => [...current, membership]);
+      setUserQuery("");
+      setUserResults([]);
+    } catch (err) {
+      setMembershipError(
+        errorText(err) || errorMessage(err, "Failed to link user to producer"),
+      );
+    } finally {
+      setLinkingUserId(null);
+    }
+  }
+
+  const handleRemoveMembership = useCallback(async (membershipId: number) => {
+    if (!window.confirm("Are you sure you want to unlink this producer?")) return;
+    setMembershipsLoading(true);
+    try {
+      await usersApi.producerMemberships.destroy(user!.id, membershipId);
+      setMemberships((prev) => prev.filter((m) => m.id !== membershipId));
+    } catch (err) {
+      setMembershipError("Failed to unlink producer");
+      console.error(err);
+    } finally {
+      setMembershipsLoading(false);
+    }
+  }, [user, slug]);
+
+  const handleMembershipTypeChange = useCallback(
+    async (membershipId: number, membershipType: ProducerMembershipType) => {
+      setMembershipsLoading(true);
+      try {
+        const updated = await usersApi.producerMemberships.update(
+          user!.id,
+          membershipId,
+          membershipType,
+        );
+        setMemberships((prev) =>
+          prev.map((membership) =>
+            membership.id === membershipId ? updated : membership,
+          ),
+        );
+      } catch (err) {
+        setMembershipError("Failed to change membership type");
+        console.error(err);
+      } finally {
+        setMembershipsLoading(false);
+      }
+    },
+    [user, slug],
+  );
 
   // Fetch paginated wines for this producer
   const {
@@ -361,29 +483,32 @@ function ProducerDetail() {
           >
             Edit Producer
           </Link>
-          <button
-            className="wine-management__delete-btn"
-            onClick={async () => {
-              if (
-                !window.confirm(
-                  `Delete "${producer.name}"? This action cannot be undone.`,
+          {canDeleteProducer && (
+            <button
+              className="wine-management__delete-btn"
+              type="button"
+              onClick={async () => {
+                if (
+                  !window.confirm(
+                    `Delete "${producer.name}"? This action cannot be undone.`,
+                  )
                 )
-              )
-                return;
-              try {
-                await producersApi.destroy(producer.slug);
-                navigate("/producers", { replace: true });
-              } catch (err) {
-                alert(
-                  err instanceof Error
-                    ? err.message
-                    : "Failed to delete producer",
-                );
-              }
-            }}
-          >
-            Delete Producer
-          </button>
+                  return;
+                try {
+                  await producersApi.destroy(producer.slug);
+                  navigate("/producers", { replace: true });
+                } catch (err) {
+                  alert(
+                    err instanceof Error
+                      ? err.message
+                      : "Failed to delete producer",
+                  );
+                }
+              }}
+            >
+              Delete Producer
+            </button>
+          )}
         </div>
       )}
 
@@ -474,18 +599,127 @@ function ProducerDetail() {
 
       {/* Linked Users section - visible to editors/admins/reviewers */}
       {canManageProducers && (
-        <div className="wine-detail__section">
-          <h2>Linked Users</h2>
+        <div className="wine-detail__section linked-users-section">
+          <div className="linked-users-section__header">
+            <div>
+              <h2>Linked Users</h2>
+              <p>
+                Manage who can represent and contribute to {producer.name}.
+              </p>
+            </div>
+            <span className="linked-users-section__count" aria-label={`${memberships.length} linked users`}>
+              {memberships.length}
+            </span>
+          </div>
+          {canManageMemberships && (
+            <div className="membership-link-form">
+              <div className="membership-link-form__intro">
+                <span className="membership-link-form__icon" aria-hidden="true">+</span>
+                <div>
+                  <h3>Add a user</h3>
+                  <p>Find an account and choose the access level they should receive.</p>
+                </div>
+              </div>
+              <div className="membership-link-form__controls">
+                <div className="review-form__field membership-link-form__search">
+                  <label htmlFor="producer-user-search">Search users</label>
+                  <div className="membership-link-form__search-control">
+                    <span aria-hidden="true">⌕</span>
+                    <input
+                      id="producer-user-search"
+                      type="search"
+                      aria-label="Search users by name or email"
+                      value={userQuery}
+                      onChange={(event) => setUserQuery(event.target.value)}
+                      placeholder="Name or email address"
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+                <label className="membership-type-field" htmlFor="producer-new-membership-type">
+                  <span>Access level</span>
+                  <select
+                    id="producer-new-membership-type"
+                    className="form-select membership-type-select"
+                    aria-label="Membership type"
+                    value={newMembershipType}
+                    onChange={(event) =>
+                      setNewMembershipType(event.target.value as ProducerMembershipType)
+                    }
+                    disabled={linkingUserId !== null}
+                  >
+                    {PRODUCER_MEMBERSHIP_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {producerMembershipLabel(type)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              {membershipError && <p className="review-form__error">{membershipError}</p>}
+              {searchingUsers && (
+                <p className="membership-link-form__status" role="status">
+                  Searching users…
+                </p>
+              )}
+              {!searchingUsers && userQuery.trim() && availableUserResults.length > 0 && (
+                <div className="producer-search-results" aria-label="User search results">
+                  {availableUserResults.map((result) => (
+                    <button
+                      key={result.id}
+                      type="button"
+                      className="producer-search-item"
+                      onClick={() => handleAddMembership(result)}
+                      disabled={linkingUserId !== null}
+                    >
+                      <span className="producer-search-item__avatar" aria-hidden="true">
+                        {(result.display_name || result.email).charAt(0).toUpperCase()}
+                      </span>
+                      <span className="producer-search-item__identity">
+                        <strong>{result.display_name || result.email}</strong>
+                        <span className="text-muted">{result.email}</span>
+                      </span>
+                      <span className="producer-search-item__action">
+                        {linkingUserId === result.id ? "Linking…" : "Link user"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!searchingUsers &&
+                userQuery.trim() &&
+                userResults.length > 0 &&
+                availableUserResults.length === 0 && (
+                  <p className="wine-management__empty-state">
+                    All matching users are already linked.
+                  </p>
+                )}
+              {!searchingUsers && userQuery.trim() && userResults.length === 0 && !membershipError && (
+                <p className="wine-management__empty-state">No matching users found.</p>
+              )}
+            </div>
+          )}
           {membershipsLoading ? (
             <p className="wine-management__loading">Loading linked users…</p>
           ) : memberships.length === 0 ? (
-            <p className="wine-management__empty-state">
-              No users linked to this producer yet.
-            </p>
+            <div className="linked-users-empty">
+              <span className="linked-users-empty__icon" aria-hidden="true">◎</span>
+              <div>
+                <h3>No linked users yet</h3>
+                <p>
+                  {canManageMemberships
+                    ? "Search above to give someone access to this producer."
+                    : "No one has been assigned to this producer."}
+                </p>
+              </div>
+            </div>
           ) : (
             <ul className="linked-users-list">
               {memberships.map((membership) => (
                 <li key={membership.id} className="linked-user-item">
+                  <span className="linked-user-avatar" aria-hidden="true">
+                    {(membership.user.display_name || membership.user.email).charAt(0).toUpperCase()}
+                  </span>
                   <div className="linked-user-info">
                     <strong>
                       <Link to={`/users/${membership.user.id}`}>
@@ -499,10 +733,52 @@ function ProducerDetail() {
                       </span>
                     )}
                   </div>
+                  <span
+                    className={`membership-badge membership-badge--${membership.membership_type}`}
+                  >
+                    {producerMembershipLabel(membership.membership_type)}
+                  </span>
+                  {/* Conditional unlink/change buttons - only show for authorized users */}
+                  {canManageMemberships && (
+                    <div className="membership-actions">
+                      <button
+                        onClick={() => handleRemoveMembership(membership.id)}
+                        className="review-form__status-btn unlink-btn"
+                        title="Unlink producer"
+                      >
+                        Unlink
+                      </button>
+                      <select
+                        value={membership.membership_type}
+                        onChange={(e) =>
+                          handleMembershipTypeChange(membership.id, e.target.value as ProducerMembershipType)
+                        }
+                        className="membership-type-select"
+                        title="Change membership type"
+                      >
+                        {PRODUCER_MEMBERSHIP_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {producerMembershipLabel(type)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {membership.membership_type === "owner" && (
+                    <div className="membership-actions owner-actions">
+                      <button
+                        onClick={() => handleRemoveMembership(membership.id)}
+                        className="review-form__status-btn unlink-btn owner-btn"
+                        title="Unlink owner membership"
+                      >
+                        Unlink
+                      </button>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
-          )}
+          ) }
         </div>
       )}
 

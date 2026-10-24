@@ -81,6 +81,7 @@ export interface AuditLog {
 
 import type { Paginated } from "./common"
 import type { User } from "./authentication"
+import type { ProducerMembershipType } from "./producer"
 
 /**
  * A user row as the admin endpoints render it (`users#search`, `assign_roles`,
@@ -141,8 +142,16 @@ export interface ProducerMembership {
     slug: string
     country: string | null
   }
+  /**
+   * Typed membership (issue #191). Always one of owner/manager/contributor;
+   * there is no follower/viewer value.
+   */
+  membership_type: ProducerMembershipType
+  /** Owners and managers may edit the producer; contributors are read-only. */
+  can_edit?: boolean
   created_by: { id: number; display_name: string } | null
   created_at: string
+  updated_at?: string
 }
 
 /** Detailed user info returned by GET /api/v1/users/:id (admin only). */

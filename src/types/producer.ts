@@ -35,6 +35,13 @@ export interface ProducerGrapeRef {
   color?: string | null
 }
 
+/**
+ * Producer memberships are typed (issue #191). There is deliberately no
+ * `follower`/`viewer` value: following a producer is a separate, out-of-scope
+ * feature and must not be modelled through memberships.
+ */
+export type ProducerMembershipType = "owner" | "manager" | "contributor"
+
 export interface Producer {
   id: number
   slug: string
@@ -50,6 +57,8 @@ export interface Producer {
   phone?: string | null
   founded_year?: number | null
   active?: boolean
+  /** Server-derived: may the current user edit this producer? */
+  can_edit?: boolean
   country?: Country | null
   /**
    * Each entry is `{ id, name, country_name }` — the association payload from
@@ -108,4 +117,9 @@ export interface ProducerSummary {
   email: string | null
   producer_type: string | null
   founded_year: number | null
+  /** The membership this row came from (issue #191). */
+  membership_id: number
+  membership_type: ProducerMembershipType
+  /** Owners/managers (and catalogue staff) can open the edit form. */
+  can_edit: boolean
 }

@@ -70,7 +70,7 @@ import type {
 } from "./reference"
 import type { Notification } from "./notification"
 import type { Stats } from "./stats"
-import type { Producer, ProducerSearchResult, ProducerSummary } from "./producer"
+import type { Producer, ProducerSearchResult, ProducerSummary, ProducerMembershipType } from "./producer"
 import type { Subscription, SubscriptionWritePayload } from "./subscription"
 import type { Review } from "./review"
 import type { ShipmentTracking } from "./shipmentTracking"
@@ -357,7 +357,16 @@ export interface UsersApi {
   show(userId: number): Promise<UserDetail>
   producerMemberships: {
     list(userId: number): Promise<ProducerMembership[]>
-    create(userId: number, producerId: number): Promise<ProducerMembership>
+    create(
+      userId: number,
+      producerId: number,
+      membershipType: ProducerMembershipType,
+    ): Promise<ProducerMembership>
+    update(
+      userId: number,
+      membershipId: number,
+      membershipType: ProducerMembershipType,
+    ): Promise<ProducerMembership>
     destroy(userId: number, membershipId: number): Promise<unknown>
   }
 }

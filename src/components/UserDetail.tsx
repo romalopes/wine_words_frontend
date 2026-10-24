@@ -1,11 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { usersApi, producersApi, subscriptionsApi } from "../services/api";
 import type { UserDetail as UserDetailType } from "../types/user";
-import type { ProducerSearchResult } from "../types/producer";
+import type { ProducerSearchResult, ProducerMembershipType } from "../types/producer";
 import type { Subscription } from "../types/subscription";
 import { useAuth } from "../contexts/AuthContext";
-import { USER_ROLE_OPTIONS, isAdmin, canManageUsers } from "../constants/roles";
+import { USER_ROLE_OPTIONS, isAdmin, canManageUsers, PRODUCER_MEMBERSHIP_TYPES, producerMembershipLabel } from "../constants/roles";
 import { errorMessage } from "../utils/errors";
 import DetailHero from "./DetailHero";
 
@@ -15,7 +15,7 @@ function UserDetail() {
   const [user, setUser] = useState<UserDetailType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rolesLoading, setRolesLoading] = useState(false);
+  const [rolesLoading] = useState(false);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [membershipsLoading, setMembershipsLoading] = useState(false);
   const [producerResults, setProducerResults] = useState<ProducerSearchResult[]>([]);
@@ -23,6 +23,10 @@ function UserDetail() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchDebounce, setSearchDebounce] = useState("");
+  // Membership type applied when linking a producer (issue #191). Defaults to
+  // manager: admins must make an explicit choice, and an accidental owner grant
+  // is worse than an accidental manager one.
+  const [newMembershipType, setNewMembershipType] = useState<ProducerMembershipType>("manager");
   
   // Track pending role changes (similar to UserRoles.tsx)
   const [selectedRoles, setSelectedRoles] = useState<Set<number>>(new Set());
@@ -135,7 +139,11 @@ function UserDetail() {
     if (!user) return;
     setMembershipsLoading(true);
     try {
-      const membership = await usersApi.producerMemberships.create(user.id, producerId);
+      const membership = await usersApi.producerMemberships.create(
+        user.id,
+        producerId,
+        newMembershipType,
+      );
       setUser((prev) => {
         if (!prev) return null;
         return {
@@ -149,6 +157,39 @@ function UserDetail() {
     } catch (err) {
       console.error("Failed to add producer membership:", err);
       alert("Failed to link producer");
+    } finally {
+      setMembershipsLoading(false);
+    }
+  };
+
+  // Change an existing membership type without touching global roles or the
+  // subscription (issue #191). The API rejects follower/viewer values.
+  const handleMembershipTypeChange = async (
+    membershipId: number,
+    membershipType: ProducerMembershipType,
+  ) => {
+    if (!user) return;
+    setMembershipsLoading(true);
+    try {
+      const updated = await usersApi.producerMemberships.update(
+        user.id,
+        membershipId,
+        membershipType,
+      );
+      setUser((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          producer_memberships: prev.producer_memberships.map((membership) =>
+            membership.id === membershipId
+              ? { ...membership, membership_type: updated.membership_type }
+              : membership,
+          ),
+        };
+      });
+    } catch (err) {
+      console.error("Failed to change producer membership type:", err);
+      alert("Failed to change membership type");
     } finally {
       setMembershipsLoading(false);
     }
@@ -274,6 +315,24 @@ function UserDetail() {
                   className="form-input"
                   style={{ maxWidth: "400px" }}
                 />
+                <label className="membership-type-field" htmlFor="new-membership-type">
+                  <span>Membership type</span>
+                  <select
+                    id="new-membership-type"
+                    className="form-select"
+                    value={newMembershipType}
+                    onChange={(e) =>
+                      setNewMembershipType(e.target.value as ProducerMembershipType)
+                    }
+                    disabled={membershipsLoading}
+                  >
+                    {PRODUCER_MEMBERSHIP_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {producerMembershipLabel(type)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 {searchDebounce.trim() && searchingProducers && <p className="text-muted mt-1">Searching…</p>}
               </div>
               {searchDebounce.trim() && !searchingProducers && filteredProducers.length > 0 && (
@@ -305,13 +364,39 @@ function UserDetail() {
                             {membership.producer.name}
                           </Link>
                         </strong>
-                        <span className="text-muted">({membership.producer.country?.name || "No country"})</span>
+                        <span className="text-muted">({membership.producer.country || "No country"})</span>
+                        <span
+                          className={`membership-badge membership-badge--${membership.membership_type}`}
+                        >
+                          {producerMembershipLabel(membership.membership_type)}
+                        </span>
                         {membership.created_by && (
                           <span className="text-muted">
                             Linked by {membership.created_by.display_name}
                           </span>
                         )}
                       </div>
+                      <label className="membership-type-field">
+                        <span>Type</span>
+                        <select
+                          className="form-select membership-type-select"
+                          aria-label={`Membership type for ${membership.producer.name}`}
+                          value={membership.membership_type}
+                          onChange={(e) =>
+                            handleMembershipTypeChange(
+                              membership.id,
+                              e.target.value as ProducerMembershipType,
+                            )
+                          }
+                          disabled={membershipsLoading}
+                        >
+                          {PRODUCER_MEMBERSHIP_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {producerMembershipLabel(type)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                       <button
                         className="btn btn-danger btn-sm"
                         onClick={() => handleRemoveMembership(membership.id)}

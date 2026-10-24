@@ -34,7 +34,18 @@ export function createUsersApi(request: ApiRequester): UsersApi {
     show: (userId) => request<UserDetail>(`/users/${userId}`, { auth: true }),
     producerMemberships: {
       list: (userId) => request<ProducerMembership[]>(`/users/${userId}/producer_memberships`, { auth: true }),
-      create: (userId, producerId) => request<ProducerMembership>(`/users/${userId}/producer_memberships`, { method: "POST", auth: true, body: { producer_id: producerId } }),
+      create: (userId, producerId, membershipType) =>
+        request<ProducerMembership>(`/users/${userId}/producer_memberships`, {
+          method: "POST",
+          auth: true,
+          body: { producer_membership: { producer_id: producerId, membership_type: membershipType } },
+        }),
+      update: (userId, membershipId, membershipType) =>
+        request<ProducerMembership>(`/users/${userId}/producer_memberships/${membershipId}`, {
+          method: "PATCH",
+          auth: true,
+          body: { producer_membership: { membership_type: membershipType } },
+        }),
       destroy: (userId, membershipId) => request(`/users/${userId}/producer_memberships/${membershipId}`, { method: "DELETE", auth: true }),
     },
   }

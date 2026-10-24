@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import DetailHero from "./DetailHero";
 import { grapesApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageGrapes, canManageWinesRole } from "../constants/roles";
 import WineTable from "./WineTable";
 import Pagination from "./Pagination";
-import BackToSource from "./BackToSource";
 import { errorMessage } from "../utils/errors";
 import usePagedList from "../hooks/usePagedList";
 import type { GrapeDetail as GrapeDetailData } from "../types/catalog";

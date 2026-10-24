@@ -15,6 +15,7 @@ import type { PasswordChange } from "../types/account";
 import type { Identity } from "../types/authentication";
 import type { CountryListItem } from "../types/reference";
 import type { ProducerSummary } from "../types/producer";
+import { producerMembershipLabel } from "../constants/roles";
 import { useAnalyticsOptOut } from "../hooks/useAnalyticsOptOut";
 
 /** The editable profile form. Every field is a string so the inputs stay controlled. */
@@ -643,14 +644,24 @@ export default function AccountSettings() {
                         <strong>{producer.name}</strong>
                         <span className="producer-link__meta">
                           {producer.country || "No country"}
+                          {" · "}
+                          <span
+                            className={`membership-badge membership-badge--${producer.membership_type}`}
+                          >
+                            {producerMembershipLabel(producer.membership_type)}
+                          </span>
                         </span>
                       </Link>
-                      <Link
-                        to={`/producers/${producer.slug}/edit`}
-                        className="btn btn-secondary btn-sm"
-                      >
-                        Edit
-                      </Link>
+                      {/* Contributors may view the association but not edit it
+                          (issue #191); `can_edit` is derived by the API. */}
+                      {producer.can_edit && (
+                        <Link
+                          to={`/producers/${producer.slug}/edit`}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          Edit
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
