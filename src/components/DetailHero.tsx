@@ -68,10 +68,11 @@ export default function DetailHero({
               {badge.label}
             </span>
           )}
+          {intro != null && intro !== "" && (
+            <p className="wine-app__detail-hero__intro">{intro}</p>
+          )}
         </div>
-        {intro != null && intro !== "" && (
-          <p className="wine-app__detail-hero__intro">{intro}</p>
-        )}
+
         {children}
       </div>
       {media != null && (

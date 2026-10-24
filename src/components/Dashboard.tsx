@@ -109,6 +109,21 @@ function Dashboard() {
         ))}
       </div>
 
+      {recentReviews.length > 0 && (
+        <>
+          <h2 className="dashboard__section-title">Latest Reviews</h2>
+          <div className="content-grid">
+            {recentReviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                onOpen={() => navigate(`/reviews/${review.slug || review.id}`)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
       {recentArticles.length > 0 && (
         <>
           <h2 className="dashboard__section-title">Latest Articles</h2>
@@ -120,21 +135,6 @@ function Dashboard() {
                 onOpen={() =>
                   navigate(`/articles/${article.slug || article.id}`)
                 }
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      {recentReviews.length > 0 && (
-        <>
-          <h2 className="dashboard__section-title">Latest Reviews</h2>
-          <div className="content-grid">
-            {recentReviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                onOpen={() => navigate(`/reviews/${review.slug || review.id}`)}
               />
             ))}
           </div>
