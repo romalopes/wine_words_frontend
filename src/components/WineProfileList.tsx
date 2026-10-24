@@ -9,6 +9,7 @@ import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
 import { SearchHighlight, SearchInput } from "../components/search";
 import WineProfileTable from "./WineProfileTable";
+import DetailHero from "./DetailHero";
 import styles from "./WineProfileList.module.css";
 
 type ViewMode = "cards" | "list";
@@ -133,21 +134,26 @@ export default function WineProfileList() {
 
   return (
     <div className="wine-app">
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Cellar</p>
-          <h1>Wine Profiles</h1>
-        </div>
-        {/* Add Wine Profile button for managers? Not requested by user, but we can add for completeness */}
-        {canManageWines && (
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Cellar"
+        title="Wine Profiles"
+        intro="Save tasting profiles, record grapes and regions, and track the wines you want to try."
+        actions={
           <Link
             to="/wine-profiles/new"
-            className="auth-form__submit wine-management__add-btn"
+            className="auth-form__submit"
+            aria-disabled={!canManageWines}
+            onClick={(e) => {
+              if (!canManageWines) e.preventDefault();
+            }}
           >
             + Add Wine Profile
           </Link>
-        )}
-      </div>
+        }
+      />
 
       <div className={styles.resultsToolbar}>
         <div className={styles.searchArea}>

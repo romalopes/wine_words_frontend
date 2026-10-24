@@ -7,6 +7,7 @@ import type { Subscription } from "../types/subscription";
 import { useAuth } from "../contexts/AuthContext";
 import { USER_ROLE_OPTIONS, isAdmin, canManageUsers } from "../constants/roles";
 import { errorMessage } from "../utils/errors";
+import DetailHero from "./DetailHero";
 
 function UserDetail() {
   const { id } = useParams<{ id: string }>();
@@ -182,11 +183,15 @@ function UserDetail() {
 
   return (
     <div className="page-container">
+      <Link to="/users" className="wine-detail__back">
+        &larr; Back to Users
+      </Link>
+      <DetailHero
+        kicker="People"
+        title={user.display_name || user.email}
+        intro={`Email: ${user.email}`}
+      />
       <div className="card">
-        <div className="card-header">
-          <h2>{user.display_name || user.email}</h2>
-          <p className="text-muted">{user.email}</p>
-        </div>
         <div className="card-body">
           <div className="grid grid-2">
             {isAdminUser && (

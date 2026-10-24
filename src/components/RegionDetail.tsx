@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { regionsApi, winesApi, producersApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageGrapes, canManageWinesRole } from "../constants/roles";
@@ -167,19 +168,16 @@ function RegionDetail() {
 
   return (
     <div className="grapes-page">
-      <div className="region-detail__header">
-        <h1 className="region-detail__title">
-          {region.country?.flag_emoji ? `${region.country.flag_emoji} ` : ""}
-          {region.name}
-        </h1>
+      <DetailHero
+        kicker="Region"
+        title={`${region.country?.flag_emoji ? `${region.country.flag_emoji} ` : ""}${region.name}`}
+      >
         {canManage && (
-          <div className="region-detail__actions">
-            <Link to="/regions" className="btn-primary">
-              Manage Regions
-            </Link>
-          </div>
+          <Link to="/regions" className="btn-primary">
+            Manage Regions
+          </Link>
         )}
-      </div>
+      </DetailHero>
 
       {/* Region Path/Breadcrumb */}
       <div className="region-detail__path">

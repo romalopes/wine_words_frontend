@@ -5,6 +5,7 @@ import { canManageWinesRole } from "../constants/roles";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
 import ProducerTable from "./ProducerTable";
+import DetailHero from "./DetailHero";
 import { useState, useEffect, useMemo } from "react";
 import type { CountryListItem } from "../types/reference";
 import styles from "./ProducerList.module.css";
@@ -101,20 +102,26 @@ function ProducerList() {
 
   return (
     <div className="wine-app">
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Cellar</p>
-          <h1>Producers</h1>
-        </div>
-        {canManageProducers && (
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Cellar"
+        title="Producers"
+        intro="Browse and manage wineries, negociants, and cooperatives linked to your wines and reviews."
+        actions={
           <Link
             to="/producers/new"
-            className="auth-form__submit wine-management__add-btn"
+            className="auth-form__submit"
+            aria-disabled={!canManageProducers}
+            onClick={(e) => {
+              if (!canManageProducers) e.preventDefault();
+            }}
           >
             + Add Producer
           </Link>
-        )}
-      </div>
+        }
+      />
 
       {/* Filters Bar */}
       <div className={styles.producersFilters}>

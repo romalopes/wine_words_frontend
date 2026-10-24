@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { grapesApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageGrapes, canManageWinesRole } from "../constants/roles";
@@ -223,15 +224,7 @@ function GrapeDetail() {
 
   return (
     <div className="grapes-page">
-      <div className="grapes-page__header">
-        <BackToSource />
-        <Link to="/grapes" className="back-link">← All Grapes</Link>
-        {isWineManager && !isEditing && (
-          <button type="button" className="btn-primary" onClick={() => setIsEditing(true)}>
-            Edit Grape
-          </button>
-        )}
-      </div>
+      <DetailHero kicker="Grape" title={grape.name} />
 
       {error && <div className="flash flash--alert">{error}</div>}
       {notice && <div className="flash flash--notice">{notice}</div>}

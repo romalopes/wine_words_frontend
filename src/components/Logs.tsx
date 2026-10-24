@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin } from "../constants/roles";
 import { logsApi } from "../services/api";
 import { copyText } from "../utils/clipboard";
 import Pagination from "./Pagination";
+import DetailHero from "./DetailHero";
 
 import type { AuditLog } from "../types/user";
 const LINE_COUNT_OPTIONS = [100, 250, 500, 1000, 2000];
@@ -125,7 +126,7 @@ function LogFileViewer() {
   }, [token, lineCount]);
 
   return (
-    <section>
+    <section className="wine-detail__section">
       <h2>Application Log (file)</h2>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
         <label htmlFor="line-count" style={{ fontSize: 14 }}>Show last:</label>
@@ -283,13 +284,12 @@ function AuditLogTable() {
   }
 
   return (
-    <section>
+    <section className="wine-detail__section">
       <h2>Audit Log</h2>
       <p className="review-card__comment">
         Database audit trail of user actions (sign-ups, logins, content
         changes). Click a row for full details.
       </p>
-
       <form
         onSubmit={submitFilters}
         style={{
@@ -641,10 +641,10 @@ function Logs() {
     return (
       <main className="wine-management">
         <div className="wine-management__container">
-          <h1>Logs</h1>
-          <p className="wine-management__hint">
-            Access denied. Admin role required.
-          </p>
+          <Link to="/" className="wine-detail__back">
+            &larr; Back to Dashboard
+          </Link>
+          <DetailHero kicker="Admin" title="Logs" intro="Access denied. Admin role required." />
         </div>
       </main>
     );
@@ -653,26 +653,34 @@ function Logs() {
   return (
     <main className="wine-management">
       <div className="wine-management__container">
-        <h1>Logs</h1>
-
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          <button
-            type="button"
-            className="auth-form__submit"
-            onClick={() => setTab("audit")}
-            disabled={tab === "audit"}
-          >
-            Audit Log (database)
-          </button>
-          <button
-            type="button"
-            className="auth-form__submit"
-            onClick={() => setTab("file")}
-            disabled={tab === "file"}
-          >
-            Application Log (file)
-          </button>
-        </div>
+        <Link to="/" className="wine-detail__back">
+          &larr; Back to Dashboard
+        </Link>
+        <DetailHero
+          kicker="Admin"
+          title="Logs"
+          intro="Review the audit trail of system actions. Use the filters to narrow by user, action, object type, date range, or request ID."
+          actions={
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                className="auth-form__submit"
+                onClick={() => setTab("audit")}
+                disabled={tab === "audit"}
+              >
+                Audit Log (database)
+              </button>
+              <button
+                type="button"
+                className="auth-form__submit"
+                onClick={() => setTab("file")}
+                disabled={tab === "file"}
+              >
+                Application Log (file)
+              </button>
+            </div>
+          }
+        />
 
         {tab === "audit" ? <AuditLogTable /> : <LogFileViewer />}
       </div>

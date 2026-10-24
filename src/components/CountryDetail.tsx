@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { countriesApi, producersApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
@@ -94,11 +95,10 @@ function CountryDetail() {
       <Link to="/countries" className="back-link">
         &larr; Back to countries
       </Link>
-      <div className="grapes-page__header">
-        <h1 className="grapes-page__title">
-          {country.flag_emoji} {country.name}
-        </h1>
-      </div>
+      <DetailHero
+        kicker="Country"
+        title={`${country.flag_emoji} ${country.name}`}
+      />
 
       <div className="grape-detail">
         <ul className="facts">

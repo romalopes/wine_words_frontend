@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import PageHero from "./PageHero";
 import {
   winesApi,
   tasteParametersApi,

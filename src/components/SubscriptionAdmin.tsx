@@ -9,6 +9,7 @@ import type {
   SubscriptionWritePayload,
 } from "../types/subscription";
 import { errorMessage } from "../utils/errors";
+import DetailHero from "./DetailHero";
 
 /**
  * The editable plan fields. Prices are held as the raw dollar strings the
@@ -211,16 +212,19 @@ function SubscriptionAdmin() {
 
   return (
     <main className="wine-app">
-      <div className="wine-management__header">
-        <h1>Subscriptions</h1>
-        <p className="review-card__comment">
-          Manage membership plans and their features. Plans with users or history cannot be
-          deleted — deactivate or hide them instead.
-        </p>
-        <button type="button" className="auth-form__submit" onClick={startNew}>
-          + Add plan
-        </button>
-      </div>
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Admin"
+        title="Subscriptions"
+        intro="Manage membership plans and their features. Plans with users or history cannot be deleted — deactivate or hide them instead."
+        actions={
+          <button type="button" className="auth-form__submit" onClick={startNew}>
+            + Add plan
+          </button>
+        }
+      />
 
       {error && <p className="review-form__error">{error}</p>}
       {loading && <p className="wine-management__loading">Loading…</p>}

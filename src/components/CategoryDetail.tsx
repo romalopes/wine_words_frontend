@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { categoriesApi, winesApi, reviewsApi, articlesApi } from "../services/api";
 import WineTable from "./WineTable";
 import ReviewTable from "./ReviewTable";
@@ -70,12 +71,10 @@ function CategoryDetail() {
       <Link to="/categories" className="wine-detail__back">
         &larr; Back to Categories
       </Link>
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Cellar</p>
-          <h1>Category: {category.name}</h1>
-        </div>
-      </div>
+      <DetailHero
+        kicker="Cellar"
+        title={`Category: ${category.name}`}
+      />
 
       <section className="detail-card" style={{ padding: "1rem 1.5rem" }}>
         <h2>

@@ -1,5 +1,6 @@
 import { useState, useEffect, type ChangeEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import PageHero from "./PageHero";
 import { producersApi, imagesApi, countriesApi } from "../services/api";
 import GrapeSearch, { type SelectedGrape } from "./GrapeSearch";
 import RegionSearch, { type SelectedRegion } from "./RegionSearch";
@@ -303,9 +304,10 @@ function ProducerForm() {
       >
         &larr; Back
       </Link>
-      <div className="wine-management__header">
-        <h1>{isEditing ? "Edit Producer" : "Add New Producer"}</h1>
-      </div>
+      <PageHero
+        kicker="Cellar"
+        title={isEditing ? "Edit Producer" : "Add New Producer"}
+      />
       {error && <p className="auth-form__error">{error}</p>}
       <form onSubmit={handleSubmit} className="wine-form producer-form">
         <div className="wine-form__fields producer-form__fields">

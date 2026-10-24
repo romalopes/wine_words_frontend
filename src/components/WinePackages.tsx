@@ -14,6 +14,7 @@ import {
   statusLabel,
 } from "../constants/winePackages";
 import { formatDate, deadlineLabel } from "../utils/dates";
+import DetailHero from "./DetailHero";
 import styles from "./winePackages.module.css";
 
 // Wine packages list: every shipment a reviewer is responsible for, with the
@@ -71,31 +72,32 @@ function WinePackages() {
 
   return (
     <div className="wine-app">
-      <div className={styles.header}>
-        <div>
-          <p className="wine-kicker">Cellar</p>
-          <h1>Wine Packages</h1>
-          <p className={styles.cellMuted}>
-            Wines received from producers, and the reviews they still need.
-          </p>
-        </div>
-        {canCreate && (
-          <div className={styles.headerActions}>
-            <Link
-              to="/wine-packages/new?mode=arrived"
-              className="wine-btn wine-btn--primary"
-            >
-              + Record Received Package
-            </Link>
-            <Link
-              to="/wine-packages/new?mode=announced"
-              className="wine-btn wine-btn--primary"
-            >
-              + Add Expected Package
-            </Link>
-          </div>
-        )}
-      </div>
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Cellar"
+        title="Wine Packages"
+        intro="Wines received from producers, and the reviews they still need."
+        actions={
+          canCreate && (
+            <div className={styles.headerActions}>
+              <Link
+                to="/wine-packages/new?mode=arrived"
+                className="wine-btn wine-btn--primary"
+              >
+                + Record Received Package
+              </Link>
+              <Link
+                to="/wine-packages/new?mode=announced"
+                className="wine-btn wine-btn--primary"
+              >
+                + Add Expected Package
+              </Link>
+            </div>
+          )
+        }
+      />
 
       <div className={styles.filters}>
         <div className={styles.filterField}>

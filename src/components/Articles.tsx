@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import PageHero from "./PageHero";
 import { articlesApi, categoriesApi } from "../services/api";
 import { useCategoryOrder, sortCategoryNames } from "../hooks/useCategoryOrder";
 import ArticleForm from "./ArticleForm";
@@ -15,6 +16,7 @@ import {
 } from "../services/searchParams";
 import type { SearchParams } from "../services/searchParams";
 import type { Article } from "../types/article";
+import type { QueryParams } from "../types/common";
 import type { ArticleGroup, RequestSignal } from "../types/api";
 import { SearchBar } from "./search";
 
@@ -134,11 +136,14 @@ function Articles() {
     try {
       // The grouped view backs the no-category listing, so it must honour the
       // same free-text search as the paginated feed; otherwise the query would
-      // be fetched and then thrown away.
-      const rows = await articlesApi.grouped(
-        searchTerm ? { query: searchTerm } : {},
-        options,
-      );
+      // be fetched and then thrown away. It must also honour the active status
+      // filter: the per-category window caps each section at `per_group` rows,
+      // so if archived articles aren't filtered server-side they get crowded
+      // out by the newest published ones and never reach the client-side filter.
+      const params: QueryParams = {};
+      if (searchTerm) params.query = searchTerm;
+      if (statusFilter !== "all") params.status = statusFilter;
+      const rows = await articlesApi.grouped(params, options);
       setGroups(Array.isArray(rows) ? rows : []);
     } catch (error) {
       // An abort is the expected outcome of a superseded search, not a failure.
@@ -146,10 +151,11 @@ function Articles() {
     } finally {
       if (!options?.signal?.aborted) setLoadingGroups(false);
     }
-  }, [searchTerm]);
+  }, [searchTerm, statusFilter]);
 
   // Load the grouped view whenever the listing is not scoped to one category,
-  // and re-run it when the search term changes.
+  // and re-run it when the search term or the status filter changes —
+  // `loadGroups` captures both, so its identity drives this effect.
   useEffect(() => {
     if (selectedCategory) return;
     const controller = new AbortController();
@@ -260,25 +266,16 @@ function Articles() {
 
   return (
     <main className="wine-app">
-      <div className="wine-management__header">
-        <div>
-          <h1>{selectedCategory || "Articles"}</h1>
-          {selectedCategory && (
-            <Link className="group-show-all" to="/articles">
-              ← Show all articles
-            </Link>
-          )}
-        </div>
-        {canManageContent && (
-          <button
-            type="button"
-            className="auth-form__submit"
-            onClick={() => setShowForm((prev) => !prev)}
-          >
-            {showForm ? "Close" : "+ Add Article"}
-          </button>
-        )}
-      </div>
+      <PageHero
+        kicker={selectedCategory ? "Category" : "Editorial"}
+        title="Articles"
+        description="Browse and manage editorial articles. Use the filters to narrow by category, status, or search."
+        primaryAction={
+          canManageContent
+            ? { label: "+ Add Article", onClick: () => setShowForm(true) }
+            : undefined
+        }
+      />
 
       {showForm && (
         <div className="review-form-wrapper">
@@ -345,7 +342,7 @@ function Articles() {
 
           {canManageContent && (
             <div className="content-status-filter-row">
-              {["all", "draft", "published"].map((filter) => (
+              {["all", "draft", "published", "archived"].map((filter) => (
                 <button
                   key={filter}
                   type="button"

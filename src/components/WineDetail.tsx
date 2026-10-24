@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { tasteScoreText } from "../utils/tasteParameters";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import {
   winesApi,
   reviewsApi,
@@ -213,7 +214,6 @@ function WineDetail() {
 
   if (!wine) return null;
 
-  const colorClass = wine.color?.toLowerCase().replace(/\s+/g, "-") || "unknown";
   const categories = Array.isArray(wine.categories) ? wine.categories : [];
   const grapes = Array.isArray(wine.grapes) ? wine.grapes : [];
   const regions = Array.isArray(wine.regions) ? wine.regions : [];
@@ -224,55 +224,52 @@ function WineDetail() {
       <Link to="/wines" className="wine-detail__back">
         &larr; Back to Wines
       </Link>
-      <header className="wine-detail-page__hero">
-        <div>
-          <p className="wine-kicker">{wine.producer?.name || "Wine"}</p>
-          <div className="wine-detail-page__title-row">
-            <h1>{wine.name}</h1>
-            {wine.color && <span className={`wine-profile-detail__color wine-profile-detail__color--${colorClass}`}>{wine.color}</span>}
-          </div>
-          <p className="wine-detail-page__intro">
-            {wine.prompt || "Explore this bottle’s origins, style, and tasting profile."}
-          </p>
-          <LikeButton
-            kind="wine"
-            identifier={wine.slug || wine.id}
-            initialLiked={wine.liked_by_current_user}
-            initialCount={wine.likes_count}
-            onChange={({ liked, likes_count }) =>
-              setWine((prev) => prev ? { ...prev, liked_by_current_user: liked, likes_count } : prev)
-            }
-          />
-        </div>
-        {canManageWines && (
-          <div className="wine-detail-page__hero-actions">
-          <Link to={`/wines/${wine.slug}/edit`} className="auth-form__submit">
-            Edit Wine
-          </Link>
-          <button
-            className="wine-management__delete-btn"
-            onClick={async () => {
-              if (
-                !window.confirm(
-                  `Delete "${wine.name}"? This action cannot be undone.`,
-                )
-              )
-                return;
-              try {
-                await winesApi.destroy(wine.slug);
-                navigate("/wines", { replace: true });
-              } catch (err) {
-                alert(
-                  err instanceof Error ? err.message : "Failed to delete wine",
-                );
-              }
-            }}
-          >
-            Delete Wine
-          </button>
-          </div>
-        )}
-      </header>
+      <DetailHero
+        kicker={wine.producer?.name || "Wine"}
+        title={wine.name}
+        badge={wine.color ? { label: wine.color, tone: wine.color } : undefined}
+        intro={wine.prompt || "Explore this bottle’s origins, style, and tasting profile."}
+        actions={
+          canManageWines ? (
+            <>
+              <Link to={`/wines/${wine.slug}/edit`} className="auth-form__submit">
+                Edit Wine
+              </Link>
+              <button
+                className="wine-management__delete-btn"
+                onClick={async () => {
+                  if (
+                    !window.confirm(
+                      `Delete "${wine.name}"? This action cannot be undone.`,
+                    )
+                  )
+                    return;
+                  try {
+                    await winesApi.destroy(wine.slug);
+                    navigate("/wines", { replace: true });
+                  } catch (err) {
+                    alert(
+                      err instanceof Error ? err.message : "Failed to delete wine",
+                    );
+                  }
+                }}
+              >
+                Delete Wine
+              </button>
+            </>
+          ) : undefined
+        }
+      >
+        <LikeButton
+          kind="wine"
+          identifier={wine.slug || wine.id}
+          initialLiked={wine.liked_by_current_user}
+          initialCount={wine.likes_count}
+          onChange={({ liked, likes_count }) =>
+            setWine((prev) => prev ? { ...prev, liked_by_current_user: liked, likes_count } : prev)
+          }
+        />
+      </DetailHero>
 
       <div className="wine-detail-page__layout">
         <div className="wine-detail-page__main">

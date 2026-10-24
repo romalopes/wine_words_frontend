@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageGrapes } from "../constants/roles";
 import { errorMessage } from "../utils/errors";
 import type { Country, CountryListItem } from "../types/reference";
+import DetailHero from "./DetailHero";
 
 /**
  * The editable subset of a country. Every field is a string (or the boolean
@@ -187,7 +188,24 @@ function Countries() {
 
   return (
     <div className="grapes-page">
-      <h1 className="grapes-page__title">Countries</h1>
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Cellar"
+        title="Countries"
+        intro="Browse and manage the countries in your library. Each country links to the regions, producers, and wines classified there."
+        actions={
+          <button
+            type="button"
+            className="auth-form__submit"
+            onClick={openCreateForm}
+            disabled={!canManage}
+          >
+            + Add New Country
+          </button>
+        }
+      />
 
       {error && <div className="flash flash--alert">{error}</div>}
       {notice && <div className="flash flash--notice">{notice}</div>}
@@ -287,37 +305,24 @@ function Countries() {
       )}
 
       <section>
-        <div className="section-header">
-          <h2 className="section-header__title">All Countries</h2>
-          <div className="section-header__actions">
-            <label className="region-tree-filter">
-              <input
-                type="checkbox"
-                checked={onlyWineCountries}
-                onChange={(e) => setOnlyWineCountries(e.target.checked)}
-              />
-              Only show wine countries
-            </label>
-            <select
-              className="sort-select"
-              value={sortBy}
-              // Safe cast: the only two <option>s below are "name"/"continent".
-              onChange={(e) => setSortBy(e.target.value as SortBy)}
-              aria-label="Sort countries"
-            >
-              <option value="name">Name</option>
-              <option value="continent">Continent</option>
-            </select>
-            {canManage && !showForm && (
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={openCreateForm}
-              >
-                + Add New Country
-              </button>
-            )}
-          </div>
+        <div className="grapes-list-section__toolbar">
+          <label className="region-tree-filter">
+            <input
+              type="checkbox"
+              checked={onlyWineCountries}
+              onChange={(e) => setOnlyWineCountries(e.target.checked)}
+            />
+            Only show wine countries
+          </label>
+          <select
+            className="sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
+            aria-label="Sort countries"
+          >
+            <option value="name">Name</option>
+            <option value="continent">Continent</option>
+          </select>
         </div>
 
         {loading ? (

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import styles from "./ApiHealth.module.css";
 import {
   API_CHECKS,
@@ -18,6 +19,7 @@ import ResponseInspector from "./components/ResponseInspector";
 import WriteSandbox from "./components/WriteSandbox";
 import EmailSendSandbox from "./components/EmailSendSandbox";
 import type { DetailedHealthPayload } from "../../types/health";
+import DetailHero from "../DetailHero";
 
 type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
@@ -315,24 +317,33 @@ export default function ApiHealth() {
     backendVersion === null ? null : backendVersion === APP_VERSION;
   return (
     <main className={styles.container}>
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
       <div className={styles.header}>
-        <div>
-          <h1 className={styles.headerTitle}>API Health &amp; Diagnostics</h1>
-          <p className={styles.headerMeta}>
-            {API_CHECKS.length} checks configured · backend{" "}
-            <code>{backendVersion ?? "…"}&nbsp;</code> · {new Date().toLocaleString()}
-          </p>
-        </div>
-        <div className={styles.toolbar}>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
-            onClick={runAll}
-            disabled={runningAll}
-          >
-            {runningAll && <span className={styles.spinner} />} Run All Checks
-          </button>
-        </div>
+        <DetailHero
+          kicker="Admin"
+          title="API Health & Diagnostics"
+          intro={
+            <>
+              {API_CHECKS.length} checks configured · backend{" "}
+              <code>{backendVersion ?? "…"}</code> ·{" "}
+              {new Date().toLocaleString()}
+            </>
+          }
+          actions={
+            <div className={styles.toolbar}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={runAll}
+                disabled={runningAll}
+              >
+                {runningAll && <span className={styles.spinner} />} Run All Checks
+              </button>
+            </div>
+          }
+        />
       </div>
 
       {versionMatched != null && (

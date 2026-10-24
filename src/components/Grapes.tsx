@@ -7,6 +7,7 @@ import { isAdmin, canManageGrapes } from "../constants/roles";
 import { errorMessage } from "../utils/errors";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
+import DetailHero from "./DetailHero";
 import { SearchInput } from "./search";
 import { effectiveSearchTerm } from "../services/searchParams";
 import type { GrapeDetail } from "../types/catalog";
@@ -218,7 +219,24 @@ function Grapes() {
 
   return (
     <div className="grapes-page">
-      <h1 className="grapes-page__title">Grape Varieties</h1>
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Cellar"
+        title="Grape Varieties"
+        intro="Browse and manage the grape varieties in your library. Each variety links to the wines and producers that use it."
+        actions={
+          <button
+            type="button"
+            className="auth-form__submit"
+            onClick={openCreateForm}
+            disabled={!isWineManager}
+          >
+            + Add New Grape Variety
+          </button>
+        }
+      />
 
       {(error ?? list.error) && (
         <div className="flash flash--alert">{error ?? list.error}</div>
@@ -358,35 +376,23 @@ function Grapes() {
         </section>
       )}
       <section className="grapes-list-section">
-        <div className="section-header">
-          <h2>All Grapes</h2>
-          <div className="section-header__actions">
-            <SearchInput
-              value={searchValue}
-              onChange={setSearchValue}
-              placeholder="Search grapes by name, synonym or origin…"
-            />
-            <select
-              className="sort-select"
-              aria-label="Sort grapes"
-              value={sortBy}
-              onChange={(e) => handleSortChange(e.target.value as GrapeSortKey)}
-            >
-              <option value="relevance">Sort by Relevance</option>
-              <option value="wines_count">Sort by Wines</option>
-              <option value="producers_count">Sort by Producers</option>
-            </select>
-            {isWineManager && (
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={openCreateForm}
-              >
-                + Add New Grape Variety
-              </button>
-            )}
-          </div>
-        </div>
+        <div className="grapes-list-section__toolbar">
+          <SearchInput
+            value={searchValue}
+            onChange={setSearchValue}
+            placeholder="Search grapes by name, synonym or origin…"
+          />
+          <select
+            className="sort-select"
+            aria-label="Sort grapes"
+            value={sortBy}
+            onChange={(e) => handleSortChange(e.target.value as GrapeSortKey)}
+          >
+            <option value="relevance">Sort by Relevance</option>
+            <option value="wines_count">Sort by Wines</option>
+            <option value="producers_count">Sort by Producers</option>
+          </select>
+                </div>
         {list.loading ? (
           <p className="loading">Loading grapes…</p>
         ) : list.items.length === 0 ? (

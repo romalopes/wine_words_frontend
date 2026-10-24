@@ -94,7 +94,7 @@ function Reviews() {
 
   // Scope and status filters
   const [scope, setScope] = useState("all"); // "all" | "mine"
-  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "draft" | "published"
+  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "draft" | "published" | "archived"
 
   // Bumped by `reload()` after a create/edit/delete. It is part of the fetch
   // callback's identity, so changing it forces a refetch even when the page
@@ -377,7 +377,7 @@ function Reviews() {
 
           {canManageContent && (
             <div className="content-status-filter-row">
-              {["all", "draft", "published"].map((filter) => (
+              {["all", "draft", "published", "archived"].map((filter) => (
                 <button
                   key={filter}
                   type="button"

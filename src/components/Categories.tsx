@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { DragEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
+import PageHero from "./PageHero";
 import { categoriesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
@@ -203,12 +204,11 @@ function Categories() {
 
   return (
     <div className="wine-app">
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Settings</p>
-          <h1>Categories</h1>
-        </div>
-      </div>
+      <PageHero
+        kicker="Settings"
+        title="Categories"
+        description="Manage the editorial categories used to organise wines, reviews, and articles."
+      />
 
       {notice && <p className="wine-management__notice">{notice}</p>}
       {error && <p className="wine-management__error">{error}</p>}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { reviewsApi } from "../services/api";
 import ReviewForm from "./ReviewForm";
 import ContentStatusActions, { type ContentStatus } from "./ContentStatusActions";
@@ -187,32 +188,29 @@ function ReviewDetail() {
       {error && <p className="wine-management__error">{error}</p>}
 
       <article className="article-page review-page">
-        <header className="article-page__header">
-          <p className="article-page__kicker">
-            {categories.length > 0 ? (
+        <DetailHero
+          className="review-page__hero"
+          kicker={
+            categories.length > 0 ? (
               <Link to={returnToLink(`/categories/${categories[0]?.slug}`)}>
                 {kicker}
               </Link>
             ) : (
               kicker
-            )}
-          </p>
-
-          <h1 className="article-page__title">
-            {review.title || "Untitled review"}
-          </h1>
-
-          {review.wine_name && review.wine_slug ? (
-            <p className="article-page__deck">
+            )
+          }
+          title={review.title || "Untitled review"}
+          intro={
+            review.wine_name && review.wine_slug ? (
               <Link to={returnToLink(`/wines/${review.wine_slug}`)}>
                 {review.wine_name}
                 {showVintage ? ` ${review.vintage_year}` : ""}
               </Link>
-            </p>
-          ) : (
-            showVintage && <p className="article-page__deck">{review.vintage_year}</p>
-          )}
-
+            ) : (
+              showVintage && review.vintage_year
+            )
+          }
+        >
           <div className="review-page__facts">
             {review.score != null && (
               <span className="review-page__score">{review.score}</span>
@@ -291,7 +289,7 @@ function ReviewDetail() {
               ))}
             </div>
           )}
-        </header>
+        </DetailHero>
 
         {canEdit && !editing && (
           <div className="wine-detail__actions article-page__actions">

@@ -368,6 +368,35 @@ describe("Reviews", () => {
     expect(await screen.findByText("A draft wine")).toBeInTheDocument();
   });
 
+  it("sends the archived status filter to the grouped feed and renders the returned archived reviews", async () => {
+    // The grouped view is what backs the no-category listing, and its
+    // per-category window caps each section at 12 rows. Selecting Archived must
+    // reach that request as `status: "archived"`, otherwise archived reviews
+    // get crowded out by the newest published ones and never reach the
+    // client-side filter.
+    mockGrouped.mockResolvedValue(
+      groupedPayload([makeReview({ id: 8, title: "An archived wine", status: "archived" })]),
+    );
+    const user = userEvent.setup();
+
+    renderReviews();
+
+    await user.click(await screen.findByRole("button", { name: "Archived" }));
+
+    await waitFor(() => {
+      expect(
+        mockGrouped.mock.calls.some(
+          (call) =>
+            typeof call[0] === "object" &&
+            call[0] !== null &&
+            (call[0] as { status?: string }).status === "archived",
+        ),
+      ).toBe(true);
+    });
+
+    expect(await screen.findByText("An archived wine")).toBeInTheDocument();
+  });
+
   it("clears the status filter chip when its × is clicked", async () => {
     mockGrouped.mockResolvedValue(groupedPayload());
     const user = userEvent.setup();

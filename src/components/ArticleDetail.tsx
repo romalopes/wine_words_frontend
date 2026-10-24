@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { articlesApi } from "../services/api";
 import ArticleForm from "./ArticleForm";
 import ContentStatusActions, { type ContentStatus } from "./ContentStatusActions";
@@ -190,23 +191,20 @@ function ArticleDetail() {
       </Link>
 
       <article className="article-page">
-        <header className="article-page__header">
-          <p className="article-page__kicker">
-            {categories.length > 0 ? (
+        <DetailHero
+          className="article-page__hero-header"
+          kicker={
+            categories.length > 0 ? (
               <Link to={returnToLink(`/categories/${categories[0]?.slug}`)}>
                 {kicker}
               </Link>
             ) : (
               kicker
-            )}
-          </p>
-
-          <h1 className="article-page__title">{article.title}</h1>
-
-          {article.abstract && (
-            <p className="article-page__standfirst">{article.abstract}</p>
-          )}
-
+            )
+          }
+          title={article.title}
+          intro={article.abstract}
+        >
           <div className="article-page__byline">
             <span className="article-page__byline-info">
               <span className="article-page__author">by {article.author_name}</span>
@@ -272,7 +270,7 @@ function ArticleDetail() {
               ))}
             </div>
           )}
-        </header>
+        </DetailHero>
 
         {canEdit && !editing && (
           <div className="wine-detail__actions article-page__actions">

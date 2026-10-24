@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
+import DetailHero from "./DetailHero"
 import { articleProjectsApi } from "../services/api"
 import type { ArticleProject, ArticleProjectStatus, DraftingStatus } from "../types/articleProject"
 import { useAuth } from "../contexts/AuthContext"
@@ -56,14 +57,19 @@ function ArticleProjects() {
 
   return (
     <div className="wine-app">
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Editorial</p>
-          <h1>Article Projects</h1>
-          <p>Track editorial assignments, wine requests, and drafting progress.</p>
-        </div>
-          <Link className="auth-form__submit" to="/article-projects/new">New Article Project</Link>
-      </div>
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Editorial"
+        title="Article Projects"
+        intro="Track editorial assignments, wine requests, and drafting progress."
+        actions={
+          <Link className="auth-form__submit" to="/article-projects/new">
+            New Article Project
+          </Link>
+        }
+      />
 
       <section aria-label="Article Project filters" className={`${styles.filters} wine-management__filters`}>
         <div className={styles.filtersGrid}>

@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import type { Mock } from "vitest";
 import ApiHealth from "./ApiHealth";
 import { APP_VERSION } from "../../constants/versions";
@@ -77,7 +78,7 @@ describe("ApiHealth", () => {
   });
 
   it("renders the health interface heading", () => {
-    render(<ApiHealth />);
+    render(<MemoryRouter><ApiHealth /></MemoryRouter>);
     expect(
       screen.getByRole("heading", { name: /API Health/i }),
     ).toBeInTheDocument();
@@ -86,7 +87,7 @@ describe("ApiHealth", () => {
   it("displays the backend/API version from the detailed check payload", async () => {
     mockRunCheck.mockResolvedValueOnce(detailedResult);
 
-    render(<ApiHealth />);
+    render(<MemoryRouter><ApiHealth /></MemoryRouter>);
 
     await userEvent.click(testButtonFor("Detailed Infrastructure Health"));
 
@@ -107,7 +108,7 @@ describe("ApiHealth", () => {
   it("displays backend version 0.0.20 when the API reports 0.0.20, even though React is 0.0.21", async () => {
     mockRunCheck.mockResolvedValueOnce(mismatchResult);
 
-    render(<ApiHealth />);
+    render(<MemoryRouter><ApiHealth /></MemoryRouter>);
 
     await userEvent.click(testButtonFor("Detailed Infrastructure Health"));
 

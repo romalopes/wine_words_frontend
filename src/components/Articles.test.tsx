@@ -256,6 +256,38 @@ describe("Articles", () => {
     });
   });
 
+  it("sends the archived status filter to the grouped feed and renders the returned archived articles", async () => {
+    // The grouped view backs the no-category listing, and its per-category
+    // window caps each section at 12 rows. Selecting Archived must reach that
+    // request as `status: "archived"`, otherwise archived articles get crowded
+    // out by the newest published ones and never reach the client-side filter.
+    mockGrouped.mockResolvedValue([
+      {
+        category: "Tasting notes",
+        count: 1,
+        articles: [makeArticle({ id: 8, title: "An archived note", status: "archived" })],
+      },
+    ]);
+    const user = userEvent.setup();
+
+    renderArticles();
+
+    await user.click(await screen.findByRole("button", { name: "Archived" }));
+
+    await waitFor(() => {
+      expect(
+        mockGrouped.mock.calls.some(
+          (call) =>
+            typeof call[0] === "object" &&
+            call[0] !== null &&
+            (call[0] as { status?: string }).status === "archived",
+        ),
+      ).toBe(true);
+    });
+
+    expect(await screen.findByText("An archived note")).toBeInTheDocument();
+  });
+
   it("clears the status filter chip when its × is clicked", async () => {
     mockGrouped.mockResolvedValue([
       { category: "Tasting notes", count: 1, articles: [makeArticle()] },

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Link } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { usersApi, subscriptionsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageUsers } from "../constants/roles";
@@ -98,10 +99,14 @@ function UserRoles() {
   if (!isAdminUser) {
     return (
       <main className="wine-app">
-        <div className="auth-card">
-          <h1>Access denied</h1>
-          <p>Admin access required.</p>
-        </div>
+        <Link to="/" className="wine-detail__back">
+          &larr; Back to Dashboard
+        </Link>
+        <DetailHero
+          kicker="Admin"
+          title="User Management"
+          intro="Access denied. Admin role required."
+        />
       </main>
     );
   }
@@ -109,17 +114,22 @@ function UserRoles() {
   return (
     <main className="wine-app">
       {(!canManage) && (
-        <div className="wine-management__header">
-          <h1>User Management</h1>
-          <p className="text-muted">You don't have permission to access user management.</p>
-        </div>
+        <DetailHero
+          kicker="Admin"
+          title="User Management"
+          intro="You don't have permission to access user management."
+        />
       )}
       {canManage && (
         <>
-          <div className="wine-management__header">
-            <h1>Users</h1>
-            <p className="review-card__comment">Search and manage users, roles, and subscriptions</p>
-          </div>
+          <Link to="/" className="wine-detail__back">
+            &larr; Back to Dashboard
+          </Link>
+          <DetailHero
+            kicker="Admin"
+            title="Users"
+            intro="Search and manage users, roles, and subscriptions"
+          />
 
           <div className="admin-user-search">
             <input type="search" placeholder="Search users by name or email..." value={query} onChange={handleSearchChange} className="admin-user-search__input" aria-label="Search users" />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import PageHero from "./PageHero";
 import { producersApi, winesApi } from "../services/api";
 import { errorMessage } from "../utils/errors";
 import WineTable from "./WineTable";
@@ -69,12 +70,10 @@ function ProducerWines() {
       <Link to="/producers" className="wine-detail__back">
         &larr; Back to Producers
       </Link>
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Cellar</p>
-          <h1>Wines of {producer.name}</h1>
-        </div>
-      </div>
+      <PageHero
+        kicker="Cellar"
+        title={`Wines of ${producer.name}`}
+      />
 
       {list.items.length === 0 ? (
         <div className="wine-management__empty">

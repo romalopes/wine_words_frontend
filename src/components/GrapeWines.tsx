@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import PageHero from "./PageHero";
 import { grapesApi, winesApi } from "../services/api";
 import WineTable from "./WineTable";
 import Pagination from "./Pagination";
@@ -37,12 +38,10 @@ function GrapeWines() {
       <Link to="/grapes" className="wine-detail__back">
         &larr; Back to Grapes
       </Link>
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Cellar</p>
-          <h1>Wines of {grape ? grape.name : "Grape"}</h1>
-        </div>
-      </div>
+      <PageHero
+        kicker="Cellar"
+        title={`Wines of ${grape ? grape.name : "Grape"}`}
+      />
 
       {list.error && (
         <p className="wine-management__error">{list.error}</p>

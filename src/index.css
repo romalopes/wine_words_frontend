@@ -1329,6 +1329,105 @@ textarea {
   white-space: nowrap;
 }
 
+/* ===== Page Hero (shared list/admin page header) ===== */
+
+.page-hero {
+  align-items: center;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.page-hero__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-hero__kicker {
+  color: #b9475f;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.page-hero__title {
+  font-size: clamp(2.1rem, 5vw, 3.2rem);
+  line-height: 1.05;
+  margin: 0;
+  color: #241b19;
+}
+
+.page-hero__description {
+  color: #6b5d55;
+  font-size: 1rem;
+  margin: 0;
+  max-width: 42rem;
+}
+
+.page-hero__actions {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.page-hero__btn {
+  align-items: center;
+  border: 1px solid #d7c8bb;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.88rem;
+  font-weight: 700;
+  gap: 6px;
+  padding: 8px 16px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.page-hero__btn--primary {
+  background: #681a2a;
+  border-color: #681a2a;
+  color: #fff8f2;
+}
+
+.page-hero__btn--primary:hover:not(:disabled):not(.page-hero__btn--disabled) {
+  background: #4a1020;
+  border-color: #4a1020;
+}
+
+.page-hero__btn--primary:disabled,
+.page-hero__btn--disabled {
+  border-color: #d7c8bb;
+  color: #a89c92;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* List toolbar (search/filter controls below the hero). */
+.grapes-list-section__toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.grapes-list-section__toolbar .sort-select,
+.grapes-list-section__toolbar select {
+  font: inherit;
+  padding: 6px 10px;
+  border: 1px solid #d7c8bb;
+  border-radius: 6px;
+  background: #fff;
+  min-width: 150px;
+}
+
 .wine-management__loading,
 .wine-management__error {
   color: #5d514b;
@@ -6358,14 +6457,10 @@ a.admin-user-card:hover {
   }
 }
 
-/* Wine profile detail: a compact reference card, scoped to avoid changing wine details. */
-.wine-profile-detail {
-  margin: 0 auto;
-  max-width: 1040px;
-  padding: clamp(24px, 4vw, 52px) clamp(18px, 4vw, 40px) 64px;
-}
-
-.wine-profile-detail__hero {
+/* Shared detail-page hero: the warm reference-card design shared by every
+   detail page (wine profiles, wines, producers, grapes, regions, ...).
+   See src/components/DetailHero.tsx. */
+.wine-app__detail-hero {
   align-items: flex-end;
   background: radial-gradient(circle at top right, rgba(185, 71, 95, 0.17), transparent 39%), linear-gradient(135deg, #fffaf4, #f3e8dc);
   border: 1px solid #e4d9cd;
@@ -6379,7 +6474,7 @@ a.admin-user-card:hover {
   position: relative;
 }
 
-.wine-profile-detail__hero::after {
+.wine-app__detail-hero::after {
   border: 1px solid rgba(104, 26, 42, 0.1);
   border-radius: 50%;
   content: "";
@@ -6390,10 +6485,11 @@ a.admin-user-card:hover {
   width: 190px;
 }
 
-.wine-profile-detail__hero > * { position: relative; z-index: 1; }
-.wine-profile-detail__title-row { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; }
+.wine-app__detail-hero > * { position: relative; z-index: 1; }
+.wine-app__detail-hero__content { flex: 1 1 auto; min-width: 0; }
+.wine-app__detail-hero__title-row { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; }
 
-.wine-profile-detail__title-row h1 {
+.wine-app__detail-hero__title-row h1 {
   color: #3e1520;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2.15rem, 6vw, 4.25rem);
@@ -6402,18 +6498,45 @@ a.admin-user-card:hover {
   margin: 4px 0 0;
 }
 
-.wine-profile-detail__color,
-.wine-profile-detail__chip { border-radius: 999px; display: inline-flex; font-size: 0.82rem; font-weight: 750; line-height: 1.2; padding: 7px 12px; }
-.wine-profile-detail__color { background: #eee1d2; color: #5d514b; }
-.wine-profile-detail__color--red { background: #f2d7dc; color: #7b1930; }
-.wine-profile-detail__color--white { background: #fbf0c9; color: #806400; }
-.wine-profile-detail__color--rosé { background: #f8dce3; color: #9a3f59; }
-.wine-profile-detail__color--sparkling { background: #d9eee9; color: #27615e; }
-.wine-profile-detail__color--orange,
-.wine-profile-detail__color--amber { background: #f8dfbd; color: #985313; }
+.wine-app__detail-hero__badge {
+  background: #eee1d2;
+  border-radius: 999px;
+  color: #5d514b;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.2;
+  padding: 7px 12px;
+}
+.wine-app__detail-hero__badge--red { background: #f2d7dc; color: #7b1930; }
+.wine-app__detail-hero__badge--white { background: #fbf0c9; color: #806400; }
+.wine-app__detail-hero__badge--rose { background: #f8dce3; color: #9a3f59; }
+.wine-app__detail-hero__badge--sparkling { background: #d9eee9; color: #27615e; }
+.wine-app__detail-hero__badge--orange,
+.wine-app__detail-hero__badge--amber { background: #f8dfbd; color: #985313; }
 
-.wine-profile-detail__intro { color: #6b5d55; font-size: 1rem; margin: 16px 0 0; max-width: 37rem; }
-.wine-profile-detail__edit { flex: 0 0 auto; text-decoration: none; white-space: nowrap; }
+.wine-app__detail-hero__intro { color: #6b5d55; font-size: 1rem; margin: 16px 0 0; max-width: 37rem; }
+
+.wine-app__detail-hero__media { align-items: center; display: flex; flex: 0 0 auto; justify-content: center; }
+.wine-app__detail-hero__media img { max-height: 150px; max-width: 180px; object-fit: contain; }
+
+.wine-app__detail-hero__actions { align-items: center; display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 12px; }
+.wine-app__detail-hero__actions .auth-form__submit { text-decoration: none; white-space: nowrap; }
+.wine-app__detail-hero__actions .wine-management__delete-btn { background: transparent; }
+
+@media (max-width: 720px) {
+  .wine-app__detail-hero { align-items: flex-start; flex-direction: column; }
+}
+
+/* Wine profile detail: a compact reference card, scoped to avoid changing wine details. */
+/* Wine profile detail: a compact reference card, scoped to avoid changing wine details. */
+.wine-profile-detail {
+  margin: 0 auto;
+  max-width: 1040px;
+  padding: clamp(24px, 4vw, 52px) clamp(18px, 4vw, 40px) 64px;
+}
+
+.wine-profile-detail__chip { border-radius: 999px; display: inline-flex; font-size: 0.82rem; font-weight: 750; line-height: 1.2; padding: 7px 12px; }
 
 .wine-profile-detail__layout {
   align-items: start;
@@ -6452,22 +6575,12 @@ a.admin-user-card:hover {
 .wine-profile-detail__param-heading small { color: #9a8c84; font-size: 0.72rem; font-weight: 700; margin-left: 1px; }
 
 @media (max-width: 720px) {
-  .wine-profile-detail__hero { align-items: flex-start; flex-direction: column; }
   .wine-profile-detail__layout { grid-template-columns: 1fr; }
   .wine-profile-detail__origins { position: static; }
 }
 
 /* Wine detail: use the same reference-card visual language as wine profiles. */
 .wine-detail-page { margin: 0 auto; max-width: 1040px; padding: clamp(24px, 4vw, 52px) clamp(18px, 4vw, 40px) 64px; }
-.wine-detail-page__hero { align-items: flex-end; background: radial-gradient(circle at top right, rgba(185, 71, 95, 0.17), transparent 39%), linear-gradient(135deg, #fffaf4, #f3e8dc); border: 1px solid #e4d9cd; border-radius: 18px; display: flex; gap: 24px; justify-content: space-between; margin: 20px 0 24px; overflow: hidden; padding: clamp(24px, 5vw, 46px); position: relative; }
-.wine-detail-page__hero::after { border: 1px solid rgba(104, 26, 42, 0.1); border-radius: 50%; content: ""; height: 190px; position: absolute; right: -72px; top: -94px; width: 190px; }
-.wine-detail-page__hero > * { position: relative; z-index: 1; }
-.wine-detail-page__title-row { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; }
-.wine-detail-page__title-row h1 { color: #3e1520; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.15rem, 6vw, 4.25rem); letter-spacing: -0.04em; line-height: 0.98; margin: 4px 0 0; }
-.wine-detail-page__intro { color: #6b5d55; font-size: 1rem; margin: 16px 0; max-width: 37rem; }
-.wine-detail-page__hero-actions { align-items: center; display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 12px; }
-.wine-detail-page__hero-actions .auth-form__submit { text-decoration: none; white-space: nowrap; }
-.wine-detail-page__hero-actions .wine-management__delete-btn { background: transparent; }
 .wine-detail-page__layout { align-items: start; display: grid; gap: 24px; grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.8fr); }
 .wine-detail-page__main { display: grid; gap: 24px; }
 .wine-detail-page__card, .wine-detail-page__origins { background: #fffaf4; border: 1px solid #e4d9cd; border-radius: 14px; }

@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin } from "../constants/roles";
 import { configurationApi, settingsApi } from "../services/api";
 import type { ConfigurationUpdatePayload } from "../types/api";
 import type { Setting } from "../types/notification";
 import { errorMessage } from "../utils/errors";
+import DetailHero from "./DetailHero";
 
 // New (unsaved) custom settings carry a client-generated temp id like
 // "new-<timestamp>-<random>"; server rows have numeric ids.
@@ -75,10 +77,7 @@ function Configuration() {
     return (
       <main className="wine-management">
         <div className="wine-management__container">
-          <h1>Configuration</h1>
-          <p className="wine-management__hint">
-            Access denied. Admin role required.
-          </p>
+          <DetailHero kicker="Admin" title="Configuration" intro="Access denied. Admin role required." />
         </div>
       </main>
     );
@@ -190,10 +189,15 @@ function Configuration() {
   return (
     <main className="wine-management">
       <div className="wine-management__container">
-        <h1>Configuration</h1>
-        <p className="wine-management__hint">
-          Global application settings. Changes take effect immediately.
-        </p>
+        <Link to="/" className="wine-detail__back">
+          &larr; Back to Dashboard
+        </Link>
+        <DetailHero
+          kicker="Admin"
+          title="Configuration"
+          intro="Global application settings. Changes take effect immediately."
+        />
+
         {loading ? (
           <p className="wine-management__hint">Loading configuration...</p>
         ) : (

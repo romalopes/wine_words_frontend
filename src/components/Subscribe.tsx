@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { subscriptionsApi, billingApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Subscription } from "../types/subscription";
@@ -377,12 +378,14 @@ function Subscribe() {
 
   return (
     <main className="wine-app">
-      <div className="wine-management__header">
-        <h1>Membership</h1>
-        <p className="review-card__comment">
-          Choose the plan that fits how you explore and share wine words.
-        </p>
-      </div>
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Cellar"
+        title="Membership"
+        intro="Choose the plan that fits how you explore and share wine words."
+      />
 
       {loading && <p className="wine-management__loading">Loading plans…</p>}
       {error && <p className="review-form__error">{error}</p>}

@@ -12,6 +12,7 @@ import type { Article } from "../types/article"
 import type { Review } from "../types/review"
 import type { QueryParams } from "../types/common"
 import "./ContentManagementList.css"
+import DetailHero from "./DetailHero"
 
 type ContentKind = "review" | "article"
 type ContentItem = Review | Article
@@ -96,10 +97,17 @@ function ContentManagementList({ kind }: ContentManagementListProps) {
     finally { setBusyId(null) }
   }
 
-  if (!canManage) return <main className="wine-app"><div className="wine-management__header"><h1>Manage {plural}</h1></div><p className="wine-management__error" role="alert">You do not have permission to manage {plural.toLowerCase()}.</p></main>
+  if (!canManage) return <main className="wine-app"><Link to={isReview ? "/reviews" : "/articles"} className="wine-detail__back">&larr; Back to {plural}</Link><DetailHero kicker="Settings" title={`Manage ${plural}`} intro="Access denied. You do not have permission to manage content." /><p className="wine-management__error" role="alert">You do not have permission to manage {plural.toLowerCase()}.</p></main>
 
   return <main className="wine-app">
-    <div className="wine-management__header"><div><p className="wine-kicker">Settings</p><h1>Manage {plural}</h1><p>Search, filter, and update content using your existing permissions.</p></div></div>
+    <Link to={isReview ? "/reviews" : "/articles"} className="wine-detail__back">
+      &larr; Back to {plural}
+    </Link>
+    <DetailHero
+      kicker="Settings"
+      title={`Manage ${plural}`}
+      intro="Search, filter, and update content using your existing permissions."
+    />
     <section className="content-management__toolbar" aria-label={`${plural} filters`}>
       <label className="content-management__field"><span>Search</span><input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={`Search ${plural.toLowerCase()}…`} /></label>
       <label className="content-management__field"><span>Status</span><select value={status} onChange={(event) => setFilter("status", event.target.value)}>{STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>

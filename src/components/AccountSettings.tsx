@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
+import PageHero from "./PageHero";
 import { accountApi, countriesApi, identitiesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -306,12 +307,11 @@ export default function AccountSettings() {
 
   return (
     <main className="wine-app">
-      <div className="wine-management__header">
-        <h1>Account settings</h1>
-        <p className="review-card__comment">
-          Manage your personal information, address and password.
-        </p>
-      </div>
+      <PageHero
+        kicker="Account"
+        title="Account settings"
+        description="Manage your personal information, address and password."
+      />
 
       {loading && <p className="wine-management__loading">Loading account…</p>}
 

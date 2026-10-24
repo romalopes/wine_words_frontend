@@ -4,6 +4,7 @@ import { regionsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageGrapes } from "../constants/roles";
 import { errorMessage } from "../utils/errors";
+import DetailHero from "./DetailHero";
 import type {
   CountryRegionNode,
   Region,
@@ -159,7 +160,7 @@ function Regions() {
   );
   // Active highlight follows the row sent into the edit form (null = none).
   const [targetRegionId, setTargetRegionId] = useState<string | null>(null);
-  const [showOnlyWithWines, setShowOnlyWithWines] = useState(true);
+  const [showOnlyWithWines, setShowOnlyWithWines] = useState(false);
   const [query, setQuery] = useState("");
 
   let displayTree = treeData ?? [];
@@ -169,7 +170,9 @@ function Regions() {
   const queryTrimmed = query.trim();
   if (queryTrimmed !== "") {
     const lowerQuery = queryTrimmed.toLowerCase();
-    function filterCountry(country: CountryRegionNode): CountryRegionNode | null {
+    function filterCountry(
+      country: CountryRegionNode,
+    ): CountryRegionNode | null {
       const countryMatch = country.name.toLowerCase().includes(lowerQuery);
       const filteredRegions = country.regions
         .map(filterRegion)
@@ -179,7 +182,9 @@ function Regions() {
       }
       return null;
     }
-    function filterRegion(region: RegionTreeNodeData): RegionTreeNodeData | null {
+    function filterRegion(
+      region: RegionTreeNodeData,
+    ): RegionTreeNodeData | null {
       const regionMatch = region.name.toLowerCase().includes(lowerQuery);
       const filteredChildren = region.children
         .map(filterRegion)
@@ -238,7 +243,8 @@ function Regions() {
         setEditingId(region.id);
         setForm({
           name: region.name,
-          country_id: region.country_id == null ? "" : String(region.country_id),
+          country_id:
+            region.country_id == null ? "" : String(region.country_id),
           parent_id: region.parent_id == null ? "" : String(region.parent_id),
           is_state: Boolean(region.is_state),
           is_appellation: Boolean(region.is_appellation),
@@ -360,21 +366,26 @@ function Regions() {
       {error && <div className="flash flash--alert">{error}</div>}
       {notice && <div className="flash flash--notice">{notice}</div>}
 
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Cellar"
+        title="Regions"
+        intro="Browse the wine regions tree, organised by country. Each region links to the wines grown there."
+        actions={
+          <button
+            type="button"
+            className="auth-form__submit"
+            onClick={openCreateForm}
+            disabled={!canManage}
+          >
+            + Add Region
+          </button>
+        }
+      />
+
       <section>
-        <div className="section-header">
-          <h2 className="section-header__title">Regions Tree</h2>
-          <div className="section-header__actions">
-            {canManage && !showForm && (
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={openCreateForm}
-              >
-                + Add Region
-              </button>
-            )}
-          </div>
-        </div>
 
         {showForm && (
           <section>
@@ -490,7 +501,13 @@ function Regions() {
 
         <div className="region-tree-search">
           <label>
-            Search regions: <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Type to search regions..." />
+            Search regions:{" "}
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Type to search regions..."
+            />
           </label>
         </div>
 
@@ -515,9 +532,7 @@ function Regions() {
               No countries or regions with wines found.
             </p>
           ) : (
-            <p className="grapes-page__empty">
-              No countries or regions found.
-            </p>
+            <p className="grapes-page__empty">No countries or regions found.</p>
           )
         ) : (
           <div className="region-tree-container">

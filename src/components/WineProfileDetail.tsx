@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { wineProfilesApi, tasteParametersApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
@@ -54,7 +55,6 @@ export default function WineProfileDetail() {
   const grapes = asList(profile.grapes);
   const regions = asList(profile.regions);
   const parameters = Object.entries(profile.parameters ?? {});
-  const colorClass = profile.color?.toLowerCase().replace(/\s+/g, "-") || "unknown";
 
   return (
     <div className="wine-app">
@@ -63,17 +63,19 @@ export default function WineProfileDetail() {
           &larr; Back to wine profiles
         </Link>
 
-        <header className="wine-profile-detail__hero">
-          <div>
-            <p className="wine-kicker">Wine profile</p>
-            <div className="wine-profile-detail__title-row">
-              <h1>{profile.name}</h1>
-              {profile.color && <span className={`wine-profile-detail__color wine-profile-detail__color--${colorClass}`}>{profile.color}</span>}
-            </div>
-            <p className="wine-profile-detail__intro">A reference tasting profile for exploring a wine’s character and origins.</p>
-          </div>
-          {canManageWines && <Link to={`/wine-profiles/${profile.slug}/edit`} className="auth-form__submit wine-profile-detail__edit">Edit Profile</Link>}
-        </header>
+        <DetailHero
+          kicker="Wine profile"
+          title={profile.name}
+          badge={profile.color ? { label: profile.color, tone: profile.color } : undefined}
+          intro="A reference tasting profile for exploring a wine’s character and origins."
+          actions={
+            canManageWines ? (
+              <Link to={`/wine-profiles/${profile.slug}/edit`} className="auth-form__submit">
+                Edit Profile
+              </Link>
+            ) : undefined
+          }
+        />
 
         <div className="wine-profile-detail__layout">
           <div className="wine-profile-detail__main">

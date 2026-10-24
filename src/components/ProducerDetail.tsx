@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { producersApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
@@ -232,22 +233,15 @@ function ProducerDetail() {
       <Link to="/producers" className="wine-detail__back">
         &larr; Back to Producers
       </Link>
-      <div className="wine-detail__header">
-        <div>
-          <p className="wine-kicker">Producer</p>
-          <h1>{producer.name}</h1>
-        </div>
-      </div>
-
-      {producer.logo_url && (
-        <div style={{ margin: "0 0 1rem" }}>
-          <img
-            src={producer.logo_url}
-            alt={`${producer.name} logo`}
-            style={{ maxWidth: 180 }}
-          />
-        </div>
-      )}
+      <DetailHero
+        kicker="Producer"
+        title={producer.name}
+        media={
+          producer.logo_url ? (
+            <img src={producer.logo_url} alt={`${producer.name} logo`} />
+          ) : undefined
+        }
+      />
 
       {Array.isArray(producer.images) && producer.images.length > 0 && (
         <div className="wine-detail__images">
