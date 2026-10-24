@@ -65,6 +65,11 @@ describe("ReviewsManagement", () => {
     expect(image.closest("td")).toBe(screen.getAllByRole("cell")[0])
   })
 
+  it("links the hero action to the review creation form", () => {
+    renderPage()
+    expect(screen.getByRole("link", { name: "+ Add Review" })).toHaveAttribute("href", "/reviews?new=true")
+  })
+
   it("shows an authorization message when the viewer is not a content manager", () => {
     currentUser = { roles: ["Reader"] }
     renderPage()
@@ -87,5 +92,10 @@ describe("ArticlesManagement", () => {
     const image = await screen.findByRole("img", { name: "Estate article" })
     expect(image).toHaveAttribute("src", "/article.jpg")
     expect(image.closest("td")).toBe(screen.getAllByRole("cell")[0])
+  })
+
+  it("links the hero action to the article creation form", () => {
+    renderArticlesPage()
+    expect(screen.getByRole("link", { name: "+ Add Article" })).toHaveAttribute("href", "/articles?new=true")
   })
 })

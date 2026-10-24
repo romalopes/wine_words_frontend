@@ -37,7 +37,8 @@ function Articles() {
   // Category name -> id map for resolving ?category= to category_id
   const [categoryNameToId, setCategoryNameToId] = useState<Record<string, number>>({});
   // Add-article form visibility.
-  const [showForm, setShowForm] = useState<boolean>(false);
+  const createRequested = searchParams.get("new") === "true";
+  const [showForm, setShowForm] = useState<boolean>(createRequested);
   // Scope and status filters.
   const [scope, setScope] = useState<"all" | "mine">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -62,8 +63,12 @@ function Articles() {
 
   // When the selected category changes, hide the add form (user navigated away).
   useEffect(() => {
-    setShowForm(false);
+    if (selectedCategory) setShowForm(false);
   }, [selectedCategory]);
+
+  useEffect(() => {
+    if (createRequested && canManageContent) setShowForm(true);
+  }, [createRequested, canManageContent]);
 
   // Content managers can act on any article; everyone else only on their own.
   function canManage(article: Article) {

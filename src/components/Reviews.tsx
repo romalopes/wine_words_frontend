@@ -208,7 +208,11 @@ function Reviews() {
   // Add-review form visibility and the review currently being edited.
   // `ReviewForm` owns its own field state (including its wine search picker),
   // so only the review being edited needs to live here.
-  const [showForm, setShowForm] = useState(false);
+  const createRequested = searchParams.get("new") === "true";
+  const [showForm, setShowForm] = useState(createRequested);
+  useEffect(() => {
+    if (createRequested && canManageContent) setShowForm(true);
+  }, [createRequested, canManageContent]);
   const toggleFilterDrawer = () => {
     // Placeholder for filter drawer toggle logic
   };

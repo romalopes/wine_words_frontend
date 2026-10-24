@@ -32,7 +32,7 @@ vi.mock("../contexts/AuthContext", () => ({
   }),
 }));
 
-vi.mock("./ArticleForm", () => ({ default: () => null }));
+vi.mock("./ArticleForm", () => ({ default: () => <div>New article form</div> }));
 
 interface ArticleRow {
   id: number;
@@ -66,6 +66,11 @@ function renderArticles(initialEntry = "/articles") {
     </MemoryRouter>,
   );
 }
+
+it("opens the existing creation form when requested in the URL", () => {
+  renderArticles("/articles?new=true");
+  expect(screen.getByText("New article form")).toBeInTheDocument();
+});
 
 describe("Articles", () => {
   beforeEach(() => {

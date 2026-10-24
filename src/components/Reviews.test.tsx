@@ -41,7 +41,7 @@ vi.mock("../contexts/AuthContext", () => ({
 
 // The forms are only mounted behind interaction; stub them so this file tests
 // the list/search rendering in isolation.
-vi.mock("./ReviewForm", () => ({ default: () => null }));
+vi.mock("./ReviewForm", () => ({ default: () => <div>New review form</div> }));
 vi.mock("./WineQuickCreate", () => ({ default: () => null }));
 
 function makeReview(overrides: Record<string, unknown> = {}) {
@@ -98,6 +98,11 @@ describe("Reviews", () => {
     mockGrouped.mockReset().mockResolvedValue([]);
     mockMyReviews.mockReset().mockResolvedValue([]);
     mockCategoriesList.mockReset().mockResolvedValue([]);
+  });
+
+  it("opens the existing creation form when requested in the URL", () => {
+    renderReviews("/reviews?new=true");
+    expect(screen.getByText("New review form")).toBeInTheDocument();
   });
 
   it("does not fetch my reviews when logged out", async () => {

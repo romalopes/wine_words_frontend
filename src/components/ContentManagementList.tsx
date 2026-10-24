@@ -114,6 +114,11 @@ function ContentManagementList({ kind }: ContentManagementListProps) {
       kicker="Settings"
       title={`Manage ${plural}`}
       intro="Search, filter, and update content using your existing permissions."
+      actions={
+        <Link to={`/${kind}s?new=true`} className="auth-form__submit">
+          + Add {singular}
+        </Link>
+      }
     />
     <section className="content-management__toolbar" aria-label={`${plural} filters`}>
       <label className="content-management__field"><span>Search</span><input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={`Search ${plural.toLowerCase()}…`} /></label>
