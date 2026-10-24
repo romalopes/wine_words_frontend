@@ -190,6 +190,13 @@ describe("Reviews", () => {
         screen.getByRole("heading", { name: "Reviews" }),
       ).toBeInTheDocument();
     });
+    expect(
+      screen.getByRole("heading", { name: "Reviews" }).closest("header"),
+    ).toHaveClass("wine-app__detail-hero");
+    expect(screen.getByRole("link", { name: /Back to Dashboard/ })).toHaveAttribute(
+      "href",
+      "/",
+    );
   });
 
   it("shows the empty state when there are no reviews", async () => {

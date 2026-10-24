@@ -80,6 +80,7 @@ function ArticleTable({ articles, linkContext, onArticleLinked }: ArticleTablePr
       <table className="grapes-table producers-table">
         <thead>
           <tr>
+            <th className="producers-table__image-col">Image</th>
             <th>Title</th>
             <th>Author</th>
             <th>Status</th>
@@ -95,6 +96,20 @@ function ArticleTable({ articles, linkContext, onArticleLinked }: ArticleTablePr
               onClick={() => navigate(returnToLink(`/articles/${article.slug}`))}
               style={{ cursor: "pointer" }}
             >
+              <td>
+                {article.primary_image || article.images?.[0] ? (
+                  <img
+                    src={article.primary_image || article.images?.[0]}
+                    alt={article.title}
+                    className="producers-table__thumb"
+                  />
+                ) : (
+                  <span
+                    className="producers-table__thumb producers-table__thumb--empty"
+                    aria-hidden="true"
+                  />
+                )}
+              </td>
               <td>
                 <Link
                   to={returnToLink(`/articles/${article.slug}`)}

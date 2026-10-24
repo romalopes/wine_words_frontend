@@ -12,7 +12,7 @@ interface DetailHeroProps {
   /** Main heading content. */
   title: ReactNode;
   /** Optional pill badge next to the title (e.g. wine colour). */
-  badge?: DetailHeroBadge;
+  badge?: DetailHeroBadge | undefined;
   /** Optional intro/deck paragraph under the title. */
   intro?: ReactNode;
   /** Optional media (e.g. producer logo) rendered beside the text. */

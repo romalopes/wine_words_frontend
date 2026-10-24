@@ -254,6 +254,13 @@ describe("Articles", () => {
         screen.getByRole("heading", { name: "Articles" }),
       ).toBeInTheDocument();
     });
+    expect(
+      screen.getByRole("heading", { name: "Articles" }).closest("header"),
+    ).toHaveClass("wine-app__detail-hero");
+    expect(screen.getByRole("link", { name: /Back to Dashboard/ })).toHaveAttribute(
+      "href",
+      "/",
+    );
   });
 
   it("sends the archived status filter to the grouped feed and renders the returned archived articles", async () => {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { reviewsApi, categoriesApi } from "../services/api";
 import { useCategoryOrder, sortCategoryNames } from "../hooks/useCategoryOrder";
 import ReviewForm from "./ReviewForm";
@@ -297,20 +298,25 @@ function Reviews() {
 
   return (
     <main className="wine-app">
-      <div className="wine-management__header">
-        <div>
-          <h1>Reviews</h1>
-        </div>
-        {canManageContent && (
-          <button
-            type="button"
-            className="auth-form__submit"
-            onClick={() => (showForm ? closeForm() : setShowForm(true))}
-          >
-            + Add Review
-          </button>
-        )}
-      </div>
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker={selectedCategory ? "Category" : "Editorial"}
+        title="Reviews"
+        intro="Browse and manage wine reviews, ratings, and notes."
+        actions={
+          canManageContent ? (
+            <button
+              type="button"
+              className="auth-form__submit"
+              onClick={() => (showForm ? closeForm() : setShowForm(true))}
+            >
+              + Add Review
+            </button>
+          ) : undefined
+        }
+      />
 
       {showForm && (
         <div className="review-form-wrapper">

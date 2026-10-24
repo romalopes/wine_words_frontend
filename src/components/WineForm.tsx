@@ -351,9 +351,10 @@ function WineForm() {
       >
         &larr; Back
       </Link>
-      <div className="wine-management__header">
-        <h1>{isEditing ? "Edit Wine" : "Add New Wine"}</h1>
-      </div>
+      <PageHero
+        kicker="Cellar"
+        title={isEditing ? "Edit Wine" : "Add New Wine"}
+      />
       {error && <p className="auth-form__error">{error}</p>}
       <form onSubmit={handleSubmit} className="wine-form wine-catalog-form">
         <div className="wine-form__fields wine-catalog-form__fields">

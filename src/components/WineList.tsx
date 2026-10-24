@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import DetailHero from "./DetailHero";
 import { winesApi, categoriesApi } from "../services/api";
 import type { WineGroup } from "../types/api";
 import type { WineListItem } from "../types/wine";
@@ -383,12 +384,21 @@ function WineList() {
   if (showingAdvancedResults) {
     return (
       <div className="wine-app">
-        <div className="wine-management__header">
-          <div>
-            <p className="wine-kicker">Cellar</p>
-            <h1>Advanced Search Results</h1>
-          </div>
-        </div>
+        <Link to="/" className="wine-detail__back">
+          &larr; Back to Dashboard
+        </Link>
+        <DetailHero
+          kicker="Cellar"
+          title="Advanced Search Results"
+          intro="Every wine matching the filters you set below."
+          actions={
+            canManageWines ? (
+              <Link to="/wines/new" className="auth-form__submit">
+                + Add Wine
+              </Link>
+            ) : undefined
+          }
+        />
 
         <WineAdvancedSearch
           open={advancedOpen}
@@ -431,12 +441,21 @@ function WineList() {
   if (showingSimpleResults) {
     return (
       <div className="wine-app">
-        <div className="wine-management__header">
-          <div>
-            <p className="wine-kicker">Cellar</p>
-            <h1>Search Results</h1>
-          </div>
-        </div>
+        <Link to="/" className="wine-detail__back">
+          &larr; Back to Dashboard
+        </Link>
+        <DetailHero
+          kicker="Cellar"
+          title="Search Results"
+          intro="Browse wines matching your search across names, producers, regions, and grapes."
+          actions={
+            canManageWines ? (
+              <Link to="/wines/new" className="auth-form__submit">
+                + Add Wine
+              </Link>
+            ) : undefined
+          }
+        />
 
         <SearchModeControls
           searchMode={searchMode}
@@ -498,34 +517,35 @@ function WineList() {
   if (selectedCategory) {
     return (
       <div className="wine-app">
-        <div className="wine-management__header">
-          <div>
-            <p className="wine-kicker">Cellar</p>
-            <h1>{selectedCategory} Wines</h1>
-            {selectedCategory && (
-              <CategoryChip
-                label={selectedCategory}
-                onClear={() => {
-                  setSearchParams((prev) => {
-                    const next = new URLSearchParams(prev);
-                    next.delete("category");
-                    return next;
-                  });
-                }}
-              />
-            )}
-            <Link className="group-show-all" to="/wines">
-              ← Show all categories
-            </Link>
-          </div>
-          {canManageWines && (
-            <Link
-              to="/wines/new"
-              className="auth-form__submit wine-management__add-btn"
-            >
-              + Add Wine
-            </Link>
-          )}
+        <Link to="/" className="wine-detail__back">
+          &larr; Back to Dashboard
+        </Link>
+        <DetailHero
+          kicker="Cellar"
+          title={`${selectedCategory} Wines`}
+          intro={`Browse wines filed under ${selectedCategory}.`}
+          actions={
+            canManageWines ? (
+              <Link to="/wines/new" className="auth-form__submit">
+                + Add Wine
+              </Link>
+            ) : undefined
+          }
+        />
+        <div className="wine-management__toolbar">
+          <CategoryChip
+            label={selectedCategory}
+            onClear={() => {
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                next.delete("category");
+                return next;
+              });
+            }}
+          />
+          <Link className="group-show-all" to="/wines">
+            ← Show all categories
+          </Link>
         </div>
 
         <SearchModeControls
@@ -567,20 +587,21 @@ function WineList() {
   // --- No category selected: grouped-by-category view (12 per category) ---
   return (
     <div className="wine-app">
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Cellar</p>
-          <h1>Wine List</h1>
-        </div>
-        {canManageWines && (
-          <Link
-            to="/wines/new"
-            className="auth-form__submit wine-management__add-btn"
-          >
-            + Add Wine
-          </Link>
-        )}
-      </div>
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
+        kicker="Cellar"
+        title="Wine List"
+        intro="Browse every wine in the cellar, grouped by category."
+        actions={
+          canManageWines ? (
+            <Link to="/wines/new" className="auth-form__submit">
+              + Add Wine
+            </Link>
+          ) : undefined
+        }
+      />
 
       {/* Search mode toggle — one mode visible at a time. Simple search is the
           default; the existing Advanced Wine Search stays one click away. */}

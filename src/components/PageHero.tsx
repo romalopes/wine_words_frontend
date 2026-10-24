@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 
 export interface PageHeroAction {
   label: string;
+  /** Renders the action as a router link to this path. */
   to?: string;
+  /** Renders the action as a button that runs this handler. */
   onClick?: () => void;
   primary?: boolean;
   disabled?: boolean;
@@ -18,8 +20,11 @@ interface PageHeroProps {
   description?: ReactNode;
   /** Optional right-hand action buttons. */
   actions?: ReactNode;
-  /** Optional primary action rendered as a link button. */
-  primaryAction?: PageHeroAction;
+  /**
+   * Optional primary action. It renders as a router link when `to` is set and
+   * as a button otherwise, so in-page actions never navigate the router.
+   */
+  primaryAction?: PageHeroAction | undefined;
   /** Extra classes appended to the hero container. */
   className?: string;
 }
@@ -49,17 +54,32 @@ export default function PageHero({
         )}
       </div>
       <div className="page-hero__actions">
-        {primaryAction && (
-          <Link
-            to={primaryAction.to ?? ""}
-            onClick={primaryAction.onClick}
-            className={`page-hero__btn page-hero__btn--primary${primaryAction.disabled ? " page-hero__btn--disabled" : ""}`}
-            disabled={primaryAction.disabled}
-            aria-disabled={primaryAction.disabled}
-          >
-            {primaryAction.label}
-          </Link>
-        )}
+        {primaryAction &&
+          (primaryAction.to ? (
+            <Link
+              to={primaryAction.to}
+              onClick={(event) => {
+                if (primaryAction.disabled) {
+                  event.preventDefault();
+                  return;
+                }
+                primaryAction.onClick?.();
+              }}
+              className={`page-hero__btn page-hero__btn--primary${primaryAction.disabled ? " page-hero__btn--disabled" : ""}`}
+              aria-disabled={primaryAction.disabled}
+            >
+              {primaryAction.label}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={primaryAction.onClick}
+              className={`page-hero__btn page-hero__btn--primary${primaryAction.disabled ? " page-hero__btn--disabled" : ""}`}
+              disabled={primaryAction.disabled}
+            >
+              {primaryAction.label}
+            </button>
+          ))}
         {actions}
       </div>
     </header>

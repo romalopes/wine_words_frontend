@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import PageHero from "./PageHero";
+import DetailHero from "./DetailHero";
 import { articlesApi, categoriesApi } from "../services/api";
 import { useCategoryOrder, sortCategoryNames } from "../hooks/useCategoryOrder";
 import ArticleForm from "./ArticleForm";
@@ -266,14 +266,23 @@ function Articles() {
 
   return (
     <main className="wine-app">
-      <PageHero
+      <Link to="/" className="wine-detail__back">
+        &larr; Back to Dashboard
+      </Link>
+      <DetailHero
         kicker={selectedCategory ? "Category" : "Editorial"}
         title="Articles"
-        description="Browse and manage editorial articles. Use the filters to narrow by category, status, or search."
-        primaryAction={
-          canManageContent
-            ? { label: "+ Add Article", onClick: () => setShowForm(true) }
-            : undefined
+        intro="Browse and manage editorial articles. Use the filters to narrow by category, status, or search."
+        actions={
+          canManageContent ? (
+            <button
+              type="button"
+              className="auth-form__submit"
+              onClick={() => setShowForm(true)}
+            >
+              + Add Article
+            </button>
+          ) : undefined
         }
       />
 

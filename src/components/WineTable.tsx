@@ -96,6 +96,7 @@ function WineTable({
       <table className="grapes-table producers-table">
         <thead>
           <tr>
+            <th className="producers-table__image-col">Image</th>
             <th>Name</th>
             <th>Producer</th>
             <th>Regions</th>
@@ -114,6 +115,20 @@ function WineTable({
               onClick={() => navigate(returnToLink(`/wines/${wine.slug}`))}
               style={{ cursor: "pointer" }}
             >
+              <td>
+                {wine.primary_image || wine.images?.[0] ? (
+                  <img
+                    src={wine.primary_image || wine.images?.[0]}
+                    alt={wine.name}
+                    className="producers-table__thumb"
+                  />
+                ) : (
+                  <span
+                    className="producers-table__thumb producers-table__thumb--empty"
+                    aria-hidden="true"
+                  />
+                )}
+              </td>
               <td>
                 <Link
                   to={returnToLink(`/wines/${wine.slug}`)}

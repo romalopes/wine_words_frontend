@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import PageHero from "./PageHero";
 import { sourcesApi } from "../services/api";
 import { errorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext";
@@ -57,12 +58,11 @@ function SourceList() {
 
   return (
     <div className="wine-app">
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Settings</p>
-          <h1>Sources</h1>
-        </div>
-      </div>
+      <PageHero
+        kicker="Settings"
+        title="Sources"
+        description="Content sources used to attribute reviews and articles."
+      />
 
       <section aria-label="Sources" aria-busy={loading}>
         {loading ? (

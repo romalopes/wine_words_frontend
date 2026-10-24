@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import PageHero from "./PageHero";
 import { sourcesApi, reviewsApi, articlesApi } from "../services/api";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
@@ -131,20 +132,14 @@ function SourceDetail() {
 
   return (
     <div className="wine-app">
-      <div className="wine-management__header">
-        <div>
-          <p className="wine-kicker">Settings · Sources</p>
-          <h1>{label}</h1>
-          {meta && (
-            <p className="wine-management__count">
-              {meta.reviews_count} reviews · {meta.articles_count} articles
-            </p>
-          )}
-        </div>
-        <Link to="/sources" className="auth-form__submit wine-management__add-btn">
-          ← All Sources
-        </Link>
-      </div>
+      <PageHero
+        kicker="Settings · Sources"
+        title={label}
+        description={
+          meta ? `${meta.reviews_count} reviews · ${meta.articles_count} articles` : undefined
+        }
+        primaryAction={{ label: "← All Sources", to: "/sources" }}
+      />
 
       {metaError && <p className="wine-management__error">{metaError}</p>}
 

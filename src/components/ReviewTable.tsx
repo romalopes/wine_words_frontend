@@ -85,6 +85,7 @@ function ReviewTable({
       <table className="grapes-table producers-table">
         <thead>
           <tr>
+            <th className="producers-table__image-col">Image</th>
             <th>Score</th>
             <th>Wine</th>
             <th>Vintage</th>
@@ -103,6 +104,25 @@ function ReviewTable({
               onClick={() => navigate(returnToLink(`/reviews/${review.slug}`))}
               style={{ cursor: "pointer" }}
             >
+              <td>
+                {review.primary_image || review.images?.[0] || review.wine_image ? (
+                  <img
+                    src={
+                      review.primary_image ||
+                      review.images?.[0] ||
+                      review.wine_image ||
+                      undefined
+                    }
+                    alt={review.title}
+                    className="producers-table__thumb"
+                  />
+                ) : (
+                  <span
+                    className="producers-table__thumb producers-table__thumb--empty"
+                    aria-hidden="true"
+                  />
+                )}
+              </td>
               <td>
                 <strong>{review.score ?? "—"}</strong>
               </td>
