@@ -100,9 +100,10 @@ describe("Reviews", () => {
     mockCategoriesList.mockReset().mockResolvedValue([]);
   });
 
-  it("opens the existing creation form when requested in the URL", () => {
+  it("opens the existing creation form when requested in the URL", async () => {
     renderReviews("/reviews?new=true");
-    expect(screen.getByText("New review form")).toBeInTheDocument();
+    expect(await screen.findByText("New review form")).toBeInTheDocument();
+    await waitFor(() => expect(mockGrouped).toHaveBeenCalled());
   });
 
   it("does not fetch my reviews when logged out", async () => {

@@ -67,11 +67,6 @@ function renderArticles(initialEntry = "/articles") {
   );
 }
 
-it("opens the existing creation form when requested in the URL", () => {
-  renderArticles("/articles?new=true");
-  expect(screen.getByText("New article form")).toBeInTheDocument();
-});
-
 describe("Articles", () => {
   beforeEach(() => {
     // `useSearch` persists the query back to window.location, so without this
@@ -81,6 +76,12 @@ describe("Articles", () => {
     mockGrouped.mockReset().mockResolvedValue([]);
     mockMyArticles.mockReset().mockResolvedValue([]);
     mockCategoriesList.mockReset().mockResolvedValue([]);
+  });
+
+  it("opens the existing creation form when requested in the URL", async () => {
+    renderArticles("/articles?new=true");
+    expect(await screen.findByText("New article form")).toBeInTheDocument();
+    await waitFor(() => expect(mockGrouped).toHaveBeenCalled());
   });
 
   it("renders the grouped view when no category is selected", async () => {

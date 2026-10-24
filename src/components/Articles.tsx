@@ -38,7 +38,9 @@ function Articles() {
   const [categoryNameToId, setCategoryNameToId] = useState<Record<string, number>>({});
   // Add-article form visibility.
   const createRequested = searchParams.get("new") === "true";
-  const [showForm, setShowForm] = useState<boolean>(createRequested);
+  const [showForm, setShowForm] = useState<boolean>(
+    createRequested && canManageContent,
+  );
   // Scope and status filters.
   const [scope, setScope] = useState<"all" | "mine">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");

@@ -209,7 +209,9 @@ function Reviews() {
   // `ReviewForm` owns its own field state (including its wine search picker),
   // so only the review being edited needs to live here.
   const createRequested = searchParams.get("new") === "true";
-  const [showForm, setShowForm] = useState(createRequested);
+  const [showForm, setShowForm] = useState(
+    createRequested && canManageContent,
+  );
   useEffect(() => {
     if (createRequested && canManageContent) setShowForm(true);
   }, [createRequested, canManageContent]);
