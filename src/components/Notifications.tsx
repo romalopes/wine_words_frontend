@@ -10,9 +10,21 @@ import { formatDate } from "../utils/dates";
 import type { Notification } from "../types/notification";
 import styles from "./winePackages.module.css";
 
-// The signed-in user's notifications — currently the wine-package review
-// deadline reminders. Read state is per-user and the API is scoped to the
-// caller, so nothing here needs to filter by recipient.
+// Human label for the Status column of follow-based notifications (no package
+// status exists for them).
+function followStatusLabel(notification: Notification): string {
+  const actor = notification.actor_name;
+  if (actor && notification.event_type?.endsWith("comment_created")) {
+    return `Comment by ${actor}`;
+  }
+  if (actor) return `By ${actor}`;
+  return "In-app";
+}
+
+// The signed-in user's notifications: wine-package review-deadline reminders
+// plus follow-based events (new content, comments) from issue #192. Read state
+// is per-user and the API is scoped to the caller, so nothing here needs to
+// filter by recipient.
 function Notifications() {
   const [searchParams, setSearchParams] = useSearchParams();
   const unreadOnly = searchParams.get("unread") === "true";
@@ -79,8 +91,8 @@ function Notifications() {
           <p className="wine-kicker">Cellar</p>
           <h1>Notifications</h1>
           <p className={styles.cellMuted}>
-            Review-deadline reminders for the wine packages you are responsible
-            for.
+            Review-deadline reminders for your wine packages, plus updates on the
+            producers, wines, reviews and articles you follow.
           </p>
         </div>
         <div className={styles.headerActions}>
@@ -131,7 +143,9 @@ function Notifications() {
                   <tr key={notification.id}>
                     <td className={styles.cellMuted}>
                       {formatDate(notification.scheduled_date)}
-                      {!notification.sent && <div>not sent yet</div>}
+                      {notification.wine_package_id && !notification.sent && (
+                        <div>not sent yet</div>
+                      )}
                     </td>
                     <td>
                       {notification.message}
@@ -147,14 +161,24 @@ function Notifications() {
                           {notification.producer_name ||
                             `Package #${notification.wine_package_id}`}
                         </Link>
+                      ) : notification.target_path ? (
+                        <Link to={notification.target_path}>
+                          {notification.target_label || notification.target_path}
+                        </Link>
                       ) : (
                         <span className={styles.cellMuted}>—</span>
                       )}
                     </td>
                     <td>
-                      <PackageStatusBadge
-                        status={notification.package_status}
-                      />
+                      {notification.wine_package_id ? (
+                        <PackageStatusBadge
+                          status={notification.package_status}
+                        />
+                      ) : (
+                        <span className={styles.cellMuted}>
+                          {followStatusLabel(notification)}
+                        </span>
+                      )}
                     </td>
                     <td>
                       {!notification.read && (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Alert, Button, Card, Chip, Spinner } from "@heroui/react";
 import PageHero from "./PageHero";
 import { sourcesApi } from "../services/api";
 import { errorMessage } from "../utils/errors";
@@ -57,35 +58,42 @@ function SourceList() {
   }
 
   return (
-    <div className="wine-app">
+    <main className="wine-app hero-settings-page">
       <PageHero
         kicker="Settings"
         title="Sources"
-        description="Content sources used to attribute reviews and articles."
+        description="See where editorial content originated and explore every review and article attributed to each source."
       />
 
-      <section aria-label="Sources" aria-busy={loading}>
+      <section className="hero-settings-section" aria-label="Sources" aria-busy={loading}>
         {loading ? (
-          <p className="wine-management__loading" role="status">
-            Loading sources…
-          </p>
+          <div className="hero-settings-state" role="status">
+            <Spinner color="accent" size="lg" />
+            <span>Loading sources…</span>
+          </div>
         ) : error ? (
-          <div role="alert">
-            <p className="wine-management__error">{error}</p>
-            <button className="auth-form__submit" onClick={() => window.location.reload()}>
+          <Alert status="danger" className="hero-settings-alert">
+            <Alert.Content>
+              <Alert.Title>Unable to load sources</Alert.Title>
+              <Alert.Description>{error}</Alert.Description>
+            </Alert.Content>
+            <Button variant="outline" onPress={() => window.location.reload()}>
               Retry
-            </button>
-          </div>
+            </Button>
+          </Alert>
         ) : sources.length === 0 ? (
-          <div className="wine-management__empty">
-            <p>No sources found.</p>
-          </div>
+          <Card variant="secondary" className="hero-settings-empty">
+            <Card.Content>
+              <Card.Title>No sources found</Card.Title>
+              <Card.Description>Sources will appear here when content is attributed to them.</Card.Description>
+            </Card.Content>
+          </Card>
         ) : (
-          <div className="wine-management__grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}>
+          <div className="source-library-grid">
             {sources.map((source) => (
-              <div
+              <Card
                 key={source.source}
-                className="wine-management__card"
+                className="source-library-card"
                 role="button"
                 tabIndex={0}
                 onClick={() => navigate(`/sources/${source.source}`)}
@@ -96,21 +104,32 @@ function SourceList() {
                   }
                 }}
               >
-                <div className="wine-management__card-header">
-                  <h3>{source.label}</h3>
-                </div>
-                <p className="wine-management__region">
-                  {source.reviews_count} {source.reviews_count === 1 ? "review" : "reviews"}
-                </p>
-                <p className="wine-management__vintage-count">
-                  {source.articles_count} {source.articles_count === 1 ? "article" : "articles"}
-                </p>
-              </div>
+                <Card.Header>
+                  <div className="source-library-card__heading">
+                    <span className="source-library-card__eyebrow">Content source</span>
+                    <Card.Title>{source.label}</Card.Title>
+                  </div>
+                  <span className="source-library-card__arrow" aria-hidden="true">→</span>
+                </Card.Header>
+                <Card.Content>
+                  <Card.Description>
+                    Browse all published content attributed to {source.label}.
+                  </Card.Description>
+                </Card.Content>
+                <Card.Footer className="source-library-card__counts">
+                  <Chip color="accent" variant="soft">
+                    {source.reviews_count} {source.reviews_count === 1 ? "review" : "reviews"}
+                  </Chip>
+                  <Chip color="default" variant="soft">
+                    {source.articles_count} {source.articles_count === 1 ? "article" : "articles"}
+                  </Chip>
+                </Card.Footer>
+              </Card>
             ))}
           </div>
         )}
       </section>
-    </div>
+    </main>
   );
 }
 

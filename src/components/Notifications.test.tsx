@@ -150,6 +150,45 @@ describe("Notifications", () => {
     );
   });
 
+  it("renders follow-based notifications with a link to the changed content", async () => {
+    const followNotification = {
+      id: 30,
+      notification_type: "review_published",
+      message: "Review published: Grange 2020",
+      wine_package_id: null,
+      producer_name: null,
+      package_status: null,
+      notification_event_id: 5,
+      event_type: "review.published",
+      actor_name: "Rene Lopes",
+      target_path: "/reviews/grange-2020",
+      target_label: "Grange 2020",
+      scheduled_date: "2026-10-24",
+      delivered_at: "2026-10-24T09:00:00Z",
+      sent_at: null,
+      read_at: null,
+      sent: false,
+      read: false,
+      created_at: "2026-10-24T09:00:00Z",
+    };
+    mockList.mockResolvedValue({
+      items: [followNotification],
+      page: 1,
+      per_page: 20,
+      total_count: 1,
+      total_pages: 1,
+    });
+    renderNotifications();
+
+    expect(await screen.findByText(/Review published: Grange 2020/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Grange 2020" })).toHaveAttribute(
+      "href",
+      "/reviews/grange-2020",
+    );
+    // Follow notifications are in-app only: no "not sent yet" noise.
+    expect(screen.queryByText("not sent yet")).not.toBeInTheDocument();
+  });
+
   it("shows an empty state", async () => {
     mockList.mockResolvedValue({
       items: [],

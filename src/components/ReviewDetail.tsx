@@ -6,6 +6,7 @@ import ReviewForm from "./ReviewForm";
 import ContentStatusActions, { type ContentStatus } from "./ContentStatusActions";
 import RelatedContent from "./RelatedContent";
 import LikeButton from "./LikeButton";
+import FollowButton from "./FollowButton";
 import ShareButton from "./ShareButton";
 import CommentSection from "./comments/CommentSection";
 import { useAuth } from "../contexts/AuthContext";
@@ -261,6 +262,7 @@ function ReviewDetail() {
             </span>
 
             <span className="article-page__byline-actions">
+              <FollowButton kind="Review" identifier={review.slug || review.id} />
               <LikeButton
                 kind="review"
                 identifier={review.slug || review.id}

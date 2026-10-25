@@ -15,6 +15,7 @@ import DOMPurify from "dompurify";
 import ReviewForm from "./ReviewForm";
 import BackToSource from "./BackToSource";
 import LikeButton from "./LikeButton";
+import FollowButton from "./FollowButton";
 import CommentSection from "./comments/CommentSection";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import AdaptiveImage from "./AdaptiveImage";
@@ -260,6 +261,7 @@ function WineDetail() {
           ) : undefined
         }
       >
+        <FollowButton kind="Wine" identifier={wine.slug || wine.id} />
         <LikeButton
           kind="wine"
           identifier={wine.slug || wine.id}

@@ -7,6 +7,7 @@ import ContentStatusActions, { type ContentStatus } from "./ContentStatusActions
 import ReviewCard from "./ReviewCard";
 import RelatedContent from "./RelatedContent";
 import LikeButton from "./LikeButton";
+import FollowButton from "./FollowButton";
 import ShareButton from "./ShareButton";
 import CommentSection from "./comments/CommentSection";
 import DOMPurify from "dompurify";
@@ -237,6 +238,7 @@ function ArticleDetail() {
             </span>
 
             <span className="article-page__byline-actions">
+              <FollowButton kind="Article" identifier={article.slug || article.id} />
               <LikeButton
                 kind="article"
                 identifier={article.slug || article.id}

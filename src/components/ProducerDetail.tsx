@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import DetailHero from "./DetailHero";
+import FollowButton from "./FollowButton";
 import { producersApi, usersApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -363,7 +364,9 @@ function ProducerDetail() {
             <img src={producer.logo_url} alt={`${producer.name} logo`} />
           ) : undefined
         }
-      />
+      >
+        <FollowButton kind="Producer" identifier={producer.slug || producer.id} />
+      </DetailHero>
 
       {Array.isArray(producer.images) && producer.images.length > 0 && (
         <div className="wine-detail__images">

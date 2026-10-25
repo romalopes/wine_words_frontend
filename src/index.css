@@ -2120,6 +2120,155 @@ textarea {
   font-size: 0.78rem;
 }
 
+/* --- Follow button (issue #192) ------------------------------------------ */
+/* Sits beside .like-button and shares its pill shape so a detail hero reads
+   as one action row. */
+.follow-button {
+  background: transparent;
+  border: 1px solid #d7c8bb;
+  border-radius: 999px;
+  color: #6d5f56;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  text-decoration: none;
+}
+
+.follow-button:hover:not(:disabled) {
+  border-color: #27615e;
+  color: #27615e;
+}
+
+.follow-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.follow-button--following {
+  border-color: #27615e;
+  color: #27615e;
+}
+
+.follow-button--readonly {
+  display: inline-block;
+}
+
+.follow-button__wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.follow-button__error {
+  color: #b9475f;
+  font-size: 0.78rem;
+}
+
+/* --- Following page (issue #192) ------------------------------------------ */
+.following-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.following-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.following-page__filter {
+  background: transparent;
+  border: 1px solid #d7c8bb;
+  border-radius: 999px;
+  color: #6d5f56;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 14px;
+}
+
+.following-page__filter--active {
+  border-color: #27615e;
+  color: #27615e;
+}
+
+.following-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.following-page__row {
+  align-items: center;
+  border: 1px solid #eee2d8;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.following-page__type {
+  color: #a09286;
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.following-page__label {
+  flex: 1 1 auto;
+  font-weight: 600;
+}
+
+.following-page__unfollow {
+  background: transparent;
+  border: 1px solid #d7c8bb;
+  border-radius: 999px;
+  color: #b9475f;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 3px 12px;
+}
+
+.following-page__status {
+  color: #6d5f56;
+}
+
+.following-page__pagination {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* --- Follow-notification preferences (issue #192 phase 8) ----------------- */
+.following-page__prefs {
+  border: 1px solid #eee2d8;
+  border-radius: 8px;
+  margin: 8px 0 24px;
+  padding: 14px 18px;
+}
+
+.following-page__prefs h2 {
+  font-size: 1rem;
+  margin: 0 0 10px;
+}
+
+.following-page__pref-row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
+}
+
 .review-add-btn {
   background: transparent;
   border: 1px dashed #d7c8bb;
@@ -3863,6 +4012,242 @@ textarea {
 
 .category-list .card-action--delete {
   color: #8a273c;
+}
+
+/* HeroUI settings surfaces: Sources and Categories */
+.hero-settings-page {
+  --hero-wine: #681a2a;
+  --hero-wine-dark: #4a1020;
+  --hero-ink-muted: #6b5d55;
+  --hero-surface: #fffaf4;
+  --hero-border: #e4d9cd;
+}
+
+.hero-settings-section {
+  margin-top: 1.25rem;
+}
+
+.hero-settings-state {
+  align-items: center;
+  color: var(--hero-ink-muted);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  min-height: 12rem;
+}
+
+.hero-settings-alert {
+  align-items: center;
+}
+
+.hero-settings-alert [data-slot="alert-content"] {
+  flex: 1;
+}
+
+.hero-settings-empty {
+  border: 1px dashed var(--hero-border);
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.hero-settings-empty--inline {
+  color: var(--hero-ink-muted);
+  padding: 2rem 1rem 1rem;
+}
+
+.hero-settings-messages {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.source-library-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.source-library-card {
+  background: linear-gradient(145deg, #fffdf9 0%, var(--hero-surface) 100%);
+  border-color: var(--hero-border);
+  cursor: pointer;
+  min-height: 15rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.source-library-card:hover {
+  border-color: rgba(104, 26, 42, 0.36);
+  box-shadow: 0 18px 40px rgba(54, 36, 28, 0.12);
+  transform: translateY(-3px);
+}
+
+.source-library-card:focus-visible {
+  box-shadow: 0 0 0 3px rgba(104, 26, 42, 0.22);
+  outline: none;
+}
+
+.source-library-card [data-slot="card-header"] {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.source-library-card__heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.source-library-card__eyebrow {
+  color: #a13b52;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.source-library-card__arrow {
+  align-items: center;
+  background: rgba(104, 26, 42, 0.08);
+  border-radius: 999px;
+  color: var(--hero-wine);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1.15rem;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.source-library-card__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.category-library-layout {
+  align-items: start;
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(420px, 1.4fr);
+}
+
+.category-library-form-card,
+.category-library-list-card {
+  background: var(--hero-surface);
+  border-color: var(--hero-border);
+}
+
+.category-library-form-card [data-slot="card-header"],
+.category-library-list-card [data-slot="card-header"] {
+  display: block;
+}
+
+.category-library-form-card [data-slot="card-title"],
+.category-library-list-card [data-slot="card-title"] {
+  margin-top: 0.3rem;
+}
+
+.category-library-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.category-library-form .category-form__row {
+  margin: 0;
+  max-width: none;
+}
+
+.category-library-form__toggles {
+  border: 0;
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+}
+
+.category-library-form__toggles legend {
+  color: var(--hero-ink-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.category-library-list {
+  display: grid;
+  gap: 0.65rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.category-library-list__item {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--hero-border);
+  border-radius: 0.85rem;
+  display: flex;
+  gap: 0.75rem;
+  min-height: 3.6rem;
+  padding: 0.55rem 0.65rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+
+.category-library-list__item[draggable="true"] {
+  cursor: grab;
+}
+
+.category-library-list__item--over {
+  border-color: var(--hero-wine);
+  box-shadow: 0 0 0 3px rgba(104, 26, 42, 0.16);
+}
+
+.category-library-list__item--dragging {
+  opacity: 0.48;
+}
+
+.category-library-list__handle {
+  color: #9b8b85;
+  cursor: grab;
+  font-size: 1.05rem;
+}
+
+.category-library-list__name {
+  flex: 1;
+  font-weight: 750;
+  min-width: 0;
+}
+
+.category-library-list__name a:hover {
+  color: var(--hero-wine);
+}
+
+.category-library-list__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.35rem;
+}
+
+@media (max-width: 860px) {
+  .category-library-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .source-library-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .category-library-list__item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .category-library-list__actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
 }
 
 /* Grapes Page Styles */
@@ -6867,7 +7252,7 @@ a.admin-user-card:hover {
 .wine-app__detail-hero__title-row h1 {
   color: #3e1520;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2.15rem, 6vw, 4.25rem);
+  font-size: clamp(2.15rem, 6vw, 2.7rem);
   letter-spacing: -0.04em;
   line-height: 0.98;
   margin: 4px 0 0;
@@ -6908,7 +7293,7 @@ a.admin-user-card:hover {
 .wine-app__detail-hero__intro {
   color: #6b5d55;
   font-size: 1rem;
-  margin: 16px 0 0;
+  margin: 1px 0 0;
   max-width: 37rem;
 }
 

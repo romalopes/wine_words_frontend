@@ -47,6 +47,7 @@ import WinePackages from "./WinePackages";
 import WinePackageDetail from "./WinePackageDetail";
 import WinePackageForm from "./WinePackageForm";
 import Notifications from "./Notifications";
+import Following from "./Following";
 import VerifyEmail from "./VerifyEmail";
 import ArticleProjects from "./ArticleProjects";
 import ArticleProjectDetail from "./ArticleProjectDetail";
@@ -123,6 +124,7 @@ function AppRoutes() {
         <Route element={<WinePackageDetail />} path="/wine-packages/:id" />
         <Route element={<WinePackageForm />} path="/wine-packages/:id/edit" />
         <Route element={<Notifications />} path="/notifications" />
+        <Route element={<Following />} path="/following" />
         <Route element={<ArticleProjects />} path="/article-projects" />
         <Route element={<ArticleProjectForm />} path="/article-projects/new" />
         <Route

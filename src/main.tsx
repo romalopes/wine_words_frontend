@@ -1,4 +1,5 @@
 import "bootstrap/dist/css/bootstrap.min.css";
+import "@heroui/styles";
 import * as Sentry from "@sentry/react";
 import "./index.css";
 import "./App.css";

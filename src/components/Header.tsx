@@ -356,6 +356,19 @@ function Header() {
                   Analytics
                 </NavLink>
               )}
+
+              {user && (
+                <NavLink
+                  onClick={() => {
+                    setExtrasOpen(false);
+                    handleCloseMenu();
+                  }}
+                  to="/following"
+                >
+                  Following
+                </NavLink>
+              )}
+
               <NavLink
                 to="/finder"
                 onClick={() => {
