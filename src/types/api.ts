@@ -355,6 +355,7 @@ export interface UsersApi {
   assignRoles(userId: number, roleIds: number[]): Promise<AdminUser>
   assignSubscription(userId: number, subscriptionId: number | null): Promise<AdminUser>
   show(userId: number): Promise<UserDetail>
+  updateAccount(userId: number, payload: AccountUpdatePayload): Promise<Account>
   producerMemberships: {
     list(userId: number): Promise<ProducerMembership[]>
     create(

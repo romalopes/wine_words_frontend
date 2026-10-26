@@ -81,6 +81,7 @@ export interface AuditLog {
 
 import type { Paginated } from "./common"
 import type { User } from "./authentication"
+import type { Account } from "./account"
 import type { ProducerMembershipType } from "./producer"
 
 /**
@@ -93,6 +94,8 @@ export interface AdminUser {
   id: number
   email: string
   display_name: string | null
+  first_name?: string | null
+  last_name?: string | null
   /** Numeric role ids currently assigned — drives the role checkboxes. */
   role_ids: number[]
   /** Human-readable role names, e.g. ["Admin", "Reader"]. */
@@ -156,6 +159,8 @@ export interface ProducerMembership {
 
 /** Detailed user info returned by GET /api/v1/users/:id (admin only). */
 export interface UserDetail extends AdminUser {
+  /** Admin-only personal information; omitted from catalogue-manager responses. */
+  account?: Account
   analytics_opt_out: boolean
   producer_memberships: ProducerMembership[]
 }

@@ -32,6 +32,7 @@ export function createUsersApi(request: ApiRequester): UsersApi {
     assignRoles: (userId, roleIds) => request(`/users/${userId}/assign_roles`, { method: "PATCH", auth: true, body: { role_ids: roleIds } }),
     assignSubscription: (userId, subscriptionId) => request(`/users/${userId}/assign_subscription`, { method: "PATCH", auth: true, body: { subscription_id: subscriptionId } }),
     show: (userId) => request<UserDetail>(`/users/${userId}`, { auth: true }),
+    updateAccount: (userId, data) => request<Account>(`/users/${userId}/account`, { method: "PATCH", auth: true, body: data as unknown as Record<string, never> }),
     producerMemberships: {
       list: (userId) => request<ProducerMembership[]>(`/users/${userId}/producer_memberships`, { auth: true }),
       create: (userId, producerId, membershipType) =>

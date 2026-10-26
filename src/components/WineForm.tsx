@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { ChangeEvent, KeyboardEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import PageHero from "./PageHero";
 import {
@@ -6,6 +7,7 @@ import {
   tasteParametersApi,
   imagesApi,
   categoriesApi,
+  wineProfilesApi,
 } from "../services/api";
 import ImageManager from "./ImageManager";
 import ProducerSearch from "./ProducerSearch";
@@ -22,6 +24,8 @@ import {
 import { errorMessage } from "../utils/errors";
 import type { Category, TasteParameter } from "../types/catalog";
 import type { VintageWrite, WineTasteParameter } from "../types/wine";
+import type { WineProfileSearchResponse } from "../types/api";
+import type { UserWineProfile } from "../types/user";
 
 /**
  * One row of the vintages editor. The API stores `year`/`price` as numbers and
@@ -63,6 +67,7 @@ interface WineFormData {
   producer_id: string
   producer_name: string
   designation_name: string
+  wine_profile_id: string | null
   category_ids: number[]
   fortified: boolean
   sparkling: boolean
@@ -84,6 +89,7 @@ function WineForm() {
     producer_id: "",
     producer_name: "",
     designation_name: "",
+    wine_profile_id: null,
     category_ids: [],
     fortified: false,
     sparkling: false,
@@ -92,12 +98,92 @@ function WineForm() {
   const [selectedGrapes, setSelectedGrapes] = useState<SelectedGrape[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<SelectedRegion[]>([]);
   const [autoName, setAutoName] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] =
+    useState<WineProfileSearchResponse | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const performProfileSearch = useCallback(async (query: string) => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setSearchResults(null);
+      setSearched(false);
+      setSearchError(null);
+      return;
+    }
+
+    try {
+      setSearching(true);
+      setSearchError(null);
+      const results = await wineProfilesApi.search(trimmed);
+      setSearchResults(results);
+      setSearched(true);
+    } catch (err) {
+      setSearchError(errorMessage(err, "Profile search failed"));
+      setSearchResults(null);
+      setSearched(true);
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  function handleProfileSearchChange(event: ChangeEvent<HTMLInputElement>) {
+    const value = event.target.value;
+    setSearchQuery(value);
+    setFormData((previous) => ({ ...previous, wine_profile_id: null }));
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => performProfileSearch(value), 300);
+  }
+
+  function handleProfileSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    void performProfileSearch(searchQuery);
+  }
+
+  function selectWineProfile(profile: UserWineProfile) {
+    if (profile.id == null) {
+      setSearchError("This wine profile cannot be selected because its ID is missing.");
+      return;
+    }
+    setFormData((previous) => ({
+      ...previous,
+      wine_profile_id: String(profile.id),
+    }));
+    if (profile.parameters) {
+      setTasteScores((previous) =>
+        previous.map((score) => ({
+          ...score,
+          score: profile.parameters?.[score.taste_parameter_slug] ?? score.score,
+        })),
+      );
+      setTasteParamsTouched(true);
+    }
+    setSearchQuery(profile.name ?? profile.slug);
+    setSearchResults(null);
+    setSearched(false);
+    setSearchError(null);
+  }
+
+  function clearWineProfile() {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    setFormData((previous) => ({ ...previous, wine_profile_id: null }));
+    setSearchQuery("");
+    setSearchResults(null);
+    setSearched(false);
+    setSearchError(null);
+  }
 
   const [wineCategories, setWineCategories] = useState<Category[]>([]);
   const [vintages, setVintages] = useState<VintageFormRow[]>([]);
   const [tasteParams, setTasteParams] = useState<TasteParameter[]>([]);
   const [tasteScores, setTasteScores] = useState<TasteScoreRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [tasteParamsTouched, setTasteParamsTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<File[] | null>(null);
@@ -151,10 +237,15 @@ function WineForm() {
               : "",
             producer_name: wineData.producer?.name || "",
             designation_name: wineData.designation_name || "",
+            wine_profile_id:
+              wineData.wine_profile_id == null
+                ? null
+                : String(wineData.wine_profile_id),
             category_ids: (wineData.categories ?? []).map((c) => c.id),
             sparkling: Boolean(wineData.sparkling),
             fortified: Boolean(wineData.fortified),
           });
+          setSearchQuery(wineData.wine_profile?.name ?? "");
 
           setSelectedGrapes(wineData.grapes || []);
           setAutoName(false);
@@ -200,6 +291,12 @@ function WineForm() {
   }, [slug, isEditing]);
 
   useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!autoName) return;
     const producer = (formData.producer_name || "").trim();
     const designation = (formData.designation_name || "").trim();
@@ -240,6 +337,7 @@ function WineForm() {
   }
 
   function handleTasteChange(index: number, value: string) {
+    setTasteParamsTouched(true);
     setTasteScores((prev) => {
       const updated = [...prev];
       if (updated[index]) {
@@ -282,6 +380,13 @@ function WineForm() {
         score: ts.score,
       }));
 
+      // Untouched sliders do not submit: when the server receives no taste
+      // attributes it auto-fills the closest profile. An edit or any touched
+      // slider always submits the current scores.
+      const wineTasteParameters = isEditing || tasteParamsTouched
+        ? wineTasteParametersAttributes
+        : [];
+
       const payload = {
         name: formData.name,
         color: formData.color,
@@ -294,10 +399,14 @@ function WineForm() {
         producer_id: formData.producer_id
           ? parseInt(formData.producer_id, 10)
           : null,
+        wine_profile_id: formData.wine_profile_id
+          ? parseInt(formData.wine_profile_id, 10)
+          : null,
         category_ids: formData.category_ids || [],
         sparkling: Boolean(formData.sparkling),
         fortified: Boolean(formData.fortified),
         grape_ids: selectedGrapes.map((g) => g.id),
+        wine_taste_parameters_attributes: wineTasteParameters,
         region_ids: selectedRegions.map((r) => r.id),
         vintages_attributes: vintages.map((v): VintageWrite => {
           const attr: VintageWrite = {
@@ -310,7 +419,6 @@ function WineForm() {
           if (v.id) attr.id = v.id;
           return attr;
         }),
-        wine_taste_parameters_attributes: wineTasteParametersAttributes,
       };
 
       // `isEditing` is `Boolean(slug)`, but that does not narrow `slug` itself,
@@ -404,6 +512,59 @@ function WineForm() {
               selected={selectedRegions}
               onChange={setSelectedRegions}
             />
+          </div>
+          <div className="auth-form__field wine-catalog-form__field--wide wine-profile-search">
+            <span>Wine profile</span>
+            <div className="wine-profile-search__input-row">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={handleProfileSearchChange}
+                onKeyDown={handleProfileSearchKeyDown}
+                placeholder="Search profiles by name, grape, or region…"
+                autoComplete="off"
+                aria-label="Wine profile"
+              />
+              {(searchQuery || formData.wine_profile_id) && (
+                <button
+                  type="button"
+                  className="wine-profile-search__clear"
+                  onClick={clearWineProfile}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {formData.wine_profile_id && (
+              <p className="wine-profile-search__selected">
+                Selected profile: {searchQuery}
+              </p>
+            )}
+            {searching && (
+              <p className="wine-management__loading">Searching profiles…</p>
+            )}
+            {searchError && <p className="auth-form__error">{searchError}</p>}
+            {!searching && searched && searchResults && (
+              <div className="wine-profile-search__results">
+                {searchResults.wine_profiles.length > 0 ? (
+                  searchResults.wine_profiles.map((profile) => (
+                    <button
+                      type="button"
+                      className="wine-profile-search__result"
+                      key={profile.id ?? profile.slug}
+                      onClick={() => selectWineProfile(profile)}
+                    >
+                      <strong>{profile.name ?? profile.slug}</strong>
+                      {profile.color && <span>{profile.color}</span>}
+                    </button>
+                  ))
+                ) : (
+                  <p className="wine-profile-search__empty">
+                    No wine profiles found.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <label className="auth-form__field auth-form__field--checkbox">
             <input

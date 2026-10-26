@@ -34,6 +34,15 @@ export interface Wine {
   grapes?: GrapeRef[]
   regions?: Region[]
   parameters?: WineTasteParameter[]
+  /**
+   * The WineProfile this wine was linked to (explicitly, or auto-assigned on
+   * create when no taste parameters were submitted). The `parameters` scores
+   * are a snapshot copied at creation time and do not re-sync if the profile
+   * later changes.
+   */
+  wine_profile_id?: number | null
+  /** `{ id, slug, name }` stub of the linked profile, or null. */
+  wine_profile?: { id: number; slug: string; name: string } | null
   vintages?: Vintage[]
   /**
    * Ordered image URL strings — `image_urls` in Rails (ImageAttributes).
