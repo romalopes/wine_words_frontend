@@ -5,6 +5,7 @@ import { usersApi, subscriptionsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { isAdmin, canManageUsers } from "../constants/roles";
 import { errorMessage } from "../utils/errors";
+import UserRoleSubscriptionControls from "./UserRoleSubscriptionControls";
 import type { AdminUser, AdminUserResults, RoleOption } from "../types/user";
 import type { Subscription } from "../types/subscription";
 
@@ -25,8 +26,12 @@ function UserRoles() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    usersApi.roles().then((data) => setAllRoles(Array.isArray(data) ? data : []));
-    subscriptionsApi.list({ auth: true }).then((data) => setSubscriptions(Array.isArray(data) ? data : []));
+    usersApi
+      .roles()
+      .then((data) => setAllRoles(Array.isArray(data) ? data : []));
+    subscriptionsApi
+      .list({ auth: true })
+      .then((data) => setSubscriptions(Array.isArray(data) ? data : []));
   }, []);
 
   async function runSearch(q: string, page = 1) {
@@ -36,7 +41,13 @@ function UserRoles() {
       setError(null);
       const data = await usersApi.search(trimmed, page);
       if (Array.isArray(data)) {
-        setResults({ items: data, page: 1, per_page: data.length, total_count: data.length, total_pages: 1 });
+        setResults({
+          items: data,
+          page: 1,
+          per_page: data.length,
+          total_count: data.length,
+          total_pages: 1,
+        });
       } else {
         setResults(data);
       }
@@ -48,7 +59,9 @@ function UserRoles() {
     }
   }
 
-  useEffect(() => { runSearch(""); }, []);
+  useEffect(() => {
+    runSearch("");
+  }, []);
 
   function handleSearchChange(e: ChangeEvent<HTMLInputElement>) {
     setQuery(e.target.value);
@@ -56,21 +69,27 @@ function UserRoles() {
     timer.current = setTimeout(() => runSearch(e.target.value, 1), 300);
   }
 
-  function goToPage(page: number) { runSearch(query, page); }
-
-  function updateItem(userId: number, patch: Partial<AdminUser>) {
-    setResults((prev) => prev ? { ...prev, items: prev.items.map((x) => (x.id === userId ? { ...x, ...patch } : x)) } : prev);
+  function goToPage(page: number) {
+    runSearch(query, page);
   }
 
-  function hasRole(u: AdminUser, roleId: number) {
-    const pending = selected[u.id];
-    if (pending) return pending.has(roleId);
-    return (u.role_ids || []).includes(roleId);
+  function updateItem(userId: number, patch: Partial<AdminUser>) {
+    setResults((prev) =>
+      prev
+        ? {
+            ...prev,
+            items: prev.items.map((x) =>
+              x.id === userId ? { ...x, ...patch } : x,
+            ),
+          }
+        : prev,
+    );
   }
 
   function toggleRole(u: AdminUser, roleId: number, checked: boolean) {
     const next = new Set(selected[u.id] || u.role_ids || []);
-    if (checked) next.add(roleId); else next.delete(roleId);
+    if (checked) next.add(roleId);
+    else next.delete(roleId);
     setSelected((prev) => ({ ...prev, [u.id]: next }));
   }
 
@@ -84,16 +103,21 @@ function UserRoles() {
       setSelected({ ...selected });
     } catch (err) {
       setError(errorMessage(err, "Failed to save roles"));
-    } finally { setSaving(null); }
+    } finally {
+      setSaving(null);
+    }
   }
 
-  async function changeSubscription(u: AdminUser, subscriptionId: number) {
+  async function changeSubscription(u: AdminUser, subscriptionId: number | null) {
     setSavingSub(u.id);
     try {
-      const updated = await usersApi.assignSubscription(u.id, subscriptionId || null);
+      const updated = await usersApi.assignSubscription(u.id, subscriptionId);
       updateItem(u.id, { subscription: updated.subscription });
-    } catch (err) { setError(errorMessage(err, "Failed to assign subscription")); }
-    finally { setSavingSub(null); }
+    } catch (err) {
+      setError(errorMessage(err, "Failed to assign subscription"));
+    } finally {
+      setSavingSub(null);
+    }
   }
 
   if (!isAdminUser) {
@@ -113,7 +137,7 @@ function UserRoles() {
 
   return (
     <main className="wine-app">
-      {(!canManage) && (
+      {!canManage && (
         <DetailHero
           kicker="Admin"
           title="User Management"
@@ -132,7 +156,14 @@ function UserRoles() {
           />
 
           <div className="admin-user-search">
-            <input type="search" placeholder="Search users by name or email..." value={query} onChange={handleSearchChange} className="admin-user-search__input" aria-label="Search users" />
+            <input
+              type="search"
+              placeholder="Search users by name or email..."
+              value={query}
+              onChange={handleSearchChange}
+              className="admin-user-search__input"
+              aria-label="Search users"
+            />
           </div>
 
           {error && <div className="admin-user-error">{error}</div>}
@@ -144,51 +175,61 @@ function UserRoles() {
 
           <div className="admin-users">
             {results?.items.map((u) => {
-              const isOwnAdminRole = u.roles?.includes("Admin") && u.id === user?.id;
+              const isOwnAdminRole =
+                u.roles?.includes("Admin") && u.id === user?.id;
               return (
-                <Link key={u.id} to={`/users/${u.id}`} className="admin-user-card">
+                <Link
+                  key={u.id}
+                  to={`/users/${u.id}`}
+                  className="admin-user-card"
+                >
                   <div className="admin-user-info">
-                    <span className="admin-user-name" title={u.display_name || u.email}>
+                    <span
+                      className="admin-user-name"
+                      title={u.display_name || u.email}
+                    >
                       {u.display_name || u.email}
                     </span>
-                    <span className="admin-user-email" title={u.email}>{u.email}</span>
+                    <span className="admin-user-email" title={u.email}>
+                      {u.email}
+                    </span>
                   </div>
-                  <div className="admin-user-roles">
-                    {allRoles.map((role) => {
-                      const disabled = isOwnAdminRole && role.name === "Admin";
-                      const editorDisabled = !isAdminUser || disabled;
-                      return (
-                        <label key={role.id} className="role-check" title={disabled ? "You cannot revoke your own Admin role" : !isAdminUser ? "Only admins can change roles" : undefined}>
-                          <input type="checkbox" checked={hasRole(u, role.id)} disabled={editorDisabled} onChange={(e) => { e.stopPropagation(); if (!editorDisabled) toggleRole(u, role.id, e.target.checked); }} />
-                          {role.name}
-                        </label>
-                      );
-                    })}
-                  </div>
-                  <div className="admin-user-subscription">
-                    Subscription
-                    <select value={u.subscription?.id ?? ""} disabled={savingSub === u.id || !isAdminUser} onChange={(e) => { e.stopPropagation(); if (isAdminUser) changeSubscription(u, Number(e.target.value)); }}>
-                      <option value="" disabled>{savingSub === u.id ? "Assigning..." : isAdminUser ? "Select" : "Admin only"}</option>
-                      {subscriptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="admin-user-actions">
-                    {isAdminUser && (
-                      <button type="button" className="admin-pagination__btn" disabled={saving === u.id} onClick={(e) => { e.stopPropagation(); saveRoles(u); }}>
-                        {saving === u.id ? "Saving..." : "Save roles"}
-                      </button>
-                    )}
-                    {isAdminUser && !u.roles?.includes("Admin") && (
-                      <button type="button" className="admin-pagination__btn" title={`Act as ${u.display_name || u.email}`} aria-label={`Act as ${u.display_name || u.email}`} onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm(`Act as ${u.display_name || u.email}? You will operate as this user until you stop.`)) {
-                          startImpersonation(u.id).catch((err) => setError(err.message || "Failed to start impersonation"));
-                        }
-                      }}>
-                        Act as user
-                      </button>
-                    )}
-                  </div>
+                  <UserRoleSubscriptionControls
+                    roles={allRoles}
+                    selectedRoleIds={selected[u.id] ?? new Set(u.role_ids || [])}
+                    onToggleRole={(roleId, checked) => toggleRole(u, roleId, checked)}
+                    onSaveRoles={() => saveRoles(u)}
+                    savingRoles={saving === u.id}
+                    subscriptionId={u.subscription?.id ?? null}
+                    subscriptions={subscriptions}
+                    onSubscriptionChange={(subscriptionId) =>
+                      changeSubscription(u, subscriptionId)
+                    }
+                    savingSubscription={savingSub === u.id}
+                    isOwnAdminRole={isOwnAdminRole}
+                    isAdmin={isAdminUser}
+                    impersonationTarget={
+                      isAdminUser && !u.roles?.includes("Admin")
+                        ? {
+                            name: u.display_name || u.email,
+                            onActAsUser: () => {
+                              if (
+                                window.confirm(
+                                  `Act as ${u.display_name || u.email}? You will operate as this user until you stop.`,
+                                )
+                              ) {
+                                startImpersonation(u.id).catch((err) =>
+                                  setError(
+                                    err.message || "Failed to start impersonation",
+                                  ),
+                                );
+                              }
+                            },
+                          }
+                        : undefined
+                    }
+                    insideLink
+                  />
                 </Link>
               );
             })}
@@ -196,9 +237,27 @@ function UserRoles() {
 
           {results && results.total_pages > 1 && (
             <div className="admin-pagination">
-              <button type="button" className="admin-pagination__btn" disabled={searching || results.page <= 1} onClick={() => goToPage(results.page - 1)}>← Previous</button>
-              <span>Page {results.page} of {results.total_pages} {typeof results.total_count === "number" && ` (${results.total_count} users)`}</span>
-              <button type="button" className="admin-pagination__btn" disabled={searching || results.page >= results.total_pages} onClick={() => goToPage(results.page + 1)}>Next →</button>
+              <button
+                type="button"
+                className="admin-pagination__btn"
+                disabled={searching || results.page <= 1}
+                onClick={() => goToPage(results.page - 1)}
+              >
+                ← Previous
+              </button>
+              <span>
+                Page {results.page} of {results.total_pages}{" "}
+                {typeof results.total_count === "number" &&
+                  ` (${results.total_count} users)`}
+              </span>
+              <button
+                type="button"
+                className="admin-pagination__btn"
+                disabled={searching || results.page >= results.total_pages}
+                onClick={() => goToPage(results.page + 1)}
+              >
+                Next →
+              </button>
             </div>
           )}
         </>

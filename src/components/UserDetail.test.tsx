@@ -17,6 +17,13 @@ vi.mock("../services/api", () => ({
     updateAccount: vi.fn(),
     assignRoles: vi.fn(),
     assignSubscription: vi.fn(),
+    roles: vi.fn().mockResolvedValue([
+      { id: 1, name: "Admin" },
+      { id: 2, name: "Editor" },
+      { id: 3, name: "Reviewer" },
+      { id: 4, name: "Reader" },
+      { id: 5, name: "Guest" },
+    ]),
     producerMemberships: {
       create: vi.fn(),
       update: vi.fn(),

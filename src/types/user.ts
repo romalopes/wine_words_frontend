@@ -163,5 +163,11 @@ export interface UserDetail extends AdminUser {
   account?: Account
   analytics_opt_out: boolean
   producer_memberships: ProducerMembership[]
+  /**
+   * Soft-deletion timestamp (issue #195). Present when the account has been
+   * soft-deleted; the UI shows lifecycle actions based on it. Absent while the
+   * API does not serialise it.
+   */
+  deleted_at?: string | null
 }
 

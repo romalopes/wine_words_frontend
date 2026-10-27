@@ -356,6 +356,9 @@ export interface UsersApi {
   assignSubscription(userId: number, subscriptionId: number | null): Promise<AdminUser>
   show(userId: number): Promise<UserDetail>
   updateAccount(userId: number, payload: AccountUpdatePayload): Promise<Account>
+  softDelete(userId: number): Promise<unknown>
+  hardDelete(userId: number): Promise<unknown>
+  reactivate(userId: number): Promise<unknown>
   producerMemberships: {
     list(userId: number): Promise<ProducerMembership[]>
     create(

@@ -17,35 +17,13 @@ import type { CountryListItem } from "../types/reference";
 import type { ProducerSummary } from "../types/producer";
 import { producerMembershipLabel } from "../constants/roles";
 import { useAnalyticsOptOut } from "../hooks/useAnalyticsOptOut";
-
-/** The editable profile form. Every field is a string so the inputs stay controlled. */
-interface AccountForm {
-  first_name: string;
-  last_name: string;
-  phone: string;
-  date_of_birth: string;
-  address: {
-    street_address: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country_id: string;
-  };
-}
-
-const emptyAccount: AccountForm = {
-  first_name: "",
-  last_name: "",
-  phone: "",
-  date_of_birth: "",
-  address: {
-    street_address: "",
-    city: "",
-    state: "",
-    postal_code: "",
-    country_id: "",
-  },
-};
+import PersonalInformationControls from "./PersonalInformationControls";
+import type {
+  PersonalInformationForm,
+  PersonalField,
+  PersonalAddressField,
+} from "../types/personalInformation";
+import { EMPTY_PERSONAL_INFORMATION } from "../types/personalInformation";
 
 /** Coerce a nullable API field to a string the controlled input can hold. */
 function str(v: unknown): string {
@@ -103,7 +81,9 @@ export default function AccountSettings() {
   const { user, refreshSession } = useAuth();
   const { optedOut, setOptOut, saving: savingOptOut, error: optOutError } =
     useAnalyticsOptOut();
-  const [form, setForm] = useState<AccountForm>(emptyAccount);
+  const [form, setForm] = useState<PersonalInformationForm>(
+    EMPTY_PERSONAL_INFORMATION,
+  );
   const [countries, setCountries] = useState<CountryListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -198,8 +178,8 @@ export default function AccountSettings() {
     loadIdentities();
   }, [loadIdentities]);
 
-  type ProfileField = Exclude<keyof AccountForm, "address">;
-  type AddressField = keyof AccountForm["address"];
+  type ProfileField = PersonalField;
+  type AddressField = PersonalAddressField;
 
   function setField(key: ProfileField, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -338,119 +318,19 @@ export default function AccountSettings() {
             </div>
           </section>
 
-          <section className="account-card">
-            <form className="auth-form" onSubmit={handleSaveProfile}>
-              <h2 className="account-card__title">Profile</h2>
-              {profileNotice && (
-                <p className="review-form__success">{profileNotice}</p>
-              )}
-              {profileError && (
-                <p className="review-form__error">{profileError}</p>
-              )}
-
-              <h3 className="account-section-title account-section-title--first">
-                Personal information
-              </h3>
-              <div className="account-fields">
-                <Field label="First name">
-                  <input
-                    type="text"
-                    autoComplete="given-name"
-                    required
-                    value={form.first_name}
-                    onChange={(e) => setField("first_name", e.target.value)}
-                    maxLength={80}
-                  />
-                </Field>
-                <Field label="Last name">
-                  <input
-                    type="text"
-                    autoComplete="family-name"
-                    required
-                    value={form.last_name}
-                    onChange={(e) => setField("last_name", e.target.value)}
-                    maxLength={80}
-                  />
-                </Field>
-                <Field label="Phone">
-                  <input
-                    type="tel"
-                    value={form.phone}
-                    onChange={(e) => setField("phone", e.target.value)}
-                    maxLength={40}
-                  />
-                </Field>
-                <Field label="Date of birth">
-                  <input
-                    type="date"
-                    value={form.date_of_birth}
-                    onChange={(e) => setField("date_of_birth", e.target.value)}
-                  />
-                </Field>
-              </div>
-
-              <h3 className="account-section-title">Address</h3>
-              <div className="account-fields">
-                <Field label="Street" wide>
-                  <input
-                    type="text"
-                    value={form.address.street_address}
-                    onChange={(e) =>
-                      setAddressField("street_address", e.target.value)
-                    }
-                    maxLength={200}
-                  />
-                </Field>
-                <Field label="City">
-                  <input
-                    type="text"
-                    value={form.address.city}
-                    onChange={(e) => setAddressField("city", e.target.value)}
-                  />
-                </Field>
-                <Field label="State">
-                  <input
-                    type="text"
-                    value={form.address.state}
-                    onChange={(e) => setAddressField("state", e.target.value)}
-                  />
-                </Field>
-                <Field label="Postal code">
-                  <input
-                    type="text"
-                    value={form.address.postal_code}
-                    onChange={(e) =>
-                      setAddressField("postal_code", e.target.value)
-                    }
-                    maxLength={20}
-                  />
-                </Field>
-                <Field label="Country">
-                  <select
-                    value={form.address.country_id}
-                    onChange={(e) =>
-                      setAddressField("country_id", e.target.value)
-                    }
-                  >
-                    <option value="">— Select country —</option>
-                    {countries.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
-
-              <button
-                type="submit"
-                className="auth-form__submit"
-                disabled={savingProfile}
-              >
-                {savingProfile ? "Saving…" : "Save profile"}
-              </button>
-            </form>
-          </section>
+          <PersonalInformationControls
+            title="Profile"
+            showSectionHeading
+            submitLabel="Save profile"
+            value={form}
+            onChangeField={setField}
+            onChangeAddressField={setAddressField}
+            countries={countries}
+            onSubmit={handleSaveProfile}
+            saving={savingProfile}
+            notice={profileNotice ?? undefined}
+            error={profileError ?? undefined}
+          />
 
           <section className="account-card">
             <form

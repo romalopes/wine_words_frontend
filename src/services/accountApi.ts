@@ -33,6 +33,9 @@ export function createUsersApi(request: ApiRequester): UsersApi {
     assignSubscription: (userId, subscriptionId) => request(`/users/${userId}/assign_subscription`, { method: "PATCH", auth: true, body: { subscription_id: subscriptionId } }),
     show: (userId) => request<UserDetail>(`/users/${userId}`, { auth: true }),
     updateAccount: (userId, data) => request<Account>(`/users/${userId}/account`, { method: "PATCH", auth: true, body: data as unknown as Record<string, never> }),
+    softDelete: (userId) => request(`/users/${userId}/soft_delete`, { method: "DELETE", auth: true }),
+    hardDelete: (userId) => request(`/users/${userId}/hard_delete`, { method: "DELETE", auth: true }),
+    reactivate: (userId) => request(`/users/${userId}/reactivate`, { method: "POST", auth: true }),
     producerMemberships: {
       list: (userId) => request<ProducerMembership[]>(`/users/${userId}/producer_memberships`, { auth: true }),
       create: (userId, producerId, membershipType) =>
