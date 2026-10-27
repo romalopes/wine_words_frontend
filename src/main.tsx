@@ -33,7 +33,7 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <Sentry.ErrorBoundary fallback={<SentryFallback />}>
+    <Sentry.ErrorBoundary fallback={SentryFallback}>
       <App />
     </Sentry.ErrorBoundary>
   </StrictMode>,

@@ -1,171 +1,277 @@
-import { render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ProducerMembershipsControls from "./ProducerMembershipsControls";
-import type { ProducerSearchResult } from "../types/producer";
+import { MemoryRouter } from "react-router-dom";
+import { producersApi, usersApi } from "../services/api";
 import type { ProducerMembership } from "../types/user";
-import type { ProducerMembershipType } from "../types/producer";
+import ProducerMembershipsControls from "./ProducerMembershipsControls";
 
-const MEMBERSHIPS: ProducerMembership[] = [
-  {
-    id: 1,
-    user: { id: 5, display_name: "Admin", email: "admin@example.com" },
-    producer: {
-      id: 100,
-      name: "Château Margaux",
-      slug: "chateau-margaux",
-      country: "France",
+vi.mock("../services/api", () => ({
+  producersApi: { search: vi.fn(), getMemberships: vi.fn() },
+  usersApi: {
+    search: vi.fn(),
+    producerMemberships: {
+      create: vi.fn(),
+      update: vi.fn(),
+      destroy: vi.fn(),
     },
-    membership_type: "manager",
-    created_by: { id: 2, display_name: "Root" },
-    created_at: "2024-01-01T00:00:00Z",
   },
-];
+}));
 
-const RESULTS = [
-  {
-    id: 200,
-    name: "Domaine Romanée",
-    slug: "domaine-romanee",
-    country: { id: 7, name: "France", slug: "france" },
+const MEMBERSHIP: ProducerMembership = {
+  id: 1,
+  user: { id: 5, display_name: "Admin", email: "admin@example.com" },
+  producer: {
+    id: 100,
+    name: "Château Margaux",
+    slug: "chateau-margaux",
+    country: "France",
   },
-] as unknown as ProducerSearchResult[];
-
-const BASE = {
-  memberships: MEMBERSHIPS,
-  loading: false,
-  newMembershipType: "manager" as ProducerMembershipType,
-  onChangeNewMembershipType: vi.fn(),
-  searchQuery: "",
-  onSearchQuery: vi.fn(),
-  searching: false,
-  searchResults: [] as ProducerSearchResult[],
-  onAddMembership: vi.fn(),
-  onMembershipTypeChange: vi.fn(),
-  onRemoveMembership: vi.fn(),
+  membership_type: "manager",
+  created_by: { id: 2, display_name: "Root" },
+  created_at: "2024-01-01T00:00:00Z",
 };
 
-function renderControls(
-  props: Partial<typeof BASE & Record<string, unknown>> = {},
-) {
+const { user: _embeddedUser, ...USER_DETAIL_MEMBERSHIP } = MEMBERSHIP;
+
+function renderUserMode(memberships = [USER_DETAIL_MEMBERSHIP]) {
   return render(
     <MemoryRouter>
-      <ProducerMembershipsControls {...BASE} {...props} />
+      <ProducerMembershipsControls
+        userId={5}
+        initialMemberships={memberships}
+        canManage
+      />
     </MemoryRouter>,
   );
 }
 
-describe("ProducerMembershipsControls", () => {
-  beforeEach(() => vi.clearAllMocks());
+function renderProducerMode(canManage = true) {
+  return render(
+    <MemoryRouter>
+      <ProducerMembershipsControls producerId={100} canManage={canManage} />
+    </MemoryRouter>,
+  );
+}
 
-  it("renders the search field and membership type selector with the three types", () => {
-    renderControls();
+async function advanceDebounce() {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(300);
+  });
+}
+
+describe("ProducerMembershipsControls", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.resetAllMocks();
+    vi.mocked(producersApi.search).mockResolvedValue([]);
+    vi.mocked(producersApi.getMemberships).mockResolvedValue([]);
+    vi.mocked(usersApi.search).mockResolvedValue([]);
+    vi.mocked(usersApi.producerMemberships.destroy).mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("renders user-mode memberships and all membership types", () => {
+    renderUserMode();
+
     expect(
-      screen.getByLabelText("Search producers by name"),
-    ).toBeInTheDocument();
+      screen.getByRole("link", { name: "Château Margaux" }),
+    ).toHaveAttribute("href", "/producers/chateau-margaux");
+    expect(screen.getByText(/Linked by Root/)).toBeInTheDocument();
     const select = screen.getByLabelText("Membership type");
     expect(select).toHaveValue("manager");
-    const options = within(select as HTMLElement);
-    expect(options.getByRole("option", { name: "Owner" })).toBeInTheDocument();
-    expect(options.getByRole("option", { name: "Manager" })).toBeInTheDocument();
-    expect(
-      options.getByRole("option", { name: "Contributor" }),
-    ).toBeInTheDocument();
+    expect(within(select).getByRole("option", { name: "Owner" })).toBeInTheDocument();
+    expect(within(select).getByRole("option", { name: "Contributor" })).toBeInTheDocument();
   });
 
-  it("emits the typed search query", async () => {
-    const user = userEvent.setup();
-    renderControls();
-    await user.type(screen.getByLabelText("Search producers by name"), "r");
-    expect(BASE.onSearchQuery).toHaveBeenCalledWith("r");
-  });
+  it("debounces producer search, filters linked producers, and links a result", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.mocked(producersApi.search).mockResolvedValue([
+      {
+        id: 100,
+        name: "Château Margaux",
+        slug: "chateau-margaux",
+        country: { id: 1, name: "France", slug: "france" },
+      },
+      {
+        id: 200,
+        name: "Domaine Romanée",
+        slug: "domaine-romanee",
+        country: { id: 1, name: "France", slug: "france" },
+      },
+    ]);
+    vi.mocked(usersApi.producerMemberships.create).mockResolvedValue({
+      ...MEMBERSHIP,
+      id: 2,
+      producer: {
+        id: 200,
+        name: "Domaine Romanée",
+        slug: "domaine-romanee",
+        country: "France",
+      },
+      membership_type: "owner",
+    });
+    renderUserMode();
 
-  it("shows a searching status only while a query is pending", () => {
-    const { rerender } = renderControls({ searchQuery: "rom", searching: true });
-    expect(screen.getByText("Searching…")).toBeInTheDocument();
+    const search = screen.getByLabelText("Search producers by name");
+    await user.type(search, "rom");
+    expect(producersApi.search).not.toHaveBeenCalled();
+    await advanceDebounce();
 
-    rerender(
-      <MemoryRouter>
-        <ProducerMembershipsControls
-          {...BASE}
-          searchQuery="rom"
-          searching={false}
-        />
-      </MemoryRouter>,
-    );
-    expect(screen.queryByText("Searching…")).not.toBeInTheDocument();
-  });
-
-  it("lists matching producers and emits add on click", async () => {
-    const user = userEvent.setup();
-    renderControls({ searchQuery: "rom", searchResults: RESULTS });
-    const result = screen.getByRole("button", { name: /Domaine Romanée/ });
-    expect(result).toHaveTextContent("France");
+    expect(producersApi.search).toHaveBeenCalledWith("rom");
+    expect(screen.queryByRole("button", { name: /Château Margaux/ })).not.toBeInTheDocument();
+    const result = await screen.findByRole("button", { name: /Domaine Romanée/ });
+    await user.selectOptions(screen.getByLabelText("Membership type"), "owner");
     await user.click(result);
-    expect(BASE.onAddMembership).toHaveBeenCalledWith(200);
+
+    await waitFor(() =>
+      expect(usersApi.producerMemberships.create).toHaveBeenCalledWith(
+        5,
+        200,
+        "owner",
+      ),
+    );
+    expect(search).toHaveValue("");
+    expect(screen.getByRole("link", { name: "Domaine Romanée" })).toBeInTheDocument();
   });
 
-  it("shows an empty state when the search has no matches", () => {
-    renderControls({ searchQuery: "zzz" });
-    expect(screen.getByText("No matching producers.")).toBeInTheDocument();
-  });
+  it("updates a membership type and uses the returned membership", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.mocked(usersApi.producerMemberships.update).mockResolvedValue({
+      ...MEMBERSHIP,
+      membership_type: "owner",
+    });
+    renderUserMode();
 
-  it("renders linked producers with badge, provenance, and identity link", () => {
-    renderControls();
-    const link = screen.getByRole("link", { name: "Château Margaux" });
-    expect(link).toHaveAttribute("href", "/producers/chateau-margaux");
-    // Scope to the badge to avoid colliding with the row type selector's
-    // "Manager" <option>, which renders the same string.
-    expect(screen.getByText("Manager", { selector: ".membership-badge" })).toBeInTheDocument();
-    expect(screen.getByText(/Linked by Root/)).toBeInTheDocument();
-    expect(screen.getByText(/France/)).toBeInTheDocument();
-  });
-
-  it("emits membership type changes per row", async () => {
-    const user = userEvent.setup();
-    renderControls();
     await user.selectOptions(
       screen.getByLabelText("Membership type for Château Margaux"),
       "owner",
     );
-    expect(BASE.onMembershipTypeChange).toHaveBeenCalledWith(1, "owner");
-  });
 
-  it("emits unlink for the row's remove button", async () => {
-    const user = userEvent.setup();
-    renderControls();
-    await user.click(screen.getByRole("button", { name: "Unlink" }));
-    expect(BASE.onRemoveMembership).toHaveBeenCalledWith(1);
-  });
-
-  it("shows an empty state when nothing is linked", () => {
-    renderControls({ memberships: [] });
+    await waitFor(() =>
+      expect(usersApi.producerMemberships.update).toHaveBeenCalledWith(
+        5,
+        1,
+        "owner",
+      ),
+    );
     expect(
-      screen.getByText(/No linked producers yet/),
+      screen.getByText("Owner", { selector: ".membership-badge" }),
     ).toBeInTheDocument();
   });
 
-  it("disables interactive controls while loading and shows the loading row", () => {
-    renderControls({
-      loading: true,
-      searchQuery: "rom",
-      searchResults: RESULTS,
-    });
-    expect(screen.getByText("Loading linked producers…")).toBeInTheDocument();
-    expect(screen.getByLabelText("Membership type")).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: /Domaine Romanée/ }),
-    ).toBeDisabled();
+  it("requires confirmation before unlinking", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
+    renderUserMode();
+
+    await user.click(screen.getByRole("button", { name: "Unlink" }));
+    expect(usersApi.producerMemberships.destroy).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Unlink" }));
+    await waitFor(() =>
+      expect(usersApi.producerMemberships.destroy).toHaveBeenCalledWith(5, 1),
+    );
+    expect(screen.getByText("No linked producers yet")).toBeInTheDocument();
+    confirm.mockRestore();
   });
 
-  it("honors the renderMember override for alternative identity layouts", () => {
-    renderControls({
-      renderMember: (membership: ProducerMembership) => (
-        <p>{`Custom row ${membership.id}`}</p>
-      ),
-    });
-    expect(screen.getByText("Custom row 1")).toBeInTheDocument();
+  it("shows API failures inline", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.mocked(usersApi.producerMemberships.update).mockRejectedValue(
+      new Error("Update denied"),
+    );
+    renderUserMode();
+
+    await user.selectOptions(
+      screen.getByLabelText("Membership type for Château Margaux"),
+      "owner",
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Update denied");
+  });
+
+  it("loads linked users and hides management controls for read-only viewers", async () => {
+    vi.mocked(producersApi.getMemberships).mockResolvedValue([MEMBERSHIP]);
+    renderProducerMode(false);
+
+    expect(await screen.findByRole("link", { name: "Admin" })).toHaveAttribute(
+      "href",
+      "/users/5",
+    );
+    expect(screen.queryByLabelText("Search users by name or email")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Unlink" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("searches users through a pagination envelope and links with producer argument order", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.mocked(usersApi.search).mockResolvedValue({
+      items: [
+        {
+          id: 9,
+          display_name: "Ada Lovelace",
+          email: "ada@example.com",
+          role_ids: [],
+          roles: [],
+          subscription: null,
+        },
+      ],
+      page: 1,
+      total_pages: 1,
+    });
+    vi.mocked(usersApi.producerMemberships.create).mockResolvedValue({
+      ...MEMBERSHIP,
+      id: 31,
+      user: { id: 9, display_name: "Ada Lovelace", email: "ada@example.com" },
+      membership_type: "contributor",
+    });
+    renderProducerMode();
+    await screen.findByText("No linked users yet");
+
+    const search = screen.getByLabelText("Search users by name or email");
+    await user.type(search, "ada");
+    await advanceDebounce();
+    const result = await screen.findByRole("button", { name: /Ada Lovelace/ });
+    await user.selectOptions(screen.getByLabelText("Membership type"), "contributor");
+    await user.click(result);
+
+    await waitFor(() =>
+      expect(usersApi.producerMemberships.create).toHaveBeenCalledWith(
+        9,
+        100,
+        "contributor",
+      ),
+    );
+    expect(screen.getByLabelText("1 linked users")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ada Lovelace" })).toBeInTheDocument();
+  });
+
+  it("uses the linked user's id when updating and removing in producer mode", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    vi.mocked(producersApi.getMemberships).mockResolvedValue([MEMBERSHIP]);
+    vi.mocked(usersApi.producerMemberships.update).mockResolvedValue({
+      ...MEMBERSHIP,
+      membership_type: "owner",
+    });
+    renderProducerMode();
+
+    await user.selectOptions(
+      await screen.findByLabelText("Membership type for Admin"),
+      "owner",
+    );
+    await waitFor(() =>
+      expect(usersApi.producerMemberships.update).toHaveBeenCalledWith(
+        5,
+        1,
+        "owner",
+      ),
+    );
+    await user.click(screen.getByRole("button", { name: "Unlink" }));
+    await waitFor(() =>
+      expect(usersApi.producerMemberships.destroy).toHaveBeenCalledWith(5, 1),
+    );
   });
 });

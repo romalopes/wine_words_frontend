@@ -134,7 +134,8 @@ export interface ImpersonationResponse {
 /** Producer membership linking a user to a producer. */
 export interface ProducerMembership {
   id: number
-  user: {
+  /** Included by membership endpoints; omitted from memberships embedded in user details. */
+  user?: {
     id: number
     display_name: string | null
     email: string

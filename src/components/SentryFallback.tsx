@@ -1,53 +1,46 @@
-import { useRouteError } from "react-router-dom";
 import * as Sentry from "@sentry/react";
+import type { FallbackRender } from "@sentry/react";
 import { useEffect } from "react";
 
-export default function SentryFallback() {
-  // Get error from Sentry boundary (for component errors)
-  // @ts-ignore - useSentryError may not be available in all versions
-  const sentryError = (Sentry as any).useSentryError
-    ? (Sentry as any).useSentryError()
-    : null;
-
-  // Get error from React Router (for loader/action errors)
-  const routerError = useRouteError();
-
-  // Determine which error to display
-  const error = sentryError || routerError;
-
+const SentryFallback: FallbackRender = ({ error, resetError }) => {
   // Add route context to Sentry scope for better filtering
   useEffect(() => {
     if (error) {
       const scope = Sentry.getCurrentScope();
       if (scope) {
         scope.setTag("route", window.location.pathname);
-        scope.setExtra("routerError", routerError);
+        scope.setExtra("boundaryError", error);
       }
     }
-  }, [error, routerError]);
+  }, [error]);
+
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorStack = error instanceof Error ? error.stack : undefined;
 
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>Something went wrong</h1>
-      {error && (
+      {error != null && (
         <div style={styles.errorDetails}>
           <h2>Error:</h2>
-          <pre style={styles.errorText}>{error.message || String(error)}</pre>
+          <pre style={styles.errorText}>{errorMessage}</pre>
           {/* Optional: Show stack trace in development */}
-          {(import.meta as any).env.DEV && error.stack && (
+          {import.meta.env.DEV && errorStack && (
             <>
               <div style={styles.stackLabel}>Stack Trace:</div>
-              <pre style={styles.stackText}>{error.stack}</pre>
+              <pre style={styles.stackText}>{errorStack}</pre>
             </>
           )}
         </div>
       )}
-      <button onClick={() => window.location.reload()} style={styles.button}>
+      <button onClick={resetError} style={styles.button}>
         Try Again
       </button>
     </div>
   );
-}
+};
+
+export default SentryFallback;
 
 const styles = {
   container: {

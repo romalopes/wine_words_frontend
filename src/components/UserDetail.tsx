@@ -3,15 +3,10 @@ import type { FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   usersApi,
-  producersApi,
   subscriptionsApi,
   countriesApi,
 } from "../services/api";
 import type { UserDetail as UserDetailType } from "../types/user";
-import type {
-  ProducerSearchResult,
-  ProducerMembershipType,
-} from "../types/producer";
 import type { CountryListItem } from "../types/reference";
 import type { Subscription } from "../types/subscription";
 import ProducerMembershipsControls from "./ProducerMembershipsControls";
@@ -47,11 +42,6 @@ function UserDetail() {
   const [error, setError] = useState<string | null>(null);
   const [rolesLoading] = useState(false);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-  const [membershipsLoading, setMembershipsLoading] = useState(false);
-  const [producerResults, setProducerResults] = useState<
-    ProducerSearchResult[]
-  >([]);
-  const [searchingProducers, setSearchingProducers] = useState(false);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [countries, setCountries] = useState<CountryListItem[]>([]);
   // Role options for the shared admin controls; seeded with the constant list
@@ -67,13 +57,6 @@ function UserDetail() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileNotice, setProfileNotice] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchDebounce, setSearchDebounce] = useState("");
-  // Membership type applied when linking a producer (issue #191). Defaults to
-  // manager: admins must make an explicit choice, and an accidental owner grant
-  // is worse than an accidental manager one.
-  const [newMembershipType, setNewMembershipType] =
-    useState<ProducerMembershipType>("manager");
 
   // Track pending role changes (similar to UserRoles.tsx)
   const [selectedRoles, setSelectedRoles] = useState<Set<number>>(new Set());
@@ -138,40 +121,6 @@ function UserDetail() {
       }
     });
   }, []);
-
-  // Debounced server-side producer search for inline producer linking.
-  // Searches the full producer catalog (GET /producers/search), excluding
-  // producers already linked to this user at render time.
-  useEffect(() => {
-    const q = searchDebounce.trim();
-    if (!q) {
-      setProducerResults([]);
-      return;
-    }
-    let cancelled = false;
-    setSearchingProducers(true);
-    producersApi
-      .search(q)
-      .then((data) => {
-        if (!cancelled) setProducerResults(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (!cancelled) setProducerResults([]);
-      })
-      .finally(() => {
-        if (!cancelled) setSearchingProducers(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [searchDebounce]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchDebounce(searchQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const handleRoleChange = (roleId: number, checked: boolean) => {
     if (!user) return;
@@ -339,100 +288,9 @@ function UserDetail() {
     }
   };
 
-  const handleAddMembership = async (producerId: number) => {
-    if (!user) return;
-    setMembershipsLoading(true);
-    try {
-      const membership = await usersApi.producerMemberships.create(
-        user.id,
-        producerId,
-        newMembershipType,
-      );
-      setUser((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          producer_memberships: [...prev.producer_memberships, membership],
-        };
-      });
-      setSearchQuery("");
-      setSearchDebounce("");
-      setProducerResults([]);
-    } catch (err) {
-      console.error("Failed to add producer membership:", err);
-      alert("Failed to link producer");
-    } finally {
-      setMembershipsLoading(false);
-    }
-  };
-
-  // Change an existing membership type without touching global roles or the
-  // subscription (issue #191). The API rejects follower/viewer values.
-  const handleMembershipTypeChange = async (
-    membershipId: number,
-    membershipType: ProducerMembershipType,
-  ) => {
-    if (!user) return;
-    setMembershipsLoading(true);
-    try {
-      const updated = await usersApi.producerMemberships.update(
-        user.id,
-        membershipId,
-        membershipType,
-      );
-      setUser((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          producer_memberships: prev.producer_memberships.map((membership) =>
-            membership.id === membershipId
-              ? { ...membership, membership_type: updated.membership_type }
-              : membership,
-          ),
-        };
-      });
-    } catch (err) {
-      console.error("Failed to change producer membership type:", err);
-      alert("Failed to change membership type");
-    } finally {
-      setMembershipsLoading(false);
-    }
-  };
-
-  const handleRemoveMembership = async (membershipId: number) => {
-    if (!user) return;
-    if (!window.confirm("Are you sure you want to unlink this producer?"))
-      return;
-    setMembershipsLoading(true);
-    try {
-      await usersApi.producerMemberships.destroy(user.id, membershipId);
-      setUser((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          producer_memberships: prev.producer_memberships.filter(
-            (m) => m.id !== membershipId,
-          ),
-        };
-      });
-    } catch (err) {
-      console.error("Failed to remove producer membership:", err);
-      alert("Failed to unlink producer");
-    } finally {
-      setMembershipsLoading(false);
-    }
-  };
-
   if (loading) return <div className="page-container">Loading...</div>;
   if (error || !user)
     return <div className="page-container">User not found</div>;
-
-  const linkedProducerIds = new Set(
-    user.producer_memberships.map((m) => m.producer.id),
-  );
-  const filteredProducers = producerResults.filter(
-    (p) => !linkedProducerIds.has(p.id),
-  );
 
   return (
     <>
@@ -509,17 +367,10 @@ function UserDetail() {
               <section className="mt-4">
                 <h3>Producer Memberships</h3>
                 <ProducerMembershipsControls
-                  memberships={user.producer_memberships}
-                  loading={membershipsLoading}
-                  newMembershipType={newMembershipType}
-                  onChangeNewMembershipType={setNewMembershipType}
-                  searchQuery={searchQuery}
-                  onSearchQuery={setSearchQuery}
-                  searching={searchingProducers}
-                  searchResults={filteredProducers}
-                  onAddMembership={handleAddMembership}
-                  onMembershipTypeChange={handleMembershipTypeChange}
-                  onRemoveMembership={handleRemoveMembership}
+                  key={user.id}
+                  userId={user.id}
+                  initialMemberships={user.producer_memberships}
+                  canManage={canManage}
                 />
               </section>
             )}
