@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DetailHero from "./DetailHero";
 import { usersApi, subscriptionsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -8,8 +8,10 @@ import { errorMessage } from "../utils/errors";
 import UserRoleSubscriptionControls from "./UserRoleSubscriptionControls";
 import type { AdminUser, AdminUserResults, RoleOption } from "../types/user";
 import type { Subscription } from "../types/subscription";
+import CreateManagedUserForm from "./CreateManagedUserForm";
 
 function UserRoles() {
+  const navigate = useNavigate();
   const { user, startImpersonation } = useAuth();
   const isAdminUser = isAdmin(user);
   const canManage = canManageUsers(user);
@@ -155,6 +157,17 @@ function UserRoles() {
             intro="Search and manage users, roles, and subscriptions"
           />
 
+          <CreateManagedUserForm
+            roles={allRoles}
+            isAdmin={isAdminUser}
+            onCreated={(created) => {
+              setQuery("");
+              runSearch("");
+              setError(null);
+              navigate(`/users/${created.id}`);
+            }}
+          />
+
           <div className="admin-user-search">
             <input
               type="search"
@@ -177,6 +190,7 @@ function UserRoles() {
             {results?.items.map((u) => {
               const isOwnAdminRole =
                 u.roles?.includes("Admin") && u.id === user?.id;
+              const accountLabel = u.display_name || u.email || "Unnamed account";
               return (
                 <Link
                   key={u.id}
@@ -186,12 +200,12 @@ function UserRoles() {
                   <div className="admin-user-info">
                     <span
                       className="admin-user-name"
-                      title={u.display_name || u.email}
+                      title={accountLabel}
                     >
-                      {u.display_name || u.email}
+                      {accountLabel}
                     </span>
-                    <span className="admin-user-email" title={u.email}>
-                      {u.email}
+                    <span className="admin-user-email" title={u.email ?? undefined}>
+                      {u.email || "No email"}
                     </span>
                   </div>
                   <UserRoleSubscriptionControls
@@ -211,11 +225,11 @@ function UserRoles() {
                     impersonationTarget={
                       isAdminUser && !u.roles?.includes("Admin")
                         ? {
-                            name: u.display_name || u.email,
+                            name: accountLabel,
                             onActAsUser: () => {
                               if (
                                 window.confirm(
-                                  `Act as ${u.display_name || u.email}? You will operate as this user until you stop.`,
+                                  `Act as ${accountLabel}? You will operate as this user until you stop.`,
                                 )
                               ) {
                                 startImpersonation(u.id).catch((err) =>

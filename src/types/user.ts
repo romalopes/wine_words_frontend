@@ -43,7 +43,7 @@ export interface LogEntry {
 export interface AuditLogUser {
   id: number
   display_name: string | null
-  email: string
+  email: string | null
 }
 
 /**
@@ -92,7 +92,7 @@ import type { ProducerMembershipType } from "./producer"
  */
 export interface AdminUser {
   id: number
-  email: string
+  email: string | null
   display_name: string | null
   first_name?: string | null
   last_name?: string | null
@@ -101,6 +101,7 @@ export interface AdminUser {
   /** Human-readable role names, e.g. ["Admin", "Reader"]. */
   roles: string[]
   subscription: SubscriptionSummary | null
+  account_status?: "unclaimed" | "active" | "suspended"
 }
 
 /** The `{ id, name }` subscription stub embedded in user payloads. */
@@ -160,6 +161,7 @@ export interface ProducerMembership {
 
 /** Detailed user info returned by GET /api/v1/users/:id (admin only). */
 export interface UserDetail extends AdminUser {
+  account_status: "unclaimed" | "active" | "suspended"
   /** Admin-only personal information; omitted from catalogue-manager responses. */
   account?: Account
   analytics_opt_out: boolean
@@ -170,5 +172,41 @@ export interface UserDetail extends AdminUser {
    * API does not serialise it.
    */
   deleted_at?: string | null
+  invitation_summary: {
+    count: number
+    latest: AccountInvitation | null
+  }
+}
+
+export interface AccountInvitation {
+  id: number
+  email: string
+  status: "pending" | "sent" | "accepted" | "revoked"
+  usable: boolean
+  expires_at: string
+  sent_at: string | null
+  accepted_at: string | null
+  revoked_at: string | null
+  delivery_status: string | null
+  delivery_error_code: string | null
+  invited_by?: { id: number; display_name: string | null } | null
+  revoked_by?: { id: number; display_name: string | null } | null
+  created_at: string
+}
+
+export interface CreateManagedUserPayload {
+  first_name: string
+  last_name: string
+  email?: string | null
+  role_ids: number[]
+}
+
+export interface InvitationValidationResponse {
+  valid: true
+  invitation: {
+    email: string
+    display_name: string | null
+    expires_at: string
+  }
 }
 

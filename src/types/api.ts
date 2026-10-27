@@ -75,7 +75,15 @@ import type { Subscription, SubscriptionWritePayload } from "./subscription"
 import type { Review } from "./review"
 import type { ShipmentTracking } from "./shipmentTracking"
 import type { ImageableType, ImageListResponse, ImageUploadResponse } from "./image"
-import type { AdminUser, RoleOption, UserDetail, ProducerMembership } from "./user"
+import type {
+  AccountInvitation,
+  AdminUser,
+  CreateManagedUserPayload,
+  InvitationValidationResponse,
+  RoleOption,
+  UserDetail,
+  ProducerMembership,
+} from "./user"
 import type { Vintage, Wine, WineListItem } from "./wine"
 import type { WinePackage, WinePackageItem, WinePackageListItem } from "./winePackage"
 import type { ArticleProject, ArticleProjectDetail, ArticleProjectLookupItem, ArticleProjectLookupKind, ArticleProjectNotebook, ArticleProjectWritePayload } from "./articleProject"
@@ -355,10 +363,18 @@ export interface UsersApi {
   assignRoles(userId: number, roleIds: number[]): Promise<AdminUser>
   assignSubscription(userId: number, subscriptionId: number | null): Promise<AdminUser>
   show(userId: number): Promise<UserDetail>
+  create(payload: CreateManagedUserPayload): Promise<UserDetail>
+  updateInvitationEmail(userId: number, email: string): Promise<UserDetail>
   updateAccount(userId: number, payload: AccountUpdatePayload): Promise<Account>
   softDelete(userId: number): Promise<unknown>
   hardDelete(userId: number): Promise<unknown>
   reactivate(userId: number): Promise<unknown>
+  invitations: {
+    list(userId: number): Promise<AccountInvitation[]>
+    send(userId: number): Promise<AccountInvitation>
+    resend(userId: number): Promise<AccountInvitation>
+    revoke(userId: number): Promise<AccountInvitation>
+  }
   producerMemberships: {
     list(userId: number): Promise<ProducerMembership[]>
     create(
@@ -373,6 +389,15 @@ export interface UsersApi {
     ): Promise<ProducerMembership>
     destroy(userId: number, membershipId: number): Promise<unknown>
   }
+}
+
+export interface InvitationsApi {
+  validate(token: string): Promise<InvitationValidationResponse>
+  accept(payload: {
+    token: string
+    password: string
+    password_confirmation: string
+  }): Promise<{ message: string; email: string }>
 }
 
 export interface SubscriptionsApi {

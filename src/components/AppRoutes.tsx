@@ -49,6 +49,7 @@ import WinePackageForm from "./WinePackageForm";
 import Notifications from "./Notifications";
 import Following from "./Following";
 import VerifyEmail from "./VerifyEmail";
+import AcceptInvitation from "./AcceptInvitation";
 import ArticleProjects from "./ArticleProjects";
 import ArticleProjectDetail from "./ArticleProjectDetail";
 import ArticleProjectForm from "./ArticleProjectForm";
@@ -71,6 +72,7 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/accept-invitation" element={<AcceptInvitation />} />
         <Route
           element={<Navigate replace to="/reviews" />}
           path="/my-reviews"

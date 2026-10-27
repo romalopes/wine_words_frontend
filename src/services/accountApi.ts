@@ -17,7 +17,13 @@ import type { Account } from "../types/account"
 import type { User } from "../types/authentication"
 import type { ProducerSummary } from "../types/producer"
 import type { Subscription } from "../types/subscription"
-import type { UserDetail, ProducerMembership } from "../types/user"
+import type {
+  AccountInvitation,
+  CreateManagedUserPayload,
+  InvitationValidationResponse,
+  UserDetail,
+  ProducerMembership,
+} from "../types/user"
 import type { Vintage } from "../types/wine"
 import type { ApiRequester } from "./apiClient"
 
@@ -32,10 +38,24 @@ export function createUsersApi(request: ApiRequester): UsersApi {
     assignRoles: (userId, roleIds) => request(`/users/${userId}/assign_roles`, { method: "PATCH", auth: true, body: { role_ids: roleIds } }),
     assignSubscription: (userId, subscriptionId) => request(`/users/${userId}/assign_subscription`, { method: "PATCH", auth: true, body: { subscription_id: subscriptionId } }),
     show: (userId) => request<UserDetail>(`/users/${userId}`, { auth: true }),
+    create: (payload: CreateManagedUserPayload) => request<UserDetail>("/users", {
+      method: "POST",
+      auth: true,
+      body: { user: payload } as unknown as Record<string, never>,
+    }),
+    updateInvitationEmail: (userId, email) => request<UserDetail>(`/users/${userId}/invitation_email`, {
+      method: "PATCH", auth: true, body: { user: { email } },
+    }),
     updateAccount: (userId, data) => request<Account>(`/users/${userId}/account`, { method: "PATCH", auth: true, body: data as unknown as Record<string, never> }),
     softDelete: (userId) => request(`/users/${userId}/soft_delete`, { method: "DELETE", auth: true }),
     hardDelete: (userId) => request(`/users/${userId}/hard_delete`, { method: "DELETE", auth: true }),
     reactivate: (userId) => request(`/users/${userId}/reactivate`, { method: "POST", auth: true }),
+    invitations: {
+      list: (userId) => request<AccountInvitation[]>(`/users/${userId}/invitations`, { auth: true }),
+      send: (userId) => request<AccountInvitation>(`/users/${userId}/invitations`, { method: "POST", auth: true }),
+      resend: (userId) => request<AccountInvitation>(`/users/${userId}/invitations/resend`, { method: "POST", auth: true }),
+      revoke: (userId) => request<AccountInvitation>(`/users/${userId}/invitations/revoke`, { method: "POST", auth: true }),
+    },
     producerMemberships: {
       list: (userId) => request<ProducerMembership[]>(`/users/${userId}/producer_memberships`, { auth: true }),
       create: (userId, producerId, membershipType) =>
@@ -52,6 +72,16 @@ export function createUsersApi(request: ApiRequester): UsersApi {
         }),
       destroy: (userId, membershipId) => request(`/users/${userId}/producer_memberships/${membershipId}`, { method: "DELETE", auth: true }),
     },
+  }
+}
+
+export function createInvitationsApi(request: ApiRequester) {
+  return {
+    validate: (token: string) => request<InvitationValidationResponse>("/invitations/validate", {
+      method: "POST", body: { token },
+    }),
+    accept: (payload: { token: string; password: string; password_confirmation: string }) =>
+      request<{ message: string; email: string }>("/invitations/accept", { method: "POST", body: payload }),
   }
 }
 

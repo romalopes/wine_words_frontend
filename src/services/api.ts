@@ -19,6 +19,7 @@ import {
 import {
   createAccountApi,
   createBillingApi,
+  createInvitationsApi,
   createSubscriptionsApi,
   createUserApi,
   createUsersApi,
@@ -161,6 +162,7 @@ export const wineProfilesApi = createWineProfilesApi(request);
 
 export const userApi = createUserApi(request);
 export const usersApi = createUsersApi(request);
+export const invitationsApi = createInvitationsApi(request);
 export const subscriptionsApi = createSubscriptionsApi(request);
 export const accountApi = createAccountApi(request);
 export const billingApi = createBillingApi(request);

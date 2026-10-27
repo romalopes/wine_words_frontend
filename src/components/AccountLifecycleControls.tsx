@@ -5,7 +5,7 @@ export interface AccountLifecycleControlsProps {
   account: {
     deleted_at?: string | null;
     display_name?: string | null;
-    email: string;
+    email: string | null;
   };
   loading: boolean;
   error: string | null;
@@ -37,7 +37,7 @@ export default function AccountLifecycleControls({
   onReactivate,
 }: AccountLifecycleControlsProps) {
   const [modal, setModal] = useState(false);
-  const displayName = account.display_name || account.email;
+  const displayName = account.display_name || account.email || "Unnamed account";
 
   return (
     <>

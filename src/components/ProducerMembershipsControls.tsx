@@ -354,7 +354,7 @@ export default function ProducerMembershipsControls(
         >
           {producerMode
             ? availableUserResults.map((result) => {
-                const name = result.display_name || result.email;
+                const name = result.display_name || result.email || "Unnamed account";
                 return (
                   <button
                     key={result.id}

@@ -28,6 +28,7 @@ import type { RoleOption } from "../types/user";
 import UserRoleSubscriptionControls from "./UserRoleSubscriptionControls";
 import { errorMessage, errorText, errorData } from "../utils/errors";
 import DetailHero from "./DetailHero";
+import InvitationManagement from "./InvitationManagement";
 
 function stringValue(value: unknown): string {
   return value == null ? "" : String(value);
@@ -340,11 +341,11 @@ function UserDetail() {
                     user.roles?.includes("Admin")
                       ? undefined
                       : {
-                          name: user.display_name || user.email,
+                          name: user.display_name || user.email || "Unnamed account",
                           onActAsUser: () => {
                             if (
                               window.confirm(
-                                `Act as ${user.display_name || user.email}? You will operate as this user until you stop.`,
+                                `Act as ${user.display_name || user.email || "Unnamed account"}? You will operate as this user until you stop.`,
                               )
                             ) {
                               startImpersonation(user.id).catch((err) =>
@@ -363,6 +364,9 @@ function UserDetail() {
                 />
               )}
             </div>
+            {canManage && (
+              <InvitationManagement user={user} onUserUpdated={setUser} />
+            )}
             {canManage && (
               <section className="mt-4">
                 <h3>Producer Memberships</h3>

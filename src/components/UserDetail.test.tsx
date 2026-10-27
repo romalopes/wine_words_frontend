@@ -47,9 +47,11 @@ const userDetail = {
   last_name: "Doe",
   role_ids: [1],
   roles: ["Reader"],
+  account_status: "active",
   subscription: null,
   analytics_opt_out: false,
   producer_memberships: [],
+  invitation_summary: { count: 0, latest: null },
   account: {
     first_name: "Jane",
     last_name: "Doe",
@@ -63,7 +65,7 @@ const userDetail = {
       country_id: 1,
     },
   },
-};
+} satisfies import("../types/user").UserDetail;
 
 function renderPage() {
   return render(

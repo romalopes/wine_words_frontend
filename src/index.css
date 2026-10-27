@@ -5692,6 +5692,56 @@ a.admin-user-card:hover {
   margin: 0 0 1rem;
 }
 
+.managed-account-panel {
+  margin: 0 0 1.5rem;
+  padding: 1.25rem;
+  background: #faf7f2;
+  border: 1px solid #e5ddd5;
+  border-radius: 10px;
+}
+
+.managed-account-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.managed-account-form label,
+.managed-account-form fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.managed-account-form input {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #d9c9bf;
+  border-radius: 6px;
+}
+
+.managed-account-form fieldset {
+  flex-direction: row;
+  flex-wrap: wrap;
+  border: 0;
+  padding: 0;
+}
+
+.managed-account-form--inline {
+  grid-template-columns: minmax(220px, 1fr) auto;
+}
+
+.managed-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.invitation-history {
+  padding-left: 1.25rem;
+}
+
 .admin-user-actions .admin-pagination__btn {
   padding: 0.4rem 0.9rem;
 }
