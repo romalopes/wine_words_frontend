@@ -91,81 +91,104 @@ function CountryDetail() {
   }
 
   return (
-    <div className="grapes-page">
-      <Link to="/countries" className="back-link">
+    <div className="wine-app reference-detail">
+      <BackToSource />
+      <Link to="/countries" className="wine-detail__back">
         &larr; Back to countries
       </Link>
       <DetailHero
-        kicker="Country"
-        title={`${country.flag_emoji} ${country.name}`}
+        kicker="Country reference"
+        title={`${country.flag_emoji ? `${country.flag_emoji} ` : ""}${country.name}`}
+        badge={country.continent ? { label: country.continent } : undefined}
+        intro="Explore this country’s place in the wine world and its associated producers and wines."
       />
 
-      <div className="grape-detail">
-        <ul className="facts">
-          <li>
-            <strong>ISO code:</strong> {country.code}
-          </li>
-          <li>
-            <strong>Continent:</strong> {country.continent || "—"}
-          </li>
-          <li>
-            <strong>Wine country:</strong>{" "}
-            {country.is_wine_country ? "Yes" : "No"}
-          </li>
-        </ul>
+      <div className="reference-detail__layout">
+        <div className="reference-detail__main">
+          {country.is_wine_country && (
+            <section className="wine-profile-detail__serving">
+              <div className="wine-profile-detail__serving-icon" aria-hidden="true">✦</div>
+              <div>
+                <p className="wine-profile-detail__eyebrow">Wine country</p>
+                <p>{country.name} is represented in the wine catalogue with producers, wines, or both.</p>
+              </div>
+            </section>
+          )}
+
+          <section id="producers" className="reference-detail__card reference-detail__card--wide">
+            <p className="wine-profile-detail__eyebrow">Associated catalogue</p>
+            <h2>
+              Producers{!producers.loading && ` (${producers.totalCount})`}
+            </h2>
+            {producers.loading ? (
+              <p className="wine-management__loading">Loading producers…</p>
+            ) : producers.items.length > 0 ? (
+              <>
+                <ProducerTable
+                  producers={producers.items}
+                  canManage={canManageProducers}
+                  linkContext={{ type: "country", id: country.id, name: country.name }}
+                  onProducerLinked={() => producers.reload()}
+                />
+                <Pagination
+                  page={producers.page}
+                  totalPages={producers.totalPages}
+                  totalCount={producers.totalCount}
+                  onPageChange={producers.setPage}
+                />
+              </>
+            ) : (
+              <p className="wine-profile-detail__empty">No producers for this country yet.</p>
+            )}
+          </section>
+
+          <section id="wines" className="reference-detail__card reference-detail__card--wide">
+            <p className="wine-profile-detail__eyebrow">Associated catalogue</p>
+            <h2>
+              Wines{!wines.loading && ` (${wines.totalCount})`}
+            </h2>
+            {wines.loading ? (
+              <p className="wine-management__loading">Loading wines…</p>
+            ) : wines.items.length > 0 ? (
+              <>
+                <WineTable
+                  wines={wines.items}
+                  linkContext={{ type: "country", id: country.id, name: country.name }}
+                  onWineLinked={() => wines.reload()}
+                  onDeleted={() => wines.reload()}
+                />
+                <Pagination
+                  page={wines.page}
+                  totalPages={wines.totalPages}
+                  totalCount={wines.totalCount}
+                  onPageChange={wines.setPage}
+                />
+              </>
+            ) : (
+              <p className="wine-profile-detail__empty">No wines for this country yet.</p>
+            )}
+          </section>
+        </div>
+
+        <aside className="reference-detail__sidebar" aria-label="Country information">
+          <div className="reference-detail__sidebar-group">
+            <p className="wine-profile-detail__eyebrow">At a glance</p>
+            <dl className="reference-detail__facts">
+              <div><dt>ISO code</dt><dd>{country.code || "Not specified"}</dd></div>
+              <div><dt>Continent</dt><dd>{country.continent || "Not specified"}</dd></div>
+              <div><dt>Wine country</dt><dd>{country.is_wine_country ? "Yes" : "No"}</dd></div>
+            </dl>
+          </div>
+          <div className="wine-profile-detail__origin-divider" />
+          <div className="reference-detail__sidebar-group">
+            <p className="wine-profile-detail__eyebrow">Catalogue totals</p>
+            <dl className="reference-detail__facts">
+              <div><dt>Producers</dt><dd>{producers.loading ? "…" : producers.totalCount}</dd></div>
+              <div><dt>Wines</dt><dd>{wines.loading ? "…" : wines.totalCount}</dd></div>
+            </dl>
+          </div>
+        </aside>
       </div>
-
-      <section id="producers" className="country-detail__section">
-        <h2>
-          Producers{!producers.loading && ` (${producers.totalCount})`}
-        </h2>
-        {producers.loading ? (
-          <p className="wine-management__loading">Loading producers…</p>
-        ) : producers.items.length > 0 ? (
-          <>
-            <ProducerTable
-              producers={producers.items}
-              canManage={canManageProducers}
-              linkContext={{ type: "country", id: country.id, name: country.name }}
-              onProducerLinked={() => producers.reload()}
-            />
-            <Pagination
-              page={producers.page}
-              totalPages={producers.totalPages}
-              totalCount={producers.totalCount}
-              onPageChange={producers.setPage}
-            />
-          </>
-        ) : (
-          <p>No producers for this country yet.</p>
-        )}
-      </section>
-
-      <section id="wines" className="country-detail__section">
-        <h2>
-          Wines{!wines.loading && ` (${wines.totalCount})`}
-        </h2>
-        {wines.loading ? (
-          <p className="wine-management__loading">Loading wines…</p>
-        ) : wines.items.length > 0 ? (
-          <>
-            <WineTable
-              wines={wines.items}
-              linkContext={{ type: "country", id: country.id, name: country.name }}
-              onWineLinked={() => wines.reload()}
-              onDeleted={() => wines.reload()}
-            />
-            <Pagination
-              page={wines.page}
-              totalPages={wines.totalPages}
-              totalCount={wines.totalCount}
-              onPageChange={wines.setPage}
-            />
-          </>
-        ) : (
-          <p>No wines for this country yet.</p>
-        )}
-      </section>
     </div>
   );
 }

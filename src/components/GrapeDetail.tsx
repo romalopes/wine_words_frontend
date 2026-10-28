@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import DetailHero from "./DetailHero";
 import { grapesApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -222,8 +222,24 @@ function GrapeDetail() {
   if (!grape) return <p className="empty">Grape not found.</p>;
 
   return (
-    <div className="grapes-page">
-      <DetailHero kicker="Grape" title={grape.name} />
+    <div className="wine-app reference-detail">
+      <Link to="/grapes" className="wine-detail__back">
+        &larr; Back to grapes
+      </Link>
+
+      <DetailHero
+        kicker="Grape reference"
+        title={grape.name}
+        badge={grape.color ? { label: grape.color, tone: grape.color } : undefined}
+        intro="Explore this grape’s character, origins, aliases, and associated wines."
+        actions={
+          isWineManager && !isEditing ? (
+            <button type="button" className="auth-form__submit" onClick={() => setIsEditing(true)}>
+              Edit Grape
+            </button>
+          ) : undefined
+        }
+      />
 
       {error && <div className="flash flash--alert">{error}</div>}
       {notice && <div className="flash flash--notice">{notice}</div>}
@@ -349,36 +365,36 @@ function GrapeDetail() {
           </form>
         </section>
       ) : (
-        <section className="detail-card">
-          <h1>{grape.name}</h1>
-          <ul className="grape-facts" aria-label="Grape details">
-            {grape.color && (
-              <li><strong>Color:</strong> {grape.color}</li>
-            )}
-            {grape.origin_country && (
-              <li><strong>Origin Country:</strong> {grape.origin_country}</li>
-            )}
-            {grape.relevance != null && (
-              <li><strong>Relevance:</strong> {grape.relevance}</li>
-            )}
-            <li><strong>Blending Grape:</strong> {grape.is_blending_grape ? "Yes" : "No"}</li>
-            {grape.main_regions?.length > 0 && (
-              <li><strong>Main Regions:</strong> {grape.main_regions.join(", ")}</li>
-            )}
-            {grape.synonyms?.length > 0 && (
-              <li><strong>Synonyms:</strong> {grape.synonyms.join(", ")}</li>
-            )}
+        <div className="reference-detail__layout">
+          <div className="reference-detail__main">
             {grape.notes?.length > 0 && (
-              <li><strong>Notes:</strong> {grape.notes.join(", ")}</li>
+              <section className="reference-detail__card">
+                <p className="wine-profile-detail__eyebrow">Tasting notes</p>
+                <h2>What to expect</h2>
+                <div className="wine-profile-detail__chips" aria-label="Tasting notes">
+                  {grape.notes.map((note, index) => (
+                    <span key={`${note}-${index}`} className="wine-profile-detail__chip wine-profile-detail__chip--note">
+                      {note}
+                    </span>
+                  ))}
+                </div>
+              </section>
             )}
-            {grape.serving && (
-              <li><strong>Serving:</strong> {grape.serving}</li>
-            )}
-          </ul>
 
-          {isWineManager && (
-            <div className="grape-detail__wine-linker">
-              <h2>Link a Wine</h2>
+            {grape.serving && (
+              <section className="wine-profile-detail__serving">
+                <div className="wine-profile-detail__serving-icon" aria-hidden="true">✦</div>
+                <div>
+                  <p className="wine-profile-detail__eyebrow">Serving suggestion</p>
+                  <p>{grape.serving}</p>
+                </div>
+              </section>
+            )}
+
+            {isWineManager && (
+              <section className="reference-detail__card">
+                <p className="wine-profile-detail__eyebrow">Catalogue tools</p>
+                <h2>Link a wine</h2>
               <div className="review-form__field">
                 <label htmlFor="grape-wine-search">
                   Search wines by name to add them to {grape.name}
@@ -392,7 +408,7 @@ function GrapeDetail() {
                 />
               </div>
               {linkError && <p className="review-form__error">{linkError}</p>}
-              {wineResults != null &&
+                {wineResults != null &&
                 (wineResults.length === 0 ? (
                   <p className="wine-management__empty-state">No matching wines.</p>
                 ) : (
@@ -407,15 +423,7 @@ function GrapeDetail() {
                       return (
                         <li
                           key={wine.slug}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            border: "1px solid #d8c8c0",
-                            borderRadius: 8,
-                            padding: "8px 12px",
-                            background: "#fff",
-                          }}
+                          className="reference-detail__search-result"
                         >
                           <strong>{wine.name}</strong>
                           {linkedHere ? (
@@ -437,13 +445,15 @@ function GrapeDetail() {
                     })}
                   </ul>
                 ))}
-            </div>
-          )}
-          <div className="grape-detail__wines">
-            <h2>
+              </section>
+            )}
+
+            <section className="reference-detail__card reference-detail__card--wide">
+              <p className="wine-profile-detail__eyebrow">Associated catalogue</p>
+              <h2>
               Wines{!wines.loading && ` (${wines.totalCount})`}
-            </h2>
-            {wines.loading ? (
+              </h2>
+              {wines.loading ? (
               <p className="wine-management__loading">Loading wines…</p>
             ) : wines.items.length > 0 ? (
               <>
@@ -465,9 +475,47 @@ function GrapeDetail() {
               </>
             ) : (
               <p className="empty">No wines are associated with this grape yet.</p>
-            )}
+              )}
+            </section>
           </div>
-        </section>
+
+          <aside className="reference-detail__sidebar" aria-label="Grape information">
+            <div className="reference-detail__sidebar-group">
+              <p className="wine-profile-detail__eyebrow">At a glance</p>
+              <dl className="reference-detail__facts">
+                <div><dt>Origin</dt><dd>{grape.origin_country || "Not specified"}</dd></div>
+                <div><dt>Blending grape</dt><dd>{grape.is_blending_grape ? "Yes" : "No"}</dd></div>
+                {grape.relevance != null && <div><dt>Relevance</dt><dd>{grape.relevance}</dd></div>}
+              </dl>
+            </div>
+            {grape.main_regions?.length > 0 && (
+              <>
+                <div className="wine-profile-detail__origin-divider" />
+                <div className="reference-detail__sidebar-group">
+                  <p className="wine-profile-detail__eyebrow">Main regions</p>
+                  <div className="wine-profile-detail__chips">
+                    {grape.main_regions.map((region, index) => (
+                      <span key={`${region}-${index}`} className="wine-profile-detail__chip wine-profile-detail__chip--region">{region}</span>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+            {grape.synonyms?.length > 0 && (
+              <>
+                <div className="wine-profile-detail__origin-divider" />
+                <div className="reference-detail__sidebar-group">
+                  <p className="wine-profile-detail__eyebrow">Also known as</p>
+                  <div className="wine-profile-detail__chips">
+                    {grape.synonyms.map((synonym, index) => (
+                      <span key={`${synonym}-${index}`} className="wine-profile-detail__chip">{synonym}</span>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </aside>
+        </div>
       )}
     </div>
   );

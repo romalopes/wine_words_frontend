@@ -167,60 +167,41 @@ function RegionDetail() {
   ];
 
   return (
-    <div className="grapes-page">
+    <div className="wine-app reference-detail">
+      <BackToSource />
+      <Link to="/regions" className="wine-detail__back">
+        &larr; Back to regions
+      </Link>
       <DetailHero
-        kicker="Region"
+        kicker="Region reference"
         title={`${region.country?.flag_emoji ? `${region.country.flag_emoji} ` : ""}${region.name}`}
-      >
-        {canManage && (
-          <Link to="/regions" className="btn-primary">
-            Manage Regions
-          </Link>
-        )}
-      </DetailHero>
+        badge={{ label: typeLabel(region) }}
+        intro="Explore this region’s place in the wine world and its associated producers and wines."
+        actions={canManage ? <Link to={`/regions/${region.slug}/edit`} className="auth-form__submit">Edit Region</Link> : undefined}
+      />
 
-      {/* Region Path/Breadcrumb */}
-      <div className="region-detail__path">
-        {path.map((item, index) => (
-          <span key={index} className="region-detail__path-item">
-            {index > 0 && " → "}
-            {item.type === "country" && item.flag_emoji && (
-              <span className="region-detail__flag">{item.flag_emoji} </span>
-            )}
-            <Link
-              to={returnToLink(
-                item.type === "country"
-                  ? `/countries/${item.slug}`
-                  : `/regions/${item.slug}`,
-              )}
-              className="region-detail__path-link"
-            >
-              {item.name}
-            </Link>
-          </span>
-        ))}
-      </div>
+      <div className="reference-detail__layout">
+        <div className="reference-detail__main">
+          <section className="reference-detail__card">
+            <p className="wine-profile-detail__eyebrow">Location</p>
+            <h2>Region path</h2>
+            <nav className="reference-detail__path" aria-label="Region hierarchy">
+              {path.map((item, index) => (
+                <span key={`${item.type}-${item.id}`} className="reference-detail__path-item">
+                  {index > 0 && <span className="reference-detail__path-separator">→</span>}
+                  {item.type === "country" && item.flag_emoji && <span>{item.flag_emoji}</span>}
+                  <Link to={returnToLink(item.type === "country" ? `/countries/${item.slug}` : `/regions/${item.slug}`)}>
+                    {item.name}
+                  </Link>
+                </span>
+              ))}
+            </nav>
+          </section>
 
-      <div className="region-detail__section">
-        <h2>Details</h2>
-        <ul className="facts">
-          <li>
-            <strong>Country:</strong>{" "}
-            {region.country?.flag_emoji ? `${region.country.flag_emoji} ` : ""}
-            {region.country?.name || "—"}
-          </li>
-          <li>
-            <strong>Type:</strong> {typeLabel(region)}
-          </li>
-          <li>
-            <strong>Parent:</strong> {region.parent_name ? `Yes (${region.parent_name})` : "—"}
-          </li>
-        </ul>
-      </div>
-
-      {canManageWines && (
-        <div className="region-detail__section">
-          <h2>Link a Wine</h2>
+          {canManageWines && (
+            <section className="reference-detail__card">
+              <p className="wine-profile-detail__eyebrow">Catalogue tools</p>
+              <h2>Link a wine</h2>
           <div className="review-form__field">
             <label htmlFor="region-wine-search">
               Search wines by name to add them to {region.name}
@@ -247,18 +228,7 @@ function RegionDetail() {
                     (r) => String(r.id) === String(region.id),
                   );
                   return (
-                    <li
-                      key={wine.slug}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        border: "1px solid #d8c8c0",
-                        borderRadius: 8,
-                        padding: "8px 12px",
-                        background: "#fff",
-                      }}
-                    >
+                    <li key={wine.slug} className="reference-detail__search-result">
                       <strong>{wine.name}</strong>
                       {linkedHere ? (
                         <span style={{ color: "#2e7d43", fontWeight: 700 }}>
@@ -279,11 +249,12 @@ function RegionDetail() {
                 })}
               </ul>
             ))}
-        </div>
-      )}
+            </section>
+          )}
 
-      <div className="region-detail__section" id="producers">
-        <h2>
+          <section className="reference-detail__card reference-detail__card--wide" id="producers">
+            <p className="wine-profile-detail__eyebrow">Associated catalogue</p>
+            <h2>
           Producers{!producers.loading && ` (${producers.totalCount})`}
         </h2>
         {producers.loading ? (
@@ -306,10 +277,11 @@ function RegionDetail() {
         ) : (
           <p>No producers are associated with this region yet.</p>
         )}
-      </div>
+          </section>
 
-      <div className="region-detail__section" id="wines">
-        <h2>
+          <section className="reference-detail__card reference-detail__card--wide" id="wines">
+            <p className="wine-profile-detail__eyebrow">Associated catalogue</p>
+            <h2>
           Wines{!wines.loading && ` (${wines.totalCount})`}
         </h2>
         {wines.loading ? (
@@ -332,29 +304,27 @@ function RegionDetail() {
         ) : (
           <p>No wines are associated with this region yet.</p>
         )}
-      </div>
+          </section>
+        </div>
 
-      <div className="page-actions">
-        <Link to="/regions" className="btn-secondary">
-          ← Back to Regions
-        </Link>
-        {canManage && (
-          <>
-            <Link to={`/regions/${region.slug}/edit`} className="btn-secondary">
-              Edit
-            </Link>
-            <button
-              className="btn-action btn-action--delete"
-              onClick={() => {
-                if (window.confirm("Delete this region? This action cannot be undone.")) {
-                  // Delete logic would go here
-                }
-              }}
-            >
-              Delete
-            </button>
-          </>
-        )}
+        <aside className="reference-detail__sidebar" aria-label="Region information">
+          <div className="reference-detail__sidebar-group">
+            <p className="wine-profile-detail__eyebrow">At a glance</p>
+            <dl className="reference-detail__facts">
+              <div><dt>Country</dt><dd>{region.country?.flag_emoji ? `${region.country.flag_emoji} ` : ""}{region.country?.name || "Not specified"}</dd></div>
+              <div><dt>Type</dt><dd>{typeLabel(region)}</dd></div>
+              <div><dt>Parent</dt><dd>{region.parent_name || "None"}</dd></div>
+            </dl>
+          </div>
+          <div className="wine-profile-detail__origin-divider" />
+          <div className="reference-detail__sidebar-group">
+            <p className="wine-profile-detail__eyebrow">Catalogue totals</p>
+            <dl className="reference-detail__facts">
+              <div><dt>Producers</dt><dd>{producers.loading ? "…" : producers.totalCount}</dd></div>
+              <div><dt>Wines</dt><dd>{wines.loading ? "…" : wines.totalCount}</dd></div>
+            </dl>
+          </div>
+        </aside>
       </div>
     </div>
   );

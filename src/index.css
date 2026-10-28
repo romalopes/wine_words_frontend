@@ -4849,6 +4849,28 @@ textarea {
   margin: 0.15rem 0 0;
 }
 
+.wine-management__notes {
+  font-size: 0.85rem;
+  color: #4f4440;
+  line-height: 1.5;
+  margin: 0.15rem 0 0;
+}
+
+.wine-management__notes strong {
+  color: #27615e;
+}
+
+.wine-management__serving {
+  font-size: 0.85rem;
+  color: #6b5855;
+  line-height: 1.5;
+  margin: 0.15rem 0 0;
+}
+
+.wine-management__serving strong {
+  color: #27615e;
+}
+
 .wine-management__sparkling {
   font-size: 0.85rem;
   font-weight: 600;
@@ -7612,6 +7634,115 @@ a.admin-user-card:hover {
     grid-template-columns: 1fr;
   }
   .wine-profile-detail__origins {
+    position: static;
+  }
+}
+
+/* Grape, region, and country details: reuse the compact reference-card language from wine profiles. */
+.reference-detail {
+  margin: 0 auto;
+  max-width: 1040px;
+  padding: clamp(24px, 4vw, 52px) clamp(18px, 4vw, 40px) 64px;
+}
+.reference-detail__layout {
+  align-items: start;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.8fr);
+}
+.reference-detail__main {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.reference-detail__card,
+.reference-detail__sidebar {
+  background: #fffaf4;
+  border: 1px solid #e4d9cd;
+  border-radius: 14px;
+}
+.reference-detail__card {
+  min-width: 0;
+  padding: clamp(22px, 4vw, 32px);
+}
+.reference-detail__card h2 {
+  color: #3e1520;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.6rem;
+  line-height: 1.1;
+  margin: 0 0 20px;
+}
+.reference-detail__card--wide {
+  overflow-x: auto;
+}
+.reference-detail__sidebar {
+  padding: 26px;
+  position: sticky;
+  top: 84px;
+}
+.reference-detail__facts {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0 0;
+}
+.reference-detail__facts div {
+  border-top: 1px solid #e9ddd1;
+  padding-top: 10px;
+}
+.reference-detail__facts dt {
+  color: #877971;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.reference-detail__facts dd {
+  color: #403531;
+  font-weight: 700;
+  margin: 0;
+}
+.reference-detail__path {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reference-detail__path-item {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+.reference-detail__path a {
+  color: #27615e;
+  font-weight: 750;
+  text-decoration: none;
+}
+.reference-detail__path a:hover {
+  text-decoration: underline;
+}
+.reference-detail__path-separator {
+  color: #aa968a;
+}
+.reference-detail__search-result {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #d8c8c0;
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 12px;
+}
+.reference-detail .review-form__field {
+  margin-top: 18px;
+}
+
+@media (max-width: 720px) {
+  .reference-detail__layout {
+    grid-template-columns: 1fr;
+  }
+  .reference-detail__sidebar {
     position: static;
   }
 }
