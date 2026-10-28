@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import {
   canManageWinesRole,
   canDeleteProducers,
+  canManageProducerMembership,
 } from "../constants/roles";
 import WineTable from "./WineTable";
 import RegionSearch, { type SelectedRegion } from "./RegionSearch";
@@ -17,7 +18,6 @@ import Pagination from "./Pagination";
 import type { Producer } from "../types/producer";
 import type { WineListItem } from "../types/wine";
 import type { QueryParams } from "../types/common";
-import { canManageProducerMembership } from "../constants/roles";
 import ProducerMembershipsControls from "./ProducerMembershipsControls";
 
 function ProducerDetail() {
@@ -213,7 +213,7 @@ function ProducerDetail() {
   if (!producer) return null;
 
   return (
-    <div className="wine-app">
+    <div className="wine-app reference-detail">
       <BackToSource />
       <Link to="/producers" className="wine-detail__back">
         &larr; Back to Producers
@@ -221,9 +221,57 @@ function ProducerDetail() {
       <DetailHero
         kicker="Producer"
         title={producer.name}
+        badge={
+          producer.producer_type
+            ? {
+                label: producer.producer_type
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase()),
+              }
+            : undefined
+        }
+        intro="Explore this producer’s place in the wine world and its associated regions, grapes, and wines."
         media={
           producer.logo_url ? (
             <img src={producer.logo_url} alt={`${producer.name} logo`} />
+          ) : undefined
+        }
+        actions={
+          canManageProducers ? (
+            <>
+              <Link
+                to={`/producers/${producer.slug}/edit`}
+                className="auth-form__submit"
+              >
+                Edit Producer
+              </Link>
+              {canDeleteProducer && (
+                <button
+                  className="wine-management__delete-btn"
+                  type="button"
+                  onClick={async () => {
+                    if (
+                      !window.confirm(
+                        `Delete "${producer.name}"? This action cannot be undone.`,
+                      )
+                    )
+                      return;
+                    try {
+                      await producersApi.destroy(producer.slug);
+                      navigate("/producers", { replace: true });
+                    } catch (err) {
+                      alert(
+                        err instanceof Error
+                          ? err.message
+                          : "Failed to delete producer",
+                      );
+                    }
+                  }}
+                >
+                  Delete Producer
+                </button>
+              )}
+            </>
           ) : undefined
         }
       >
@@ -238,237 +286,205 @@ function ProducerDetail() {
         </div>
       )}
 
-      <section className="detail-card">
-        <ul className="producer-facts" aria-label="Producer details">
-          <li>
-            <strong>Status:</strong>{" "}
-            {producer.active === false ? "Inactive" : "Active"}
-          </li>
-          <li>
-            <strong>Country:</strong>{" "}
-            {producer.country
-              ? `${producer.country.flag_emoji || ""} ${producer.country.name}`.trim()
-              : "—"}
-          </li>
-          <li>
-            <strong>Legal name:</strong> {producer.legal_name || "—"}
-          </li>
-          <li>
-            <strong>Address:</strong> {producer.address?.street_address || "—"}
-          </li>
-          <li>
-            <strong>Location:</strong>{" "}
-            {[
-              producer.address?.city,
-              producer.address?.state,
-              producer.address?.postal_code,
-            ]
-              .filter(Boolean)
-              .join(", ") || "—"}
-          </li>
-          <li>
-            <strong>Phone:</strong> {producer.phone || "—"}
-          </li>
-          <li>
-            <strong>Founded:</strong> {producer.founded_year || "—"}
-          </li>
-          <li>
-            <strong>Type:</strong>{" "}
-            {producer.producer_type
-              ? producer.producer_type
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (c) => c.toUpperCase())
-              : "—"}
-          </li>
-          <li>
-            <strong>Email:</strong>{" "}
-            {producer.email ? (
-              <a href={`mailto:${producer.email}`}>{producer.email}</a>
-            ) : (
-              "—"
-            )}
-          </li>
-          <li>
-            <strong>Website:</strong>{" "}
-            {producer.website ? (
-              <a href={producer.website} target="_blank" rel="noreferrer">
-                {producer.website}
-              </a>
-            ) : (
-              "—"
-            )}
-          </li>
-          <li>
-            <strong>Instagram:</strong>{" "}
-            {producer.instagram ? (
-              <a
-                href={
-                  producer.instagram.startsWith("http")
-                    ? producer.instagram
-                    : `https://instagram.com/${producer.instagram.replace("@", "")}`
-                }
-                target="_blank"
-                rel="noreferrer"
+      <div className="reference-detail__layout">
+        <div className="reference-detail__main">
+          <section className="reference-detail__card">
+            <p className="wine-profile-detail__eyebrow">Producer details</p>
+            <h2>About this producer</h2>
+            <dl
+              className="wine-detail-page__specs"
+              aria-label="Producer details"
+            >
+              <div>
+                <dt>Address</dt>
+                <dd>{producer.address?.street_address || "Not specified"}</dd>
+              </div>
+              <div>
+                <dt>Location</dt>
+                <dd>
+                  {[
+                    producer.address?.city,
+                    producer.address?.state,
+                    producer.address?.postal_code,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") || "Not specified"}
+                </dd>
+              </div>
+              <div>
+                <dt>Phone</dt>
+                <dd>{producer.phone || "Not specified"}</dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd>
+                  {producer.email ? (
+                    <a href={`mailto:${producer.email}`}>{producer.email}</a>
+                  ) : (
+                    "Not specified"
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Website</dt>
+                <dd>
+                  {producer.website ? (
+                    <a href={producer.website} target="_blank" rel="noreferrer">
+                      {producer.website}
+                    </a>
+                  ) : (
+                    "Not specified"
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Instagram</dt>
+                <dd>
+                  {producer.instagram ? (
+                    <a
+                      href={
+                        producer.instagram.startsWith("http")
+                          ? producer.instagram
+                          : `https://instagram.com/${producer.instagram.replace("@", "")}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {producer.instagram}
+                    </a>
+                  ) : (
+                    "Not specified"
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Facebook</dt>
+                <dd>
+                  {producer.facebook ? (
+                    <a
+                      href={
+                        producer.facebook.startsWith("http")
+                          ? producer.facebook
+                          : `https://facebook.com/${producer.facebook}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {producer.facebook}
+                    </a>
+                  ) : (
+                    "Not specified"
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Description</dt>
+                <dd>{producer.description || "Not specified"}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="reference-detail__card">
+            <p className="wine-profile-detail__eyebrow">Catalogue tools</p>
+            <h2>Regions</h2>
+            {canManageProducers && (
+              <button
+                type="button"
+                className="review-form__status-btn"
+                onClick={() => setRegionsEditorOpen((open) => !open)}
               >
-                {producer.instagram}
-              </a>
-            ) : (
-              "—"
+                {regionsEditorOpen ? "Close" : "+ Link Region"}
+              </button>
             )}
-          </li>
-          <li>
-            <strong>Facebook:</strong>{" "}
-            {producer.facebook ? (
-              <a
-                href={
-                  producer.facebook.startsWith("http")
-                    ? producer.facebook
-                    : `https://facebook.com/${producer.facebook}`
-                }
-                target="_blank"
-                rel="noreferrer"
+            {linkError && regionsEditorOpen && (
+              <p className="review-form__error">{linkError}</p>
+            )}
+            {Array.isArray(producer.regions) && producer.regions.length > 0 ? (
+              <div className="wine-profile-detail__chips">
+                {producer.regions.map((r) => (
+                  <span
+                    key={r.id}
+                    className="wine-profile-detail__chip wine-profile-detail__chip--region"
+                  >
+                    {r.country_name ? `${r.name} (${r.country_name})` : r.name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="wine-profile-detail__empty">
+                No regions linked yet.
+              </p>
+            )}
+            {canManageProducers && regionsEditorOpen && (
+              <div className="review-form__field">
+                <RegionSearch
+                  selected={selectedRegions}
+                  onChange={setSelectedRegions}
+                  countryId={producer.country?.id ?? null}
+                />
+                <button
+                  type="button"
+                  className="review-form__status-btn"
+                  disabled={savingLinks}
+                  onClick={handleSaveRegions}
+                >
+                  {savingLinks ? "Saving…" : "Save Regions"}
+                </button>
+              </div>
+            )}
+          </section>
+
+          <section className="reference-detail__card">
+            <p className="wine-profile-detail__eyebrow">Catalogue tools</p>
+            <h2>Grapes</h2>
+            {canManageProducers && (
+              <button
+                type="button"
+                className="review-form__status-btn"
+                onClick={() => setGrapesEditorOpen((open) => !open)}
               >
-                {producer.facebook}
-              </a>
-            ) : (
-              "—"
+                {grapesEditorOpen ? "Close" : "+ Link Grapes"}
+              </button>
             )}
-          </li>
-          <li>
-            <strong>Description:</strong> {producer.description || "—"}
-          </li>
-        </ul>
-      </section>
+            {linkError && grapesEditorOpen && !regionsEditorOpen && (
+              <p className="review-form__error">{linkError}</p>
+            )}
+            {Array.isArray(producer.grapes) && producer.grapes.length > 0 ? (
+              <div className="wine-profile-detail__chips">
+                {producer.grapes.map((g) => (
+                  <span key={g.id} className="wine-profile-detail__chip">
+                    {g.color ? `${g.name} (${g.color})` : g.name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="wine-profile-detail__empty">No grapes linked yet.</p>
+            )}
+            {canManageProducers && grapesEditorOpen && (
+              <div className="review-form__field">
+                <GrapeSearch
+                  selected={selectedGrapes}
+                  onChange={setSelectedGrapes}
+                />
+                <button
+                  type="button"
+                  className="review-form__status-btn"
+                  disabled={savingLinks}
+                  onClick={handleSaveGrapes}
+                >
+                  {savingLinks ? "Saving…" : "Save Grapes"}
+                </button>
+              </div>
+            )}
+          </section>
 
-      {canManageProducers && (
-        <div className="wine-detail__actions">
-          <Link
-            to={`/producers/${producer.slug}/edit`}
-            className="auth-form__submit"
-          >
-            Edit Producer
-          </Link>
-          {canDeleteProducer && (
-            <button
-              className="wine-management__delete-btn"
-              type="button"
-              onClick={async () => {
-                if (
-                  !window.confirm(
-                    `Delete "${producer.name}"? This action cannot be undone.`,
-                  )
-                )
-                  return;
-                try {
-                  await producersApi.destroy(producer.slug);
-                  navigate("/producers", { replace: true });
-                } catch (err) {
-                  alert(
-                    err instanceof Error
-                      ? err.message
-                      : "Failed to delete producer",
-                  );
-                }
-              }}
-            >
-              Delete Producer
-            </button>
-          )}
-        </div>
-      )}
-
-      <div className="wine-detail__section">
-        <div className="wine-management__header">
-          <h2>Regions</h2>
           {canManageProducers && (
-            <button
-              type="button"
-              className="review-form__status-btn"
-              onClick={() => setRegionsEditorOpen((open) => !open)}
-            >
-              {regionsEditorOpen ? "Close" : "+ Link Region"}
-            </button>
-          )}
-        </div>
-        {linkError && regionsEditorOpen && (
-          <p className="review-form__error">{linkError}</p>
-        )}
-        <p>
-          {Array.isArray(producer.regions) && producer.regions.length > 0
-            ? producer.regions
-                .map((r) =>
-                  r.country_name ? `${r.name} (${r.country_name})` : r.name,
-                )
-                .join(", ")
-            : "No regions linked yet."}
-        </p>
-        {canManageProducers && regionsEditorOpen && (
-          <div className="review-form__field">
-            <RegionSearch
-              selected={selectedRegions}
-              onChange={setSelectedRegions}
-              countryId={producer.country?.id ?? null}
+            <ProducerMembershipsControls
+              key={producer.id}
+              producerId={producer.id}
+              canManage={canManageMemberships}
             />
-            <button
-              type="button"
-              className="review-form__status-btn"
-              disabled={savingLinks}
-              onClick={handleSaveRegions}
-            >
-              {savingLinks ? "Saving…" : "Save Regions"}
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="wine-detail__section">
-        <div className="wine-management__header">
-          <h2>Grapes</h2>
-          {canManageProducers && (
-            <button
-              type="button"
-              className="review-form__status-btn"
-              onClick={() => setGrapesEditorOpen((open) => !open)}
-            >
-              {grapesEditorOpen ? "Close" : "+ Link Grapes"}
-            </button>
           )}
-        </div>
-        {linkError && grapesEditorOpen && !regionsEditorOpen && (
-          <p className="review-form__error">{linkError}</p>
-        )}
-        <p>
-          {Array.isArray(producer.grapes) && producer.grapes.length > 0
-            ? producer.grapes
-                .map((g) => (g.color ? `${g.name} (${g.color})` : g.name))
-                .join(", ")
-            : "No grapes linked yet."}
-        </p>
-        {canManageProducers && grapesEditorOpen && (
-          <div className="review-form__field">
-            <GrapeSearch
-              selected={selectedGrapes}
-              onChange={setSelectedGrapes}
-            />
-            <button
-              type="button"
-              className="review-form__status-btn"
-              disabled={savingLinks}
-              onClick={handleSaveGrapes}
-            >
-              {savingLinks ? "Saving…" : "Save Grapes"}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {canManageProducers && (
-        <ProducerMembershipsControls
-          key={producer.id}
-          producerId={producer.id}
-          canManage={canManageMemberships}
-        />
-      )}
 
       {/* {canManageProducers && (
         <div className="wine-detail__section">
@@ -584,121 +600,186 @@ function ProducerDetail() {
           );
         })()} */}
 
-      <div className="wine-detail__section">
-        <h2>Wines</h2>
-        {winesLoading ? (
-          <p className="wine-management__loading">Loading wines...</p>
-        ) : winesError ? (
-          <p className="wine-management__error">
-            Failed to load wines: {winesError}
-          </p>
-        ) : paginatedWines !== null && paginatedWines.length > 0 ? (
-          <>
-            <WineTable
-              wines={paginatedWines}
-              onDeleted={() => {
-                // Reload current page when a wine is deleted
-                reloadWines();
-              }}
-              linkContext={{
-                type: "producer",
-                id: producer?.id || 0,
-                name: producer?.name || "",
-              }}
-              onWineLinked={() => {
-                // Reload current page when a wine is linked
-                reloadWines();
-              }}
-            />
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              totalCount={totalCount}
-              onPageChange={setPage}
-              alwaysShow={totalPages > 1}
-            />
-          </>
-        ) : (
-          <p className="wine-management__empty-state">
-            No wines are associated with this producer yet.
-          </p>
-        )}
-      </div>
-      {canManageProducers && (
-        <div className="wine-detail__section">
-          <h2>Link a Wine</h2>
-          <div className="review-form__field">
-            <label htmlFor="producer-wine-search">
-              Search wines by name to link them to {producer.name}
-            </label>
-            <input
-              id="producer-wine-search"
-              type="text"
-              value={wineQuery}
-              onChange={(e) => setWineQuery(e.target.value)}
-              placeholder="Search wines by name…"
-            />
-          </div>
-          {linkError && <p className="review-form__error">{linkError}</p>}
-          {wineResults != null &&
-            (wineResults.length === 0 ? (
-              <p className="wine-management__empty-state">No matching wines.</p>
+          <section className="reference-detail__card reference-detail__card--wide">
+            <p className="wine-profile-detail__eyebrow">Associated catalogue</p>
+            <h2>Wines{!winesLoading && ` (${totalCount})`}</h2>
+            {winesLoading ? (
+              <p className="wine-management__loading">Loading wines...</p>
+            ) : winesError ? (
+              <p className="wine-management__error">
+                Failed to load wines: {winesError}
+              </p>
+            ) : paginatedWines !== null && paginatedWines.length > 0 ? (
+              <>
+                <WineTable
+                  wines={paginatedWines}
+                  onDeleted={() => {
+                    // Reload current page when a wine is deleted
+                    reloadWines();
+                  }}
+                  linkContext={{
+                    type: "producer",
+                    id: producer?.id || 0,
+                    name: producer?.name || "",
+                  }}
+                  onWineLinked={() => {
+                    // Reload current page when a wine is linked
+                    reloadWines();
+                  }}
+                />
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  totalCount={totalCount}
+                  onPageChange={setPage}
+                  alwaysShow={totalPages > 1}
+                />
+              </>
             ) : (
-              <ul
-                className="wine-list"
-                style={{
-                  display: "grid",
-                  gap: 6,
-                  listStyle: "none",
-                  padding: 0,
-                }}
-              >
-                {wineResults.map((wine) => {
-                  const linkedHere =
-                    wine.producer?.slug === producer.slug ||
-                    wine.producer?.id === producer.id;
-                  return (
-                    <li
-                      key={wine.slug}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        border: "1px solid #d8c8c0",
-                        borderRadius: 8,
-                        padding: "8px 12px",
-                        background: "#fff",
-                      }}
-                    >
-                      <strong>{wine.name}</strong>
-                      {linkedHere ? (
-                        <span style={{ color: "#2e7d43", fontWeight: 700 }}>
-                          Linked here ✓
-                        </span>
-                      ) : (
-                        <>
-                          <span style={{ color: "#666", fontSize: ".85rem" }}>
-                            {wine.producer?.name
-                              ? `currently with ${wine.producer.name}`
-                              : "no producer"}
-                          </span>
-                          <button
-                            type="button"
-                            className="review-form__status-btn"
-                            disabled={linking}
-                            onClick={() => handleLinkWine(wine)}
-                          >
-                            Link
-                          </button>
-                        </>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            ))}
+              <p className="wine-management__empty-state">
+                No wines are associated with this producer yet.
+              </p>
+            )}
+          </section>
+          {canManageProducers && (
+            <section className="reference-detail__card">
+              <p className="wine-profile-detail__eyebrow">Catalogue tools</p>
+              <h2>Link a wine</h2>
+              <div className="review-form__field">
+                <label htmlFor="producer-wine-search">
+                  Search wines by name to link them to {producer.name}
+                </label>
+                <input
+                  id="producer-wine-search"
+                  type="text"
+                  value={wineQuery}
+                  onChange={(e) => setWineQuery(e.target.value)}
+                  placeholder="Search wines by name…"
+                />
+              </div>
+              {linkError && <p className="review-form__error">{linkError}</p>}
+              {wineResults != null &&
+                (wineResults.length === 0 ? (
+                  <p className="wine-management__empty-state">
+                    No matching wines.
+                  </p>
+                ) : (
+                  <ul
+                    className="wine-list"
+                    style={{
+                      display: "grid",
+                      gap: 6,
+                      listStyle: "none",
+                      padding: 0,
+                    }}
+                  >
+                    {wineResults.map((wine) => {
+                      const linkedHere =
+                        wine.producer?.slug === producer.slug ||
+                        wine.producer?.id === producer.id;
+                      return (
+                        <li
+                          key={wine.slug}
+                          className="reference-detail__search-result"
+                        >
+                          <strong>{wine.name}</strong>
+                          {linkedHere ? (
+                            <span style={{ color: "#2e7d43", fontWeight: 700 }}>
+                              Linked here ✓
+                            </span>
+                          ) : (
+                            <>
+                              <span
+                                style={{ color: "#666", fontSize: ".85rem" }}
+                              >
+                                {wine.producer?.name
+                                  ? `currently with ${wine.producer.name}`
+                                  : "no producer"}
+                              </span>
+                              <button
+                                type="button"
+                                className="review-form__status-btn"
+                                disabled={linking}
+                                onClick={() => handleLinkWine(wine)}
+                              >
+                                Link
+                              </button>
+                            </>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ))}
+            </section>
+          )}
         </div>
-      )}
+
+        <aside
+          className="reference-detail__sidebar"
+          aria-label="Producer information"
+        >
+          <div className="reference-detail__sidebar-group">
+            <p className="wine-profile-detail__eyebrow">At a glance</p>
+            <dl className="reference-detail__facts">
+              <div>
+                <dt>Status</dt>
+                <dd>{producer.active === false ? "Inactive" : "Active"}</dd>
+              </div>
+              <div>
+                <dt>Type</dt>
+                <dd>
+                  {producer.producer_type
+                    ? producer.producer_type
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (c) => c.toUpperCase())
+                    : "Not specified"}
+                </dd>
+              </div>
+              <div>
+                <dt>Country</dt>
+                <dd>
+                  {producer.country
+                    ? `${producer.country.flag_emoji ? `${producer.country.flag_emoji} ` : ""}${producer.country.name}`
+                    : "Not specified"}
+                </dd>
+              </div>
+              <div>
+                <dt>Founded</dt>
+                <dd>{producer.founded_year || "Not specified"}</dd>
+              </div>
+              <div>
+                <dt>Legal name</dt>
+                <dd>{producer.legal_name || "Not specified"}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="wine-profile-detail__origin-divider" />
+
+          <div className="reference-detail__sidebar-group">
+            <p className="wine-profile-detail__eyebrow">Catalogue totals</p>
+            <dl className="reference-detail__facts">
+              <div>
+                <dt>Regions</dt>
+                <dd>
+                  {Array.isArray(producer.regions) ? producer.regions.length : 0}
+                </dd>
+              </div>
+              <div>
+                <dt>Grapes</dt>
+                <dd>
+                  {Array.isArray(producer.grapes) ? producer.grapes.length : 0}
+                </dd>
+              </div>
+              <div>
+                <dt>Wines</dt>
+                <dd>{winesLoading ? "…" : totalCount}</dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
