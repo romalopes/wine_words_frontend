@@ -14,11 +14,11 @@ import DetailHero from "./DetailHero";
  * the DOM and blank ones are normalised to `null` in `handleSubmit`.
  */
 interface CountryForm {
-  name: string
-  code: string
-  continent: string
-  flag_emoji: string
-  is_wine_country: boolean
+  name: string;
+  code: string;
+  continent: string;
+  flag_emoji: string;
+  is_wine_country: boolean;
 }
 
 const emptyForm: CountryForm = {
@@ -53,21 +53,33 @@ function Countries() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<CountryForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [onlyWineCountries, setOnlyWineCountries] = useState(true);
+  const [onlyWineCountries, setOnlyWineCountries] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const canManage = isAdmin(user) || canManageGrapes(user);
 
   const sortedCountries = useMemo(() => {
-    const source = onlyWineCountries
+    let source = onlyWineCountries
       ? countries.filter((c) => c.is_wine_country)
       : countries;
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().trim();
+      source = source.filter(
+        (c) =>
+          (c.name || "").toLowerCase().includes(q) ||
+          (c.code || "").toLowerCase().includes(q) ||
+          (c.continent || "").toLowerCase().includes(q)
+      );
+    }
+
     const sorted = [...source];
     switch (sortBy) {
       case "continent":
         sorted.sort(
           (a, b) =>
             (a.continent || "").localeCompare(b.continent || "") ||
-            (a.name || "").localeCompare(b.name || ""),
+            (a.name || "").localeCompare(b.name || "")
         );
         break;
       case "name":
@@ -76,7 +88,7 @@ function Countries() {
         break;
     }
     return sorted;
-  }, [countries, sortBy, onlyWineCountries]);
+  }, [countries, sortBy, onlyWineCountries, searchQuery]);
 
   const loadCountries = useCallback(async () => {
     try {
@@ -306,6 +318,15 @@ function Countries() {
 
       <section>
         <div className="grapes-list-section__toolbar">
+          <label className="region-tree-filter">
+            <span>Search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search countries by name, code, or continent…"
+            />
+          </label>
           <label className="region-tree-filter">
             <input
               type="checkbox"
