@@ -54,6 +54,7 @@ function Countries() {
   const [form, setForm] = useState<CountryForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [onlyWineCountries, setOnlyWineCountries] = useState(false);
+  const [onlyCountriesWithWines, setOnlyCountriesWithWines] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const canManage = isAdmin(user) || canManageGrapes(user);
@@ -62,6 +63,10 @@ function Countries() {
     let source = onlyWineCountries
       ? countries.filter((c) => c.is_wine_country)
       : countries;
+
+    if (onlyCountriesWithWines) {
+      source = source.filter((c) => (c.wines_count ?? 0) > 0);
+    }
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase().trim();
@@ -88,7 +93,7 @@ function Countries() {
         break;
     }
     return sorted;
-  }, [countries, sortBy, onlyWineCountries, searchQuery]);
+  }, [countries, sortBy, onlyWineCountries, onlyCountriesWithWines, searchQuery]);
 
   const loadCountries = useCallback(async () => {
     try {
@@ -334,6 +339,14 @@ function Countries() {
               onChange={(e) => setOnlyWineCountries(e.target.checked)}
             />
             Only show wine countries
+          </label>
+          <label className="region-tree-filter">
+            <input
+              type="checkbox"
+              checked={onlyCountriesWithWines}
+              onChange={(e) => setOnlyCountriesWithWines(e.target.checked)}
+            />
+            Only show countries with wines
           </label>
           <select
             className="sort-select"

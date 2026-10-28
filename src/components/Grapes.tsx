@@ -392,7 +392,7 @@ function Grapes() {
             <option value="wines_count">Sort by Wines</option>
             <option value="producers_count">Sort by Producers</option>
           </select>
-                </div>
+        </div>
         {list.loading ? (
           <p className="loading">Loading grapes…</p>
         ) : list.items.length === 0 ? (
@@ -409,6 +409,7 @@ function Grapes() {
                   <th>Name</th>
                   <th>Color</th>
                   <th>Origin</th>
+                  <th>Country</th>
                   <th>Synonyms</th>
                   <th>Wines</th>
                   <th>Producers</th>
@@ -432,6 +433,12 @@ function Grapes() {
                       </Link>
                     </td>
                     <td>{grape.color || "—"}</td>
+                    <td>
+                      {grape.main_regions?.length
+                        ? grape.main_regions.slice(0, 3).join(", ") +
+                          (grape.main_regions.length > 3 ? "…" : "")
+                        : "—"}
+                    </td>
                     <td>{grape.origin_country || "—"}</td>
                     <td>
                       {grape.synonyms?.length
