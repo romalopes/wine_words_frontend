@@ -3,7 +3,11 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import DetailHero from "./DetailHero";
 import { grapesApi, winesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
-import { isAdmin, canManageGrapes, canManageWinesRole } from "../constants/roles";
+import {
+  isAdmin,
+  canManageGrapes,
+  canManageWinesRole,
+} from "../constants/roles";
 import WineTable from "./WineTable";
 import Pagination from "./Pagination";
 import { errorMessage } from "../utils/errors";
@@ -13,15 +17,15 @@ import type { WineListItem } from "../types/wine";
 
 /** The editable subset of a grape, seeded blank and refilled on every load. */
 interface GrapeForm {
-  name: string
-  color: string
-  origin_country: string
-  main_regions: string[]
-  synonyms: string[]
-  is_blending_grape: boolean
-  notes: string[]
-  serving: string
-  relevance: string
+  name: string;
+  color: string;
+  origin_country: string;
+  main_regions: string[];
+  synonyms: string[];
+  is_blending_grape: boolean;
+  notes: string[];
+  serving: string;
+  relevance: string;
 }
 
 const emptyForm: GrapeForm = {
@@ -48,13 +52,13 @@ type GrapeListField = "main_regions" | "synonyms" | "notes";
 
 /** Props for the tag-list editor shared by the three array fields. */
 interface ArrayFieldInputProps {
-  label: string
-  items: string[]
-  newValue: string
-  setNewValue: (value: string) => void
-  onAdd: () => void
-  onRemove: (index: number) => void
-  placeholder?: string
+  label: string;
+  items: string[];
+  newValue: string;
+  setNewValue: (value: string) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  placeholder?: string;
 }
 
 function GrapeDetail() {
@@ -152,7 +156,10 @@ function GrapeDetail() {
   // Generic over the key so the value type follows the field: `GrapeForm[K]`
   // ties `updateField("name", "…")` to `string` and `("notes", […])` to
   // `string[]`, without needing overloads.
-  function updateField<K extends keyof GrapeForm>(field: K, value: GrapeForm[K]) {
+  function updateField<K extends keyof GrapeForm>(
+    field: K,
+    value: GrapeForm[K],
+  ) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -168,7 +175,10 @@ function GrapeDetail() {
   }
 
   function removeArrayField(field: GrapeListField, index: number) {
-    updateField(field, form[field].filter((_, i) => i !== index));
+    updateField(
+      field,
+      form[field].filter((_, i) => i !== index),
+    );
   }
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -199,12 +209,15 @@ function GrapeDetail() {
 
   async function handleDelete() {
     if (!grape || !slug) return;
-    if (!window.confirm(`Delete grape "${grape.name}"? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete grape "${grape.name}"? This cannot be undone.`))
+      return;
     setError(null);
     setNotice(null);
     try {
       await grapesApi.remove(slug);
-      navigate("/grapes", { state: { notice: `Grape "${grape.name}" deleted.` } });
+      navigate("/grapes", {
+        state: { notice: `Grape "${grape.name}" deleted.` },
+      });
     } catch (err) {
       setError(errorMessage(err, "Failed to delete grape"));
     }
@@ -230,11 +243,17 @@ function GrapeDetail() {
       <DetailHero
         kicker="Grape reference"
         title={grape.name}
-        badge={grape.color ? { label: grape.color, tone: grape.color } : undefined}
+        badge={
+          grape.color ? { label: grape.color, tone: grape.color } : undefined
+        }
         intro="Explore this grape’s character, origins, aliases, and associated wines."
         actions={
           isWineManager && !isEditing ? (
-            <button type="button" className="auth-form__submit" onClick={() => setIsEditing(true)}>
+            <button
+              type="button"
+              className="auth-form__submit"
+              onClick={() => setIsEditing(true)}
+            >
               Edit Grape
             </button>
           ) : undefined
@@ -284,7 +303,9 @@ function GrapeDetail() {
                   id="grape-origin"
                   type="text"
                   value={form.origin_country}
-                  onChange={(e) => updateField("origin_country", e.target.value)}
+                  onChange={(e) =>
+                    updateField("origin_country", e.target.value)
+                  }
                   placeholder="e.g. France"
                 />
               </div>
@@ -292,7 +313,9 @@ function GrapeDetail() {
                 <input
                   type="checkbox"
                   checked={form.is_blending_grape}
-                  onChange={(e) => updateField("is_blending_grape", e.target.checked)}
+                  onChange={(e) =>
+                    updateField("is_blending_grape", e.target.checked)
+                  }
                 />
                 Blending grape
               </label>
@@ -315,7 +338,9 @@ function GrapeDetail() {
               items={form.main_regions}
               newValue={newRegion}
               setNewValue={setNewRegion}
-              onAdd={() => addArrayField("main_regions", newRegion, setNewRegion)}
+              onAdd={() =>
+                addArrayField("main_regions", newRegion, setNewRegion)
+              }
               onRemove={(idx) => removeArrayField("main_regions", idx)}
               placeholder="Add a region and press Enter"
             />
@@ -355,10 +380,18 @@ function GrapeDetail() {
               <button type="submit" className="btn-primary" disabled={saving}>
                 {saving ? "Saving…" : "Update Grape"}
               </button>
-              <button type="button" className="btn-secondary" onClick={() => setIsEditing(false)}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setIsEditing(false)}
+              >
                 Cancel
               </button>
-              <button type="button" className="btn-action btn-action--delete" onClick={handleDelete}>
+              <button
+                type="button"
+                className="btn-action btn-action--delete"
+                onClick={handleDelete}
+              >
                 Delete
               </button>
             </div>
@@ -371,9 +404,15 @@ function GrapeDetail() {
               <section className="reference-detail__card">
                 <p className="wine-profile-detail__eyebrow">Tasting notes</p>
                 <h2>What to expect</h2>
-                <div className="wine-profile-detail__chips" aria-label="Tasting notes">
+                <div
+                  className="wine-profile-detail__chips"
+                  aria-label="Tasting notes"
+                >
                   {grape.notes.map((note, index) => (
-                    <span key={`${note}-${index}`} className="wine-profile-detail__chip wine-profile-detail__chip--note">
+                    <span
+                      key={`${note}-${index}`}
+                      className="wine-profile-detail__chip wine-profile-detail__chip--note"
+                    >
                       {note}
                     </span>
                   ))}
@@ -383,9 +422,16 @@ function GrapeDetail() {
 
             {grape.serving && (
               <section className="wine-profile-detail__serving">
-                <div className="wine-profile-detail__serving-icon" aria-hidden="true">✦</div>
+                <div
+                  className="wine-profile-detail__serving-icon"
+                  aria-hidden="true"
+                >
+                  ✦
+                </div>
                 <div>
-                  <p className="wine-profile-detail__eyebrow">Serving suggestion</p>
+                  <p className="wine-profile-detail__eyebrow">
+                    Serving suggestion
+                  </p>
                   <p>{grape.serving}</p>
                 </div>
               </section>
@@ -395,97 +441,129 @@ function GrapeDetail() {
               <section className="reference-detail__card">
                 <p className="wine-profile-detail__eyebrow">Catalogue tools</p>
                 <h2>Link a wine</h2>
-              <div className="review-form__field">
-                <label htmlFor="grape-wine-search">
-                  Search wines by name to add them to {grape.name}
-                </label>
-                <input
-                  id="grape-wine-search"
-                  type="text"
-                  value={wineQuery}
-                  onChange={(e) => setWineQuery(e.target.value)}
-                  placeholder="Search wines by name…"
-                />
-              </div>
-              {linkError && <p className="review-form__error">{linkError}</p>}
+                <div className="review-form__field">
+                  <label htmlFor="grape-wine-search">
+                    Search wines by name to add them to {grape.name}
+                  </label>
+                  <input
+                    id="grape-wine-search"
+                    type="text"
+                    value={wineQuery}
+                    onChange={(e) => setWineQuery(e.target.value)}
+                    placeholder="Search wines by name…"
+                  />
+                </div>
+                {linkError && <p className="review-form__error">{linkError}</p>}
                 {wineResults != null &&
-                (wineResults.length === 0 ? (
-                  <p className="wine-management__empty-state">No matching wines.</p>
-                ) : (
-                  <ul
-                    className="wine-list"
-                    style={{ display: "grid", gap: 6, listStyle: "none", padding: 0 }}
-                  >
-                    {wineResults.map((wine) => {
-                      const linkedHere = wine.grapes?.some(
-                        (g) => String(g.id) === String(grape.id),
-                      );
-                      return (
-                        <li
-                          key={wine.slug}
-                          className="reference-detail__search-result"
-                        >
-                          <strong>{wine.name}</strong>
-                          {linkedHere ? (
-                            <span style={{ color: "#2e7d43", fontWeight: 700 }}>
-                              Linked here ✓
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="review-form__status-btn"
-                              disabled={linking}
-                              onClick={() => handleLinkWine(wine)}
-                            >
-                              Link
-                            </button>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ))}
+                  (wineResults.length === 0 ? (
+                    <p className="wine-management__empty-state">
+                      No matching wines.
+                    </p>
+                  ) : (
+                    <ul
+                      className="wine-list"
+                      style={{
+                        display: "grid",
+                        gap: 6,
+                        listStyle: "none",
+                        padding: 0,
+                      }}
+                    >
+                      {wineResults.map((wine) => {
+                        const linkedHere = wine.grapes?.some(
+                          (g) => String(g.id) === String(grape.id),
+                        );
+                        return (
+                          <li
+                            key={wine.slug}
+                            className="reference-detail__search-result"
+                          >
+                            <strong>{wine.name}</strong>
+                            {linkedHere ? (
+                              <span
+                                style={{ color: "#2e7d43", fontWeight: 700 }}
+                              >
+                                Linked here ✓
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="review-form__status-btn"
+                                disabled={linking}
+                                onClick={() => handleLinkWine(wine)}
+                              >
+                                Link
+                              </button>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ))}
               </section>
             )}
 
             <section className="reference-detail__card reference-detail__card--wide">
-              <p className="wine-profile-detail__eyebrow">Associated catalogue</p>
-              <h2>
-              Wines{!wines.loading && ` (${wines.totalCount})`}
-              </h2>
+              <p className="wine-profile-detail__eyebrow">
+                Associated catalogue
+              </p>
+              <h2>Wines{!wines.loading && ` (${wines.totalCount})`}</h2>
               {wines.loading ? (
-              <p className="wine-management__loading">Loading wines…</p>
-            ) : wines.items.length > 0 ? (
-              <>
-                <WineTable
-                  wines={wines.items}
-                  onDeleted={() => {
-                    grapesApi.show(grape.id).then(setGrape).catch(() => {});
-                    wines.reload();
-                  }}
-                  linkContext={{ type: "grape", id: grape.id, name: grape.name }}
-                  onWineLinked={() => wines.reload()}
-                />
-                <Pagination
-                  page={wines.page}
-                  totalPages={wines.totalPages}
-                  totalCount={wines.totalCount}
-                  onPageChange={wines.setPage}
-                />
-              </>
-            ) : (
-              <p className="empty">No wines are associated with this grape yet.</p>
+                <p className="wine-management__loading">Loading wines…</p>
+              ) : wines.items.length > 0 ? (
+                <>
+                  <WineTable
+                    wines={wines.items}
+                    onDeleted={() => {
+                      grapesApi
+                        .show(grape.id)
+                        .then(setGrape)
+                        .catch(() => {});
+                      wines.reload();
+                    }}
+                    linkContext={{
+                      type: "grape",
+                      id: grape.id,
+                      name: grape.name,
+                    }}
+                    onWineLinked={() => wines.reload()}
+                  />
+                  <Pagination
+                    page={wines.page}
+                    totalPages={wines.totalPages}
+                    totalCount={wines.totalCount}
+                    onPageChange={wines.setPage}
+                  />
+                </>
+              ) : (
+                <p className="empty">
+                  No wines are associated with this grape yet.
+                </p>
               )}
             </section>
           </div>
 
-          <aside className="reference-detail__sidebar" aria-label="Grape information">
+          <aside
+            className="reference-detail__sidebar"
+            aria-label="Grape information"
+          >
             <div className="reference-detail__sidebar-group">
               <p className="wine-profile-detail__eyebrow">At a glance</p>
               <dl className="reference-detail__facts">
-                <div><dt>Origin</dt><dd>{grape.origin_country || "Not specified"}</dd></div>
-                <div><dt>Blending grape</dt><dd>{grape.is_blending_grape ? "Yes" : "No"}</dd></div>
-                {grape.relevance != null && <div><dt>Relevance</dt><dd>{grape.relevance}</dd></div>}
+                <div>
+                  <dt>Origin</dt>
+                  <dd>{grape.origin_country || "Not specified"}</dd>
+                </div>
+                <div>
+                  <dt>Blending grape</dt>
+                  <dd>{grape.is_blending_grape ? "Yes" : "No"}</dd>
+                </div>
+                {grape.relevance != null && (
+                  <div>
+                    <dt>Relevance</dt>
+                    <dd>{grape.relevance}</dd>
+                  </div>
+                )}
               </dl>
             </div>
             {grape.main_regions?.length > 0 && (
@@ -495,7 +573,12 @@ function GrapeDetail() {
                   <p className="wine-profile-detail__eyebrow">Main regions</p>
                   <div className="wine-profile-detail__chips">
                     {grape.main_regions.map((region, index) => (
-                      <span key={`${region}-${index}`} className="wine-profile-detail__chip wine-profile-detail__chip--region">{region}</span>
+                      <span
+                        key={`${region}-${index}`}
+                        className="wine-profile-detail__chip wine-profile-detail__chip--region"
+                      >
+                        {region}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -508,7 +591,12 @@ function GrapeDetail() {
                   <p className="wine-profile-detail__eyebrow">Also known as</p>
                   <div className="wine-profile-detail__chips">
                     {grape.synonyms.map((synonym, index) => (
-                      <span key={`${synonym}-${index}`} className="wine-profile-detail__chip">{synonym}</span>
+                      <span
+                        key={`${synonym}-${index}`}
+                        className="wine-profile-detail__chip"
+                      >
+                        {synonym}
+                      </span>
                     ))}
                   </div>
                 </div>

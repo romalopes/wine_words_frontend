@@ -48,7 +48,14 @@ function WineProfileCard({
       {profile.notes && (
         <p className="wine-management__notes">
           <strong>Notes:</strong>{" "}
-          <SearchHighlight text={Array.isArray(profile.notes) ? profile.notes.join(", ") : profile.notes} query={query} />
+          <SearchHighlight
+            text={
+              Array.isArray(profile.notes)
+                ? profile.notes.join(", ")
+                : profile.notes
+            }
+            query={query}
+          />
         </p>
       )}
       {profile.serving && (
@@ -67,9 +74,7 @@ function WineProfileCard({
                   <SearchHighlight text={g} query={query} />
                 </span>
               ))
-            : [
-                <SearchHighlight text={profile.grapes} query={query} key="0" />
-              ]}
+            : [<SearchHighlight text={profile.grapes} query={query} key="0" />]}
         </p>
       )}
       {profile.regions && (
@@ -83,7 +88,11 @@ function WineProfileCard({
                 </span>
               ))
             : [
-                <SearchHighlight text={profile.regions} query={query} key="0" />
+                <SearchHighlight
+                  text={profile.regions}
+                  query={query}
+                  key="0"
+                />,
               ]}
         </p>
       )}
@@ -95,7 +104,7 @@ export default function WineProfileList() {
   const { user } = useAuth();
   const canManageWines = canManageWinesRole(user);
   const [searchValue, setSearchValue] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
 
   const effectiveSearchTerm = searchValue.trim();
 
@@ -114,10 +123,16 @@ export default function WineProfileList() {
       const profiles = effectiveSearchTerm
         ? (await wineProfilesApi.search(effectiveSearchTerm, 100)).wine_profiles
         : await wineProfilesApi.list();
-      const totalPages = Math.max(1, Math.ceil(profiles.length / Number(per_page)));
+      const totalPages = Math.max(
+        1,
+        Math.ceil(profiles.length / Number(per_page)),
+      );
       const currentPage = Math.min(Number(page), totalPages);
       return {
-        items: profiles.slice((currentPage - 1) * Number(per_page), currentPage * Number(per_page)),
+        items: profiles.slice(
+          (currentPage - 1) * Number(per_page),
+          currentPage * Number(per_page),
+        ),
         page: currentPage,
         per_page: Number(per_page),
         total_count: profiles.length,
@@ -129,7 +144,11 @@ export default function WineProfileList() {
   if (isLoading) return <p>Loading…</p>;
   if (error) {
     console.error(error);
-    return <p className="error">{errorMessage(error, "Failed to load wine profiles")}</p>;
+    return (
+      <p className="error">
+        {errorMessage(error, "Failed to load wine profiles")}
+      </p>
+    );
   }
 
   return (
@@ -159,7 +178,10 @@ export default function WineProfileList() {
         <div className={styles.searchArea}>
           <SearchInput
             value={searchValue}
-            onChange={(value) => { setSearchValue(value); setPage(1); }}
+            onChange={(value) => {
+              setSearchValue(value);
+              setPage(1);
+            }}
             placeholder="Search wine profiles by name, notes, grapes, or regions…"
           />
           <p
@@ -172,7 +194,7 @@ export default function WineProfileList() {
             Matches wine profile names, notes, grapes, and regions
             {searchValue.trim() !== "" &&
               searchValue.trim().length < 3 &&
-                ` — keep typing (at least 3 characters)`}
+              ` — keep typing (at least 3 characters)`}
             .
           </p>
         </div>
@@ -210,20 +232,22 @@ export default function WineProfileList() {
             </Link>
           )}
         </div>
+      ) : viewMode === "cards" ? (
+        <div className="content-grid">
+          {wineProfiles.map((profile) => (
+            <WineProfileCard
+              key={profile.slug}
+              profile={profile}
+              query={effectiveSearchTerm}
+            />
+          ))}
+        </div>
       ) : (
-        viewMode === "cards" ? (
-          <div className="content-grid">
-            {wineProfiles.map((profile) => (
-              <WineProfileCard key={profile.slug} profile={profile} query={effectiveSearchTerm} />
-            ))}
-          </div>
-        ) : (
-          <WineProfileTable
-            profiles={wineProfiles}
-            canManage={canManageWines}
-            query={effectiveSearchTerm}
-          />
-        )
+        <WineProfileTable
+          profiles={wineProfiles}
+          canManage={canManageWines}
+          query={effectiveSearchTerm}
+        />
       )}
 
       <Pagination
@@ -235,4 +259,3 @@ export default function WineProfileList() {
     </div>
   );
 }
-

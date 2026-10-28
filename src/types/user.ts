@@ -14,16 +14,20 @@ export interface UserWineProfile {
   slug: string
   user_id?: number | null
   name?: string | null
-  /** JSON text column — a list of grape names. */
-  grapes?: string[] | string | null
-  /** JSON text column — a list of region names. */
-  regions?: string[] | string | null
   color?: string | null
   /** Free-text tasting note (a single string, not a list). */
   notes?: string[] | string | null
   serving?: string | null
   /** `{ acidity: 4, body: 2, ... }` — keyed by taste-parameter slug. */
   parameters?: Record<string, number>
+  /** String array column — a list of grape names (kept in sync with the profile_grapes association). */
+  grapes?: string[] | string | null
+  /** String array column — a list of region names (kept in sync with the profile_regions association). */
+  regions?: string[] | string | null
+  /** Link objects for the profile's grapes → /grapes/:slug. */
+  profile_grapes?: { id?: number; slug: string; name: string }[] | null
+  /** Link objects for the profile's regions → /regions/:slug. */
+  profile_regions?: { id?: number; slug: string; name: string }[] | null
 }
 
 /**
