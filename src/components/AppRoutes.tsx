@@ -57,6 +57,7 @@ import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
 import ContentAnalyticsDetail from "./analytics/ContentAnalyticsDetail";
 import { WineInsights } from "./analytics/WineInsights";
 import { ArticlesManagement, ReviewsManagement } from "./ContentManagementList";
+import WinesManagement from "./WinesManagement";
 
 function AppRoutes() {
   return (
@@ -85,6 +86,7 @@ function AppRoutes() {
         <Route element={<ArticleDetail />} path="/articles/:slug" />
         <Route element={<ArticleDetail />} path="/articles/:slug/edit" />
         <Route element={<ArticlesManagement />} path="/settings/articles" />
+        <Route element={<WinesManagement />} path="/settings/wines" />
         <Route element={<WineSearch />} path="/search" />
         <Route element={<WineList />} path="/wines" />
         <Route element={<WineDetail />} path="/wines/:slug" />

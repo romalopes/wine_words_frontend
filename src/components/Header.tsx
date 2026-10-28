@@ -429,6 +429,15 @@ function Header() {
             {settingsOpen && (
               <div className="settings-menu__dropdown">
                 <NavLink
+                  to="/settings/wines"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Wines
+                </NavLink>
+                <NavLink
                   to="/producers"
                   onClick={() => {
                     setSettingsOpen(false);
