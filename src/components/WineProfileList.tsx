@@ -48,14 +48,23 @@ function WineProfileCard({
       {profile.notes && (
         <p className="wine-management__notes">
           <strong>Notes:</strong>{" "}
-          <SearchHighlight
-            text={
-              Array.isArray(profile.notes)
-                ? profile.notes.join(", ")
-                : profile.notes
-            }
-            query={query}
-          />
+          {(() => {
+            const notesArray = Array.isArray(profile.notes)
+              ? profile.notes
+              : typeof profile.notes === "string" &&
+                profile.notes.length > 0
+                ? JSON.parse(profile.notes)
+                : [];
+            if (notesArray.length === 0) return null;
+            return notesArray.map((note: string, index: number) => (
+              <span
+                key={`${note}-${index}`}
+                className="wine-profile-detail__chip wine-profile-detail__chip--note"
+              >
+                {note}
+              </span>
+            ));
+          })()}
         </p>
       )}
       {profile.serving && (

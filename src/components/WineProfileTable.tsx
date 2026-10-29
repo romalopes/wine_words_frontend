@@ -9,11 +9,6 @@ interface WineProfileTableProps {
   query?: string;
 }
 
-function displayValue(value: string[] | string | null | undefined): string {
-  if (Array.isArray(value)) return value.join(", ");
-  return value ?? "";
-}
-
 function toStringArray(value: string[] | string | null | undefined): string[] {
   if (Array.isArray(value)) return value;
   if (typeof value === "string" && value.length > 0) return [value];
@@ -48,6 +43,8 @@ export default function WineProfileTable({
               className={
                 index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"
               }
+              onClick={() => navigate(`/wine-profiles/${profile.slug}`)}
+              style={{ cursor: "pointer" }}
             >
               <td>
                 <Link
@@ -124,14 +121,27 @@ export default function WineProfileTable({
                 })()}
               </td>
               <td>
-                {displayValue(profile.notes) ? (
-                  <SearchHighlight
-                    text={displayValue(profile.notes)}
-                    query={query}
-                  />
-                ) : (
-                  "—"
-                )}
+                {(() => {
+                  const notesArray = Array.isArray(profile.notes)
+                    ? profile.notes
+                    : typeof profile.notes === "string" &&
+                        profile.notes.length > 0
+                      ? JSON.parse(profile.notes)
+                      : [];
+                  if (notesArray.length === 0) return "—";
+                  return (
+                    <>
+                      {notesArray.map((note: string, index: number) => (
+                        <span
+                          key={`note-${index}`}
+                          className="wine-profile-detail__chip wine-profile-detail__chip--note"
+                        >
+                          {note}
+                        </span>
+                      ))}
+                    </>
+                  );
+                })()}
               </td>
               <td>
                 {profile.serving ? (
