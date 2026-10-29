@@ -85,118 +85,130 @@ function ProducerTable({
         </div>
       )}
       <table className="grapes-table producers-table">
-      <thead>
-        <tr>
-          <th className="producers-table__image-col">Image</th>
-          <th>Name</th>
-          <th>Country</th>
-          <th>Type</th>
-          <th>Status</th>
-          <th>Address</th>
-          <th>Email</th>
-          <th>Wines</th>
-          {canManage && <th>Actions</th>}
-        </tr>
-      </thead>
-      <tbody>
-        {producers.map((producer, index) => (
-          <tr
-            key={producer.slug}
-            className={
-              index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"
-            }
-            onClick={() => navigate(returnToLink(`/producers/${producer.slug}`))}
-            style={{ cursor: "pointer" }}
-          >
-            <td>
-              {producer.logo_url ? (
-                <img
-                  src={producer.logo_url}
-                  alt={producer.name}
-                  className="producers-table__thumb"
-                />
-              ) : Array.isArray(producer.images) &&
-                producer.images.length > 0 ? (
-                <img
-                  src={imageSrc(producer.images[0])}
-                  alt={producer.name}
-                  className="producers-table__thumb"
-                />
-              ) : (
-                <span
-                  className="producers-table__thumb producers-table__thumb--empty"
-                  aria-hidden="true"
-                />
-              )}
-            </td>
-            <td>
-              <Link
-                to={returnToLink(`/producers/${producer.slug}`)}
-                className="grapes-table__link"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {producer.name}
-              </Link>
-            </td>
-            <td>
-              {producer.country
-                ? `${producer.country.flag_emoji || ""} ${producer.country.name}`.trim()
-                : "—"}
-            </td>
-            <td>
-              {producer.producer_type
-                ? producer.producer_type
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase())
-                : "—"}
-            </td>
-            <td>{producer.active === false ? "Inactive" : "Active"}</td>
-            <td>{producer.address?.street_address || "—"}</td>
-            <td>{producer.email || "—"}</td>
-            <td>
-              {(producer.wines_count ?? producer.wines?.length ?? 0) > 0 ? (
+        <thead>
+          <tr>
+            <th className="producers-table__image-col">Image</th>
+            <th>Name</th>
+            <th>Country</th>
+            <th>Type</th>
+            <th>Wines</th>
+            {canManage && (
+              <>
+                <th>Address</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </>
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {producers.map((producer, index) => (
+            <tr
+              key={producer.slug}
+              className={
+                index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"
+              }
+              onClick={() =>
+                navigate(returnToLink(`/producers/${producer.slug}`))
+              }
+              style={{ cursor: "pointer" }}
+            >
+              <td>
+                {producer.logo_url ? (
+                  <img
+                    src={producer.logo_url}
+                    alt={producer.name}
+                    className="producers-table__thumb"
+                  />
+                ) : Array.isArray(producer.images) &&
+                  producer.images.length > 0 ? (
+                  <img
+                    src={imageSrc(producer.images[0])}
+                    alt={producer.name}
+                    className="producers-table__thumb"
+                  />
+                ) : (
+                  <span
+                    className="producers-table__thumb producers-table__thumb--empty"
+                    aria-hidden="true"
+                  />
+                )}
+              </td>
+              <td>
                 <Link
-                  to={`/producers/${producer.slug}/wines`}
+                  to={returnToLink(`/producers/${producer.slug}`)}
                   className="grapes-table__link"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {`${producer.wines_count ?? producer.wines?.length ?? 0} wine${
-                    (producer.wines_count ?? producer.wines?.length ?? 0) !== 1 ? "s" : ""
-                  }`}
-                </Link>
-              ) : (
-                "—"
-              )}
-            </td>
-            {canManage && (
-              <td className="actions">
-                <Link
-                  to={`/producers/${producer.slug}/edit`}
-                  className="btn-action"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Edit
+                  {producer.name}
                 </Link>
               </td>
-            )}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-    {dialogOpen && linkContext && (
-      <LinkProducerDialog
-        entityType={linkContext.type}
-        entityId={linkContext.id}
-        entityName={linkContext.name}
-        excludeIds={excludeIds}
-        onClose={() => setDialogOpen(false)}
-        onLinked={() => {
-          setDialogOpen(false);
-          onProducerLinked?.();
-        }}
-      />
-    )}
-  </>
+              <td>
+                {producer.country
+                  ? `${producer.country.flag_emoji || ""} ${producer.country.name}`.trim()
+                  : "—"}
+              </td>
+              <td>
+                {producer.producer_type
+                  ? producer.producer_type
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())
+                  : "—"}
+              </td>
+              <td>
+                {(producer.wines_count ?? producer.wines?.length ?? 0) > 0 ? (
+                  <Link
+                    to={`/producers/${producer.slug}/wines`}
+                    className="grapes-table__link"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {`${producer.wines_count ?? producer.wines?.length ?? 0} wine${
+                      (producer.wines_count ?? producer.wines?.length ?? 0) !==
+                      1
+                        ? "s"
+                        : ""
+                    }`}
+                  </Link>
+                ) : (
+                  "—"
+                )}
+              </td>
+              {canManage && (
+                <>
+                  <td>{producer.address?.street_address || "—"}</td>
+                  <td>{producer.email || "—"}</td>
+
+                  <td>{producer.active === false ? "Inactive" : "Active"}</td>
+                  <td className="actions">
+                    <Link
+                      to={`/producers/${producer.slug}/edit`}
+                      className="btn-action"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Edit
+                    </Link>
+                  </td>
+                </>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {dialogOpen && linkContext && (
+        <LinkProducerDialog
+          entityType={linkContext.type}
+          entityId={linkContext.id}
+          entityName={linkContext.name}
+          excludeIds={excludeIds}
+          onClose={() => setDialogOpen(false)}
+          onLinked={() => {
+            setDialogOpen(false);
+            onProducerLinked?.();
+          }}
+        />
+      )}
+    </>
   );
 }
 
