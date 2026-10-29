@@ -566,24 +566,35 @@ function GrapeDetail() {
                 )}
               </dl>
             </div>
-            {grape.main_regions?.length > 0 && (
-              <>
-                <div className="wine-profile-detail__origin-divider" />
-                <div className="reference-detail__sidebar-group">
-                  <p className="wine-profile-detail__eyebrow">Main regions</p>
-                  <div className="wine-profile-detail__chips">
-                    {grape.main_regions.map((region, index) => (
-                      <span
-                        key={`${region}-${index}`}
-                        className="wine-profile-detail__chip wine-profile-detail__chip--region"
-                      >
-                        {region}
-                      </span>
-                    ))}
-                  </div>
+            <div className="wine-profile-detail__origin-divider" />
+            <div className="reference-detail__sidebar-group">
+              <p className="wine-profile-detail__eyebrow">Main regions</p>
+
+              {grape.regions?.length + grape.main_regions?.length > 0 && (
+                <div className="wine-profile-detail__chips">
+                  {grape.main_regions.map((region, index) => (
+                    <span
+                      key={`${region}-${index}`}
+                      className="wine-profile-detail__chip wine-profile-detail__chip--region"
+                    >
+                      {region}
+                    </span>
+                  ))}
+                  {(grape.regions ?? []).map((region) => (
+                    <Link
+                      key={region.slug ?? region.id}
+                      to={`/regions/${encodeURIComponent(region.slug)}`}
+                      className="wine-profile-detail__chip wine-profile-detail__chip--region"
+                    >
+                      {region.name}
+                    </Link>
+                  ))}
+                  {grape.regions?.length + grape.main_regions?.length == 0 && (
+                    <p className="wine-profile-detail__empty">Not specified</p>
+                  )}
                 </div>
-              </>
-            )}
+              )}
+            </div>
             {grape.synonyms?.length > 0 && (
               <>
                 <div className="wine-profile-detail__origin-divider" />

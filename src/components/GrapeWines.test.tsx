@@ -27,6 +27,7 @@ const grapePayload = {
   wines_count: 0,
   producers_count: 0,
   main_regions: [],
+  regions: [],
   synonyms: [],
   is_blending_grape: false,
   notes: [],

@@ -14,6 +14,12 @@ function displayValue(value: string[] | string | null | undefined): string {
   return value ?? "";
 }
 
+function toStringArray(value: string[] | string | null | undefined): string[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string" && value.length > 0) return [value];
+  return [];
+}
+
 export default function WineProfileTable({
   profiles,
   canManage = false,
@@ -39,9 +45,9 @@ export default function WineProfileTable({
           {profiles.map((profile, index) => (
             <tr
               key={profile.slug}
-              className={index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"}
-              onClick={() => navigate(`/wine-profiles/${profile.slug}`)}
-              style={{ cursor: "pointer" }}
+              className={
+                index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"
+              }
             >
               <td>
                 <Link
@@ -54,22 +60,85 @@ export default function WineProfileTable({
               </td>
               <td>{profile.color ?? "—"}</td>
               <td>
-                {displayValue(profile.grapes) ? (
-                  <SearchHighlight text={displayValue(profile.grapes)} query={query} />
-                ) : "—"}
+                {(() => {
+                  const plainGrapes = toStringArray(profile.grapes);
+                  const linkedGrapes = Array.isArray(profile.profile_grapes)
+                    ? profile.profile_grapes
+                    : [];
+                  if (plainGrapes.length === 0 && linkedGrapes.length === 0) {
+                    return "—";
+                  }
+                  return (
+                    <>
+                      {plainGrapes.map((grape, i) => (
+                        <span
+                          key={`grape-plain-${index}-${i}`}
+                          className="wine-profile-detail__chip"
+                        >
+                          {grape}
+                        </span>
+                      ))}
+                      {linkedGrapes.map((grape) => (
+                        <Link
+                          key={`grape-linked-${grape.slug ?? grape.id}`}
+                          to={`/grapes/${encodeURIComponent(grape.slug)}`}
+                          className="wine-profile-detail__chip wine-profile-detail__chip--region"
+                        >
+                          {grape.name}
+                        </Link>
+                      ))}
+                    </>
+                  );
+                })()}
               </td>
               <td>
-                {displayValue(profile.regions) ? (
-                  <SearchHighlight text={displayValue(profile.regions)} query={query} />
-                ) : "—"}
+                {(() => {
+                  const plainRegions = toStringArray(profile.regions);
+                  const linkedRegions = Array.isArray(profile.profile_regions)
+                    ? profile.profile_regions
+                    : [];
+                  if (plainRegions.length === 0 && linkedRegions.length === 0) {
+                    return "—";
+                  }
+                  return (
+                    <>
+                      {plainRegions.map((region, i) => (
+                        <span
+                          key={`region-plain-${index}-${i}`}
+                          className="wine-profile-detail__chip"
+                        >
+                          {region}
+                        </span>
+                      ))}
+                      {linkedRegions.map((region) => (
+                        <Link
+                          key={`region-linked-${region.slug ?? region.id}`}
+                          to={`/regions/${encodeURIComponent(region.slug)}`}
+                          className="wine-profile-detail__chip wine-profile-detail__chip--region"
+                        >
+                          {region.name}
+                        </Link>
+                      ))}
+                    </>
+                  );
+                })()}
               </td>
               <td>
                 {displayValue(profile.notes) ? (
-                  <SearchHighlight text={displayValue(profile.notes)} query={query} />
-                ) : "—"}
+                  <SearchHighlight
+                    text={displayValue(profile.notes)}
+                    query={query}
+                  />
+                ) : (
+                  "—"
+                )}
               </td>
               <td>
-                {profile.serving ? <SearchHighlight text={profile.serving} query={query} /> : "—"}
+                {profile.serving ? (
+                  <SearchHighlight text={profile.serving} query={query} />
+                ) : (
+                  "—"
+                )}
               </td>
               {canManage && (
                 <td className="actions">

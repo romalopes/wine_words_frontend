@@ -42,6 +42,7 @@ export interface GrapeDetail {
   relevance?: number | null
   wines_count: number
   producers_count: number
+  regions: { id: number; name: string; slug: string }[]
 }
 
 /** One of the three "used for" flags a category can carry. */

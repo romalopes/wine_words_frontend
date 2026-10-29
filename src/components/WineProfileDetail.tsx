@@ -214,7 +214,7 @@ export default function WineProfileDetail() {
               <div className="wine-profile-detail__origin-group">
                 <p className="wine-profile-detail__eyebrow">Regions</p>
 
-                {regions.length + profileRegions.length > 0 && (
+                {regions?.length + profileRegions.length > 0 && (
                   <div className="wine-profile-detail__chips">
                     {regions.length > 0 &&
                       regions.map((region) => (
