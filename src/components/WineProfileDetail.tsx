@@ -67,6 +67,10 @@ export default function WineProfileDetail() {
     : profile.regions
       ? [profile.regions]
       : [];
+  // The API always serialises these as arrays (possibly empty), but the type
+  // allows null — normalise defensively so .length / .map never throw.
+  const profileGrapes = profile.profile_grapes ?? [];
+  const profileRegions = profile.profile_regions ?? [];
   const parameters = Object.entries(profile.parameters ?? {});
 
   return (
@@ -180,34 +184,62 @@ export default function WineProfileDetail() {
             >
               <div className="wine-profile-detail__origin-group">
                 <p className="wine-profile-detail__eyebrow">Grapes</p>
-                {grapes.length > 0 ? (
+                {grapes.length + profileGrapes.length > 0 && (
                   <div className="wine-profile-detail__chips">
-                    {grapes.map((grape) => (
-                      <span key={grape} className="wine-profile-detail__chip">
-                        {grape}
-                      </span>
+                    {grapes.length > 0 &&
+                      grapes.map((grape) => (
+                        <span key={grape} className="wine-profile-detail__chip">
+                          {grape}
+                        </span>
+                      ))}
+
+                    {profileGrapes.map((grape) => (
+                      <Link
+                        key={grape.slug ?? grape.id}
+                        to={`/grapes/${encodeURIComponent(grape.slug)}`}
+                        className="wine-profile-detail__chip wine-profile-detail__chip--region"
+                      >
+                        {grape.name}
+                      </Link>
                     ))}
+                    {grapes.length + profileGrapes.length == 0 && (
+                      <p className="wine-profile-detail__empty">
+                        Not specified
+                      </p>
+                    )}
                   </div>
-                ) : (
-                  <p className="wine-profile-detail__empty">Not specified</p>
                 )}
               </div>
               <div className="wine-profile-detail__origin-divider" />
               <div className="wine-profile-detail__origin-group">
                 <p className="wine-profile-detail__eyebrow">Regions</p>
-                {regions.length > 0 ? (
+
+                {regions.length + profileRegions.length > 0 && (
                   <div className="wine-profile-detail__chips">
-                    {regions.map((region) => (
-                      <span
-                        key={region}
+                    {regions.length > 0 &&
+                      regions.map((region) => (
+                        <span
+                          key={region}
+                          className="wine-profile-detail__chip"
+                        >
+                          {region}
+                        </span>
+                      ))}
+                    {profileRegions.map((region) => (
+                      <Link
+                        key={region.slug ?? region.id}
+                        to={`/regions/${encodeURIComponent(region.slug)}`}
                         className="wine-profile-detail__chip wine-profile-detail__chip--region"
                       >
-                        {region}
-                      </span>
+                        {region.name}
+                      </Link>
                     ))}
+                    {regions.length + profileRegions.length == 0 && (
+                      <p className="wine-profile-detail__empty">
+                        Not specified
+                      </p>
+                    )}
                   </div>
-                ) : (
-                  <p className="wine-profile-detail__empty">Not specified</p>
                 )}
               </div>
             </aside>

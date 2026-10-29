@@ -174,8 +174,9 @@ function Regions() {
       country: CountryRegionNode,
     ): CountryRegionNode | null {
       const countryMatch = country.name.toLowerCase().includes(lowerQuery);
+      const countryName = country.name.toLowerCase();
       const filteredRegions = country.regions
-        .map(filterRegion)
+        .map((r) => filterRegion(r, countryName))
         .filter((r): r is RegionTreeNodeData => r !== null);
       if (countryMatch || filteredRegions.length > 0) {
         return { ...country, regions: filteredRegions };
@@ -184,12 +185,14 @@ function Regions() {
     }
     function filterRegion(
       region: RegionTreeNodeData,
+      countryName: string,
     ): RegionTreeNodeData | null {
       const regionMatch = region.name.toLowerCase().includes(lowerQuery);
+      const countryMatch = countryName.includes(lowerQuery);
       const filteredChildren = region.children
-        .map(filterRegion)
+        .map((c) => filterRegion(c, countryName))
         .filter((c): c is RegionTreeNodeData => c !== null);
-      if (regionMatch || filteredChildren.length > 0) {
+      if (regionMatch || countryMatch || filteredChildren.length > 0) {
         return { ...region, children: filteredChildren };
       }
       return null;
