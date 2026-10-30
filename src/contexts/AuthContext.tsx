@@ -5,53 +5,66 @@ import {
   useEffect,
   useMemo,
   useState,
-} from "react"
-import type { ReactNode } from "react"
-import { authApi, impersonationApi, setAuthToken } from "../services/api"
-import type { AuthResponse, ResetPasswordPayload, SignInPayload, SignUpPayload, SignUpResponse, SocialSignInInput, User } from "../types/authentication"
-import type { SocialProvider } from "../types/api"
-import type { ImpersonationResponse } from "../types/user"
-import { errorStatus } from "../utils/errors"
+} from "react";
+import type { ReactNode } from "react";
+import { authApi, impersonationApi, setAuthToken } from "../services/api";
+import type {
+  AuthResponse,
+  ResetPasswordPayload,
+  SignInPayload,
+  SignUpPayload,
+  SignUpResponse,
+  SocialSignInInput,
+  User,
+} from "../types/authentication";
+import type { SocialProvider } from "../types/api";
+import type { ImpersonationResponse } from "../types/user";
+import { errorStatus } from "../utils/errors";
 
 interface AuthContextValue {
-  user: User | null
-  realUser: User | null
-  token: string | null
-  session: { token: string } | null
-  isAuthenticated: boolean
-  isImpersonating: boolean
-  loading: boolean
-  signIn: (payload: SignInPayload) => Promise<User>
+  user: User | null;
+  realUser: User | null;
+  token: string | null;
+  session: { token: string } | null;
+  isAuthenticated: boolean;
+  isImpersonating: boolean;
+  loading: boolean;
+  signIn: (payload: SignInPayload) => Promise<User>;
   /**
    * Returns the signed-in `User`, or the whole `SignUpResponse` when the
    * backend created the account but issued no session pending email
    * verification — `Login` inspects `email_verification` to show the
    * "check your inbox" banner.
    */
-  signUp: (payload: SignUpPayload) => Promise<User | SignUpResponse>
-  socialSignIn: (provider: SocialProvider, payload?: SocialSignInInput) => Promise<User>
-  resetPassword: (payload: ResetPasswordPayload) => Promise<unknown>
-  refreshSession: () => Promise<User | null>
-  signOut: () => Promise<void>
-  startImpersonation: (userId: number) => Promise<ImpersonationResponse>
-  stopImpersonation: () => Promise<ImpersonationResponse>
-  refreshImpersonationStatus: () => Promise<ImpersonationResponse | { impersonating: boolean }>
+  signUp: (payload: SignUpPayload) => Promise<User | SignUpResponse>;
+  socialSignIn: (
+    provider: SocialProvider,
+    payload?: SocialSignInInput,
+  ) => Promise<User>;
+  resetPassword: (payload: ResetPasswordPayload) => Promise<unknown>;
+  refreshSession: () => Promise<User | null>;
+  signOut: () => Promise<void>;
+  startImpersonation: (userId: number) => Promise<ImpersonationResponse>;
+  stopImpersonation: () => Promise<ImpersonationResponse>;
+  refreshImpersonationStatus: () => Promise<
+    ImpersonationResponse | { impersonating: boolean }
+  >;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null)
+const AuthContext = createContext<AuthContextValue | null>(null);
 
-const STORAGE_TOKEN_KEY = "wine_prediction_token"
+const STORAGE_TOKEN_KEY = "wine_words_token";
 
 function readStoredToken(): string | null {
-  if (typeof window === "undefined") return null
-  return window.localStorage.getItem(STORAGE_TOKEN_KEY)
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(STORAGE_TOKEN_KEY);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => readStoredToken())
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState<boolean>(Boolean(readStoredToken()))
-  const [realUser, setRealUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(() => readStoredToken());
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(Boolean(readStoredToken()));
+  const [realUser, setRealUser] = useState<User | null>(null);
 
   // Restore the session on mount when a token is stored.
   useEffect(() => {
@@ -119,7 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signUp = useCallback(
-    async ({ email, password, password_confirmation, first_name, last_name }: SignUpPayload): Promise<User | SignUpResponse> => {
+    async ({
+      email,
+      password,
+      password_confirmation,
+      first_name,
+      last_name,
+    }: SignUpPayload): Promise<User | SignUpResponse> => {
       const result = await authApi.signUp({
         email,
         password,
@@ -130,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Email verification required: the backend created the account but
       // issued NO session. Do not set auth state - Login shows the
       // "check your inbox" banner using the full result returned here.
-      if (isEmailVerificationPending(result)) return result
+      if (isEmailVerificationPending(result)) return result;
       const nextToken = extractToken(result);
       persistToken(nextToken);
       setUser(result.user ?? null);
@@ -140,7 +159,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const resetPassword = useCallback(
-    async ({ reset_password_token, password, password_confirmation }: ResetPasswordPayload): Promise<unknown> => {
+    async ({
+      reset_password_token,
+      password,
+      password_confirmation,
+    }: ResetPasswordPayload): Promise<unknown> => {
       const result = await authApi.resetPassword({
         reset_password_token,
         password,
@@ -161,8 +184,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // same JWT as email/password sign-in. Nothing else in the app needs to know
   // which method was used.
   const socialSignIn = useCallback(
-    async (provider: SocialProvider, { credential, nonce }: SocialSignInInput = { credential: "" }): Promise<User> => {
-      const result = await authApi.socialSignIn(provider, { credential, nonce });
+    async (
+      provider: SocialProvider,
+      { credential, nonce }: SocialSignInInput = { credential: "" },
+    ): Promise<User> => {
+      const result = await authApi.socialSignIn(provider, {
+        credential,
+        nonce,
+      });
       const nextToken = extractToken(result);
       persistToken(nextToken);
       setUser(result.user ?? null);
@@ -255,7 +284,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       stopImpersonation,
       refreshImpersonationStatus,
     }),
-    [user, realUser, token, isImpersonating, loading, signIn, signUp, socialSignIn, resetPassword, refreshSession, signOut, startImpersonation, stopImpersonation, refreshImpersonationStatus],
+    [
+      user,
+      realUser,
+      token,
+      isImpersonating,
+      loading,
+      signIn,
+      signUp,
+      socialSignIn,
+      resetPassword,
+      refreshSession,
+      signOut,
+      startImpersonation,
+      stopImpersonation,
+      refreshImpersonationStatus,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -267,11 +311,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  * `SignUpResponse`, and `email_verification_pending` is the documented flag.
  */
 function isEmailVerificationPending(response: SignUpResponse): boolean {
-  return response.email_verification?.email_verification_pending === true
+  return response.email_verification?.email_verification_pending === true;
 }
 
-function extractToken(response: AuthResponse | ImpersonationResponse): string | null {
-  return response.token ?? null
+function extractToken(
+  response: AuthResponse | ImpersonationResponse,
+): string | null {
+  return response.token ?? null;
 }
 
 export function useAuth(): AuthContextValue {

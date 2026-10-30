@@ -14,6 +14,7 @@ export const SortDropdown: React.FC<SortDropdownProps> = ({
 }) => {
   return (
     <select
+      aria-label="Sort results"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={styles.select}

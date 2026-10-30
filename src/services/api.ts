@@ -49,7 +49,7 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; //|| "http://localhost:3000/api/v1").replace(/\/+$/, "");
 
-const TOKEN_STORAGE_KEY = "wine_prediction_token";
+const TOKEN_STORAGE_KEY = "wine_words_token";
 
 // --- Private test-access gate ---------------------------------------------
 // While the Rails API has TEST_ACCESS_PASSWORD configured, every request must

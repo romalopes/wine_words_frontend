@@ -6,10 +6,10 @@ Complete on October 5, 2026. This is an inspection record only; no Article Proje
 
 ## Repository identity
 
-| Canonical repository | Local checkout | Responsibility |
-| --- | --- | --- |
-| `romalopes/wine_words_front_end` | `/Users/romalopes/Documents/studies/my_project/wine_project/wine_prediction` | React frontend |
-| `romalopes/wine_words_api` | `/Users/romalopes/Documents/studies/my_project/wine_project/wine_prediction_api` | Rails API |
+| Canonical repository             | Local checkout                                                              | Responsibility |
+| -------------------------------- | --------------------------------------------------------------------------- | -------------- |
+| `romalopes/wine_words_front_end` | `/Users/romalopes/Documents/studies/my_project/wine_project/wine_words`     | React frontend |
+| `romalopes/wine_words_api`       | `/Users/romalopes/Documents/studies/my_project/wine_project/wine_words_api` | Rails API      |
 
 The local Git remotes retain pre-rename names. The API's shared `WINE_WORDS_README.md` confirms that these local checkouts are the intended Wine Words applications.
 
@@ -32,17 +32,17 @@ For Article Project navigation, all three roles should see Article Projects. Rev
 
 ## Reusable frontend patterns
 
-| Need | Existing implementation |
-| --- | --- |
-| API request client and error transport | `src/services/api.ts`, `src/services/apiClient.ts` |
-| Content API factory conventions | `src/services/contentApi.ts` |
-| Routes | `src/components/AppRoutes.tsx` |
-| Header navigation and role gating | `src/components/Header.tsx` |
-| Debounced article picker search | `src/components/LinkArticleDialog.tsx` |
-| Debounced producer picker search | `src/components/LinkProducerDialog.tsx` |
-| Debounced review picker search | `src/components/LinkReviewDialog.tsx` |
-| Cancellable stale-response prevention | `src/components/Articles.tsx` |
-| Form loading/error/retry patterns | `src/components/WinePackageForm.tsx` |
+| Need                                        | Existing implementation                                                           |
+| ------------------------------------------- | --------------------------------------------------------------------------------- |
+| API request client and error transport      | `src/services/api.ts`, `src/services/apiClient.ts`                                |
+| Content API factory conventions             | `src/services/contentApi.ts`                                                      |
+| Routes                                      | `src/components/AppRoutes.tsx`                                                    |
+| Header navigation and role gating           | `src/components/Header.tsx`                                                       |
+| Debounced article picker search             | `src/components/LinkArticleDialog.tsx`                                            |
+| Debounced producer picker search            | `src/components/LinkProducerDialog.tsx`                                           |
+| Debounced review picker search              | `src/components/LinkReviewDialog.tsx`                                             |
+| Cancellable stale-response prevention       | `src/components/Articles.tsx`                                                     |
+| Form loading/error/retry patterns           | `src/components/WinePackageForm.tsx`                                              |
 | Existing package list/detail/form structure | `src/components/WinePackages.tsx`, `WinePackageDetail.tsx`, `WinePackageForm.tsx` |
 
 ## Required adaptations

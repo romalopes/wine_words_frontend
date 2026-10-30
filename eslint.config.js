@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default [
-  { ignores: ['dist', 'react-router'] },
+  { ignores: ['dist', 'react-router', 'playwright-report', 'test-results'] },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
@@ -56,6 +56,16 @@ export default [
     files: ['**/*.{test,spec}.{js,mjs,jsx,ts,tsx}'],
     languageOptions: {
       globals: { ...globals.browser, ...globals.vitest },
+    },
+  },
+  {
+    files: ['tests/**/*.ts', 'playwright.config.ts'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'react-hooks/exhaustive-deps': 'off',
     },
   },
 ]

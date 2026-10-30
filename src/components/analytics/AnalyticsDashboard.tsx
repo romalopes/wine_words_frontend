@@ -125,8 +125,8 @@ const AnalyticsDashboard = () => {
   }, [period, sort, direction, page, perPage, typeFilter, includeZeroViews, timeseriesGrouping]);
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    if (hasReportingAccess) void fetchAll();
+  }, [fetchAll, hasReportingAccess]);
 
   const handleSort = (field: string) => {
     if (sort === field) {

@@ -34,7 +34,7 @@ Saving the form is blocked while inline uploads are pending. Failures remove the
 npx vitest run src/components/RichTextEditor.test.tsx src/components/RichTextEditor.integration.test.tsx src/components/WritingForms.test.tsx src/hooks/useWritingDraft.test.ts src/services/inlineImages.test.ts src/utils/articleHtml.test.ts
 npm run build
 
-# Backend, from wine_prediction_api
+# Backend, from wine_words_api
 bundle exec rspec spec/requests/api/v1/images_spec.rb
 ```
 

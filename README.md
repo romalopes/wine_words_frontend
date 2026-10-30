@@ -1,4 +1,4 @@
-# React + Vite
+# Wine Words frontend
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
@@ -42,3 +42,38 @@ before testing API requests or social login. This preview API URL uses the exist
 Render backend; use a staging API URL in both configurations if isolation is needed.
 
 See [Cloudflare Previews](https://developers.cloudflare.com/workers/previews/).
+
+## Full-stack Playwright tests
+
+The browser suite starts the sibling Rails repository in its isolated `e2e`
+environment, resets `wine_words_api_e2e`, starts Vite on port 4173, and
+creates role-aware Admin, Reviewer, Reader, and Guest browser states. It never
+uses development or production data.
+
+Prerequisites: PostgreSQL, the sibling `../wine_words_api` checkout, Ruby/API
+dependencies, Node dependencies, and browser binaries:
+
+```bash
+npm ci
+npx playwright install chromium firefox
+npm run test:e2e:chromium       # full functional suite
+npm run test:e2e:firefox        # critical smoke coverage
+npx playwright test --project=accessibility
+npx playwright test --project=visual
+```
+
+Useful focused commands:
+
+```bash
+npm run test:e2e:smoke -- --project=chromium
+npm run test:e2e:headed
+npm run test:e2e:debug
+npm run test:e2e:update-snapshots
+npm run test:e2e:report
+```
+
+Set `E2E_API_REPOSITORY` when the API is not at `../wine_words_api`. Optional
+URL and credential overrides are `E2E_FRONTEND_URL`, `E2E_API_URL`,
+`E2E_USER_PASSWORD`, and `E2E_TEST_ACCESS_PASSWORD`. Generated auth state,
+reports, traces, videos, and screenshots are ignored; committed visual snapshots
+live beside the visual spec.

@@ -169,12 +169,13 @@ describe("ProducerDetail loading", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not offer membership linking to reviewers", async () => {
+  it("offers membership linking to reviewers", async () => {
     authState.user = { id: 2, roles: ["Reviewer"] };
     renderProducer();
 
     expect(await screen.findByRole("heading", { name: "Linked Users" })).toBeInTheDocument();
-    expect(screen.queryByRole("searchbox", { name: /Search users by name or email/i })).not.toBeInTheDocument();
-    expect(usersApi.search).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("searchbox", { name: /Search users by name or email/i }),
+    ).toBeInTheDocument();
   });
 });

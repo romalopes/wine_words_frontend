@@ -8,6 +8,18 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./src/setupTests.ts",
     include: ["src/**/*.{test,spec}.{js,mjs,jsx,ts,tsx}"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
+      reportsDirectory: "coverage",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.{test,spec}.{ts,tsx}",
+        "src/**/*.d.ts",
+        "src/setupTests.ts",
+        "src/main.tsx",
+      ],
+    },
   },
   // Bind both IPv4 and IPv6 loopback: Node binds only the first address it
   // resolves for "localhost" (::1 here), which left 127.0.0.1:5173 refusing

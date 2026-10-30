@@ -93,7 +93,7 @@ describe("ApiHealth", () => {
 
     // The backend version should appear in the version notice.
     await waitFor(() => {
-      expect(screen.getByText(/backend 0\.0\.20/i)).toBeInTheDocument();
+      expect(screen.getByText(/backend 0\.0\.21/i)).toBeInTheDocument();
     });
 
     // The runner must be handed a token getter that reads the *persisted*
@@ -105,7 +105,7 @@ describe("ApiHealth", () => {
     expect(options.getAuthToken()).toBe("fake-token");
   });
 
-  it("displays backend version 0.0.20 when the API reports 0.0.20, even though React is 0.0.21", async () => {
+  it("displays backend version 0.0.19 when the API reports 0.0.19, even though React is 0.0.21", async () => {
     mockRunCheck.mockResolvedValueOnce(mismatchResult);
 
     render(<MemoryRouter><ApiHealth /></MemoryRouter>);
@@ -117,7 +117,7 @@ describe("ApiHealth", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          /Version mismatch: backend reports 0\.0\.20 but frontend expects 0\.0\.21/i,
+          /Version mismatch: backend reports 0\.0\.19 but frontend expects 0\.0\.21/i,
         ),
       ).toBeInTheDocument();
     });
@@ -129,7 +129,7 @@ describe("ApiHealth", () => {
 
     // It must not claim the backend is on the frontend's version.
     expect(
-      screen.queryByText(/Version match: backend 0\.0\.20/i),
+      screen.queryByText(/Version match: backend 0\.0\.21/i),
     ).not.toBeInTheDocument();
   });
 

@@ -65,8 +65,8 @@ describe("CountryDetail", () => {
     const sidebar = screen.getByRole("complementary", { name: "Country information" });
     expect(within(sidebar).getByText("AU")).toBeInTheDocument();
     expect(within(sidebar).getByText("Yes")).toBeInTheDocument();
-    expect(within(sidebar).getByText("12")).toBeInTheDocument();
-    expect(within(sidebar).getByText("34")).toBeInTheDocument();
+    expect(await within(sidebar).findByText("12")).toBeInTheDocument();
+    expect(await within(sidebar).findByText("34")).toBeInTheDocument();
     expect(screen.getByText("Producer results")).toBeInTheDocument();
     expect(screen.getByText("Wine results")).toBeInTheDocument();
   });

@@ -1,0 +1,92 @@
+name: Full-stack E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: wine_words_api_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      CI: true
+      E2E_API_REPOSITORY: ${{ github.workspace }}/wine_words_api
+      E2E_DATABASE_NAME: wine_words_api_e2e
+      E2E_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/wine_words_api_e2e
+      E2E_USER_PASSWORD: Playwright123!
+      E2E_TEST_ACCESS_PASSWORD: playwright-access
+      TEST_ACCESS_PASSWORD: playwright-access
+      FRONTEND_URL: http://127.0.0.1:4173
+
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v6
+
+      - name: Checkout Rails API
+        uses: actions/checkout@v6
+        with:
+          repository: romalopes/wine_words_api
+          path: wine_words_api
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.4.2
+
+      - name: Install system and Rails dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libpq-dev libvips
+          cd wine_words_api
+          bundle install --jobs 4 --retry 3
+
+      - name: Install frontend and browser dependencies
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium firefox
+
+      - name: Run Chromium functional coverage
+        run: npm run test:e2e:chromium
+
+      - name: Run automated accessibility coverage
+        run: npx playwright test --project=accessibility
+
+      - name: Run Firefox critical coverage
+        run: npm run test:e2e:firefox
+
+      - name: Upload Playwright reports and failure artifacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            playwright-report/
+            test-results/

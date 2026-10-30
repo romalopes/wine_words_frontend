@@ -128,6 +128,7 @@ function UserRoleSubscriptionControls({
     <div className="admin-user-subscription">
       {layout === "row" && "Subscription"}
       <select
+        aria-label="Subscription"
         value={subscriptionId ?? ""}
         disabled={!isAdmin || savingSubscription}
         title={savingSubscription ? "Assigning…" : !isAdmin ? "Admin only" : undefined}

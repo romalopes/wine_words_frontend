@@ -112,6 +112,13 @@ export default function ReviewCard({
           )}
         </p>
       )}
+      {(review.drink_from != null || review.drink_to != null) && (
+        <p className="wine-management__region">
+          Drink {review.drink_from ?? ""}
+          {review.drink_to != null ? `–${review.drink_to}` : ""}
+          {review.drink_plus ? "+" : ""}
+        </p>
+      )}
       {excerpt(review.comment) && (
         <p className="wine-management__card-excerpt">
           {excerpt(review.comment)}
