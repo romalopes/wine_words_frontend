@@ -4146,7 +4146,10 @@ textarea {
   border-color: var(--hero-border);
   cursor: pointer;
   min-height: 15rem;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .source-library-card:hover {
@@ -4264,7 +4267,10 @@ textarea {
   gap: 0.75rem;
   min-height: 3.6rem;
   padding: 0.55rem 0.65rem;
-  transition: border-color 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
 }
 
 .category-library-list__item[draggable="true"] {
@@ -7502,7 +7508,7 @@ a.admin-user-card:hover {
   align-items: start;
   display: grid;
   gap: 24px;
-  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.8fr);
+  grid-template-columns: minmax(0, 2.2fr) minmax(180px, 0.8fr);
 }
 
 .wine-profile-detail__main {
@@ -7648,7 +7654,7 @@ a.admin-user-card:hover {
   align-items: start;
   display: grid;
   gap: 24px;
-  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.8fr);
+  grid-template-columns: minmax(0, 2.2fr) minmax(180px, 0.8fr);
 }
 .reference-detail__main {
   display: grid;
@@ -7757,7 +7763,7 @@ a.admin-user-card:hover {
   align-items: start;
   display: grid;
   gap: 24px;
-  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.8fr);
+  grid-template-columns: minmax(0, 2.2fr) minmax(180px, 0.8fr);
 }
 .wine-detail-page__main {
   display: grid;
