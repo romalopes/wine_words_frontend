@@ -79,7 +79,8 @@ describe("Notifications", () => {
       "href",
       "/wine-packages/7",
     );
-    expect(screen.getByText("Unread")).toBeInTheDocument();
+    // "Unread" appears twice by design: the filter tab and the row badge.
+    expect(screen.getAllByText("Unread").length).toBeGreaterThan(0);
     expect(screen.getByText("not sent yet")).toBeInTheDocument();
   });
 
@@ -136,13 +137,17 @@ describe("Notifications", () => {
     }
   });
 
-  it("filters to unread notifications", async () => {
+  it("filters to unread notifications from the tab", async () => {
     const user = userEvent.setup();
     renderNotifications();
 
     await screen.findByText(/2 review\(s\) still pending/);
-    await user.click(screen.getByLabelText("Unread only"));
+    await user.click(screen.getByRole("tab", { name: "Unread" }));
 
+    expect(screen.getByRole("tab", { name: "Unread" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     await waitFor(() =>
       expect(mockList).toHaveBeenCalledWith(
         expect.objectContaining({ unread: "true" }),
@@ -219,5 +224,21 @@ describe("Notifications", () => {
     renderNotifications();
 
     expect(await screen.findByText(/No notifications yet/)).toBeInTheDocument();
+  });
+
+  // The redesign matches /following: DetailHero + summary specs + pill tabs.
+  it("renders the Following-style hero, summary and filter tabs", async () => {
+    renderNotifications();
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Notifications" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Your cellar")).toBeInTheDocument();
+    expect(screen.getByText("Viewing")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "All" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: "Unread" })).toBeInTheDocument();
   });
 });

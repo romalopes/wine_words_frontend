@@ -8141,3 +8141,37 @@ a.admin-user-card:hover {
 .social-sign-in-dialog > button {
   margin-top: 20px;
 }
+
+/* Notifications (/notifications) — reuses the /following design language. */
+.notifications-page__row--unread {
+  background: rgba(139, 94, 60, 0.08);
+  box-shadow: inset 3px 0 0 #8b5e3c;
+}
+
+.notifications-page__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.notifications-page__target {
+  color: #8b5e3c;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.notifications-page__heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.notifications-page__mark-read {
+  margin-left: auto;
+}
