@@ -5,6 +5,7 @@ import WinePackageDetail from "./WinePackageDetail";
 import { winesApi } from "../services/api";
 
 const mockShow = vi.fn();
+const mockTimeline = vi.fn();
 const mockMarkCompleted = vi.fn();
 const mockMarkArrived = vi.fn();
 const mockDestroy = vi.fn();
@@ -17,6 +18,7 @@ const mockImagesUpload = vi.fn().mockResolvedValue({});
 vi.mock("../services/api", () => ({
   winePackagesApi: {
     show: (...args: unknown[]) => mockShow(...args),
+    timeline: (...args: unknown[]) => mockTimeline(...args),
     markCompleted: (...args: unknown[]) => mockMarkCompleted(...args),
     markArrived: (...args: unknown[]) => mockMarkArrived(...args),
     destroy: (...args: unknown[]) => mockDestroy(...args),
@@ -72,6 +74,13 @@ const packageDetail = {
   overdue: false,
   days_until_deadline: 5,
   can: {
+    update: true,
+    manage_items: true,
+    manage_attachments: true,
+    manage_tracking: true,
+    refresh_tracking: true,
+    create_review: true,
+    destroy: true,
     mark_in_transit: false,
     mark_arrived: false,
     start_reviewing: false,
@@ -149,6 +158,7 @@ describe("WinePackageDetail", () => {
     vi.clearAllMocks();
     currentUser = { id: 1, display_name: "Reviewer", roles: ["Editor"] };
     mockShow.mockResolvedValue(packageDetail);
+    mockTimeline.mockResolvedValue({ events: [] });
     mockTrackingShow.mockRejectedValue(
       Object.assign(new Error("No tracking recorded for this package"), {
         status: 404,
@@ -179,6 +189,7 @@ describe("WinePackageDetail", () => {
       ...packageDetail,
       images: ["http://img.test/a.png", "http://img.test/b.png"],
       image_ids: [5, 6],
+      can: { ...packageDetail.can, update: false, manage_items: false, manage_attachments: false, create_review: false, destroy: false },
     });
     currentUser = { id: 99, display_name: "Viewer", roles: ["Guest"] };
 
@@ -195,6 +206,10 @@ describe("WinePackageDetail", () => {
 
   it("does not render the image section for a viewer when the package has no images", async () => {
     currentUser = { id: 99, display_name: "Viewer", roles: ["Guest"] };
+    mockShow.mockResolvedValue({
+      ...packageDetail,
+      can: { ...packageDetail.can, update: false, manage_items: false, manage_attachments: false, create_review: false, destroy: false },
+    });
     renderDetail();
 
     await screen.findByRole("heading", { name: "Penfolds" });
@@ -257,7 +272,7 @@ describe("WinePackageDetail", () => {
       screen.queryByRole("button", { name: "Reopen" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Accept request" }),
+      screen.queryByRole("button", { name: "Accept and Assign to Me" }),
     ).not.toBeInTheDocument();
   });
 
@@ -375,6 +390,10 @@ describe("WinePackageDetail", () => {
 
   it("hides every management control from a user who is not the reviewer", async () => {
     currentUser = { id: 42, display_name: "Someone else", roles: ["Reviewer"] };
+    mockShow.mockResolvedValue({
+      ...packageDetail,
+      can: Object.fromEntries(Object.keys(packageDetail.can).map((key) => [key, false])),
+    });
     renderDetail();
 
     await screen.findByRole("heading", { name: "Penfolds" });
@@ -390,5 +409,31 @@ describe("WinePackageDetail", () => {
     expect(
       screen.queryByRole("button", { name: "Delete package" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows producer draft actions from viewer-specific capabilities", async () => {
+    currentUser = { id: 9, display_name: "Producer Manager", roles: ["Reader"] };
+    mockShow.mockResolvedValue({
+      ...packageDetail,
+      status: "draft",
+      source: "producer_request",
+      reviewer_id: null,
+      reviewer_name: null,
+      can: {
+        update: true,
+        manage_items: true,
+        manage_tracking: true,
+        refresh_tracking: false,
+        create_review: false,
+        destroy: false,
+        submit: true,
+      },
+    });
+    renderDetail();
+
+    expect(await screen.findByRole("button", { name: "Submit Request" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ Add a wine" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create review" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete package" })).not.toBeInTheDocument();
   });
 });

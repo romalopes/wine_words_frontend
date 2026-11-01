@@ -143,4 +143,67 @@ describe("ApiHealth", () => {
     expect(versionCheck.validate({ version: APP_VERSION })).toBe(true);
     expect(versionCheck.validate({ version: "0.0.19" })).toBe(false);
   });
+
+  // --- Notification test sandbox ---------------------------------------------
+
+  it("renders the Send Test Notification sandbox", () => {
+    render(<MemoryRouter><ApiHealth /></MemoryRouter>);
+    expect(
+      screen.getByRole("heading", { name: /Send Test Notification/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Send Test Notification/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("sends the test notification and shows the unread count the bell will display", async () => {
+    mockRunCheck.mockResolvedValueOnce({
+      id: "notifications-send-test",
+      name: "Send Test Notification",
+      category: "Notifications",
+      passed: true,
+      status: 200,
+      expectedStatus: 200,
+      latencyMs: 80,
+      latencyRating: "excellent",
+      payload: {
+        status: "delivered",
+        notification_id: 42,
+        notification_type: "health_test",
+        message: "API Health test notification",
+        unread_count: 2,
+        delivered_at: "2026-01-11T00:00:00.000Z",
+      },
+      requestHeaders: {},
+      error: null,
+      retried: false,
+    });
+
+    render(<MemoryRouter><ApiHealth /></MemoryRouter>);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /Send Test Notification/i }),
+    );
+
+    // The bell's badge number must be surfaced: "the new notification is
+    // reflected in the bell" is verified against the real unread count.
+    await waitFor(() => {
+      expect(screen.getByText(/^2$/)).toBeInTheDocument();
+      expect(screen.getByText(/Unread \(bell badge\)/i)).toBeInTheDocument();
+    });
+    expect(screen.getByRole("link", { name: /View notifications/i })).toHaveAttribute(
+      "href",
+      "/notifications",
+    );
+
+    // The runner must be handed the notification check with the persisted
+    // token getter, mirroring how every other manual diagnostic runs.
+    const call = mockRunCheck.mock.calls[0];
+    if (!call) throw new Error("runCheck was never called");
+    const check = call[0] as ApiCheck;
+    expect(check.id).toBe("notifications-send-test");
+    const options = call[1] as HealthCheckOptions;
+    if (!options.getAuthToken) throw new Error("no token getter was passed");
+    expect(options.getAuthToken()).toBe("fake-token");
+  });
 });

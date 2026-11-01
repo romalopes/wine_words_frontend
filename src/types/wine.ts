@@ -44,6 +44,11 @@ export interface Wine {
   /** `{ id, slug, name }` stub of the linked profile, or null. */
   wine_profile?: { id: number; slug: string; name: string } | null
   vintages?: Vintage[]
+  capabilities?: {
+    update: boolean
+    destroy: boolean
+    add_vintage: boolean
+  }
   /**
    * Ordered image URL strings — `image_urls` in Rails (ImageAttributes).
    * NOTE: this is `string[]`, not `Image[]`. The rich per-image objects live in

@@ -5,15 +5,18 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import WinePackageForm from "./WinePackageForm";
 
 const mockCreate = vi.fn();
+const mockSubmit = vi.fn();
 const mockUpdate = vi.fn();
 const mockShow = vi.fn();
 const mockProducerSearch = vi.fn().mockResolvedValue([]);
 const mockProducerCreate = vi.fn();
 const mockImagesUpload = vi.fn().mockResolvedValue({});
+const mockMyProducers = vi.fn();
 
 vi.mock("../services/api", () => ({
   winePackagesApi: {
     create: (...args: unknown[]) => mockCreate(...args),
+    submit: (...args: unknown[]) => mockSubmit(...args),
     update: (...args: unknown[]) => mockUpdate(...args),
     show: (...args: unknown[]) => mockShow(...args),
   },
@@ -32,6 +35,7 @@ vi.mock("../services/api", () => ({
     reorder: vi.fn(),
     setPrimary: vi.fn(),
   },
+  accountApi: { myProducers: (...args: unknown[]) => mockMyProducers(...args) },
 }));
 
 let currentUser = { id: 1, display_name: "Reviewer", roles: ["Editor"] };
@@ -83,6 +87,45 @@ describe("WinePackageForm (create)", () => {
     currentUser = { id: 1, display_name: "Reviewer", roles: ["Editor"] };
     mockProducerSearch.mockResolvedValue([{ id: 3, name: "Penfolds" }]);
     mockCreate.mockResolvedValue({ id: 9 });
+    mockSubmit.mockResolvedValue({ id: 9, status: "requested" });
+  });
+
+  it("creates a producer request draft from the user's eligible producer", async () => {
+    currentUser = { id: 9, display_name: "Producer Manager", roles: ["Reader"] };
+    mockMyProducers.mockResolvedValue([
+      { id: 3, name: "Penfolds", slug: "penfolds", membership_type: "manager", can_edit: true },
+    ]);
+    mockCreate.mockResolvedValue({ id: 99 });
+    const user = userEvent.setup();
+    renderForm("/wine-packages/new?mode=request");
+
+    expect(await screen.findByRole("heading", { name: "New Package Request" })).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Your reference"), "REF-9");
+    await user.type(screen.getByLabelText("Request notes"), "Please review these wines");
+    await user.click(screen.getByRole("button", { name: "Save Draft and Add Wines" }));
+
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
+      producer_id: 3,
+      producer_reference: "REF-9",
+      producer_notes: "Please review these wines",
+    })));
+  });
+
+  it("creates and immediately submits a producer request without wines", async () => {
+    currentUser = { id: 9, display_name: "Producer Manager", roles: ["Reader"] };
+    mockMyProducers.mockResolvedValue([
+      { id: 3, name: "Penfolds", slug: "penfolds", can_edit: true, membership_type: "manager" },
+    ]);
+    const user = userEvent.setup();
+
+    renderForm("/wine-packages/new?mode=request");
+
+    await screen.findByRole("heading", { name: "New Package Request" });
+    await user.click(screen.getByRole("button", { name: "Create and Submit" }));
+
+    await waitFor(() => expect(mockCreate).toHaveBeenCalled());
+    await waitFor(() => expect(mockSubmit).toHaveBeenCalledWith(9));
+    expect(mockCreate.mock.invocationCallOrder[0]).toBeLessThan(mockSubmit.mock.invocationCallOrder[0] ?? 0);
   });
 
   // The form uses ProducerSearch (type + pick), not a producer <select>.

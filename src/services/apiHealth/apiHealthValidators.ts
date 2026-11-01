@@ -82,6 +82,25 @@ export const isEmailTestDelivered = (data: unknown): boolean => {
   return true;
 };
 
+// --- Notifications ----------------------------------------------------------
+// The send-test-notification diagnostic must prove the new notification is
+// actually reflected in the bell: the payload has to carry a positive
+// `unread_count` — the exact number the bell's badge displays (driven by
+// GET /api/v1/notifications/unread_count, which counts delivered + unread).
+export const isNotificationTestDelivered = (data: unknown): boolean => {
+  if (!isRecord(data)) return false;
+  if (data.status !== "delivered") return false;
+  if (typeof data.notification_id !== "number") return false;
+  if (typeof data.notification_type !== "string") return false;
+  if (data.notification_type !== "health_test") return false;
+  if (typeof data.message !== "string") return false;
+  if (typeof data.delivered_at !== "string") return false;
+  if (typeof data.unread_count !== "number") return false;
+  if (!Number.isInteger(data.unread_count)) return false;
+  if (data.unread_count < 1) return false;
+  return true;
+};
+
 // --- Search index ----------------------------------------------------------
 // Full-text search runs on the `searchable` tsvector columns. A NULL tsvector
 // satisfies no match, so rows that were never indexed are invisible to every

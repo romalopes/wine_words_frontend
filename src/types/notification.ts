@@ -1,6 +1,9 @@
 /** The notification kinds the API can schedule or deliver. */
 export type NotificationType =
   | "wine_package_deadline"
+  | "wine_package_submitted"
+  | "wine_package_withdrawn"
+  | "wine_package_accepted"
   | "wine_package_arrived"
   | "wine_package_completed"
   | "wine_package_rejected"
@@ -16,6 +19,9 @@ export type NotificationType =
   | "vintage_created"
   | "vintage_updated"
   | "producer_updated"
+  // API-health diagnostics: a one-off test delivery sent from /admin/api-health
+  // to verify the notification bell end to end.
+  | "health_test"
 
 /**
  * One notification as returned by `NotificationSerializer`. Read state is exposed

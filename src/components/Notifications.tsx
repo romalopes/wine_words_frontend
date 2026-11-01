@@ -21,8 +21,8 @@ function followStatusLabel(notification: Notification): string {
   return "In-app";
 }
 
-// The signed-in user's notifications: wine-package review-deadline reminders
-// plus follow-based events (new content, comments) from issue #192. Read state
+// The signed-in user's notifications: wine-package lifecycle updates and
+// review-deadline reminders plus follow-based events. Read state
 // is per-user and the API is scoped to the caller, so nothing here needs to
 // filter by recipient.
 function Notifications() {
@@ -91,8 +91,8 @@ function Notifications() {
           <p className="wine-kicker">Cellar</p>
           <h1>Notifications</h1>
           <p className={styles.cellMuted}>
-            Review-deadline reminders for your wine packages, plus updates on the
-            producers, wines, reviews and articles you follow.
+            Package requests, editorial decisions, arrivals and review deadlines,
+            plus updates on the producers, wines, reviews and articles you follow.
           </p>
         </div>
         <div className={styles.headerActions}>
@@ -143,7 +143,7 @@ function Notifications() {
                   <tr key={notification.id}>
                     <td className={styles.cellMuted}>
                       {formatDate(notification.scheduled_date)}
-                      {notification.wine_package_id && !notification.sent && (
+                      {notification.notification_type === "wine_package_deadline" && !notification.sent && (
                         <div>not sent yet</div>
                       )}
                     </td>

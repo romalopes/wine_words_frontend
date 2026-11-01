@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { notificationsApi } from "../services/api";
 import { onNotificationsChanged } from "../services/notificationEvents";
 
-// Unread reminders count for the header.
+// Unread notification count for the header.
 //
 // Uses the dedicated `unread_count` endpoint (a single COUNT query) rather than
 // the paginated list: it exists exactly for badge display, and `usePagedList`

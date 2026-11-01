@@ -60,8 +60,6 @@ function WineDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const returnToLink = useReturnToLink();
-  // Admins, Reviewers and Editors may edit or delete wines.
-  const canManageWines = canManageWinesRole(user);
   const [wine, setWine] = useState<Wine | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +70,10 @@ function WineDetail() {
     Record<number, boolean>
   >({});
   const images = wineImageGallery(wine?.images);
+  const canManageReviews = canManageWinesRole(user);
+  const canEditWine = wine?.capabilities?.update === true;
+  const canDeleteWine = wine?.capabilities?.destroy === true;
+  const canAddVintage = wine?.capabilities?.add_vintage === true;
 
   // Inline "add vintage" form (any signed-in user; enforced by the API too).
   const [showVintageForm, setShowVintageForm] = useState(false);
@@ -231,14 +233,17 @@ function WineDetail() {
         badge={wine.color ? { label: wine.color, tone: wine.color } : undefined}
         intro={wine.prompt || "Explore this bottle’s origins, style, and tasting profile."}
         actions={
-          canManageWines ? (
+          canEditWine || canDeleteWine ? (
             <>
-              <Link to={`/wines/${wine.slug}/edit`} className="auth-form__submit">
-                Edit Wine
-              </Link>
-              <button
-                className="wine-management__delete-btn"
-                onClick={async () => {
+              {canEditWine && (
+                <Link to={`/wines/${wine.slug}/edit`} className="auth-form__submit">
+                  Edit Wine
+                </Link>
+              )}
+              {canDeleteWine && (
+                <button
+                  className="wine-management__delete-btn"
+                  onClick={async () => {
                   if (
                     !window.confirm(
                       `Delete "${wine.name}"? This action cannot be undone.`,
@@ -253,10 +258,11 @@ function WineDetail() {
                       err instanceof Error ? err.message : "Failed to delete wine",
                     );
                   }
-                }}
-              >
-                Delete Wine
-              </button>
+                  }}
+                >
+                  Delete Wine
+                </button>
+              )}
             </>
           ) : undefined
         }
@@ -337,7 +343,7 @@ function WineDetail() {
 
       <div className="wine-detail__section wine-detail-page__vintages-section">
         <h2>Vintages</h2>
-        {canManageWines &&
+        {canAddVintage &&
           (showVintageForm ? (
             <form
               className="review-form"
@@ -533,7 +539,7 @@ function WineDetail() {
                             </span>
                           </div>
                           {user &&
-                            (user.id === review.user_id || canManageWines) && (
+                            (user.id === review.user_id || canManageReviews) && (
                               <div className="review-card__actions">
                                 <button
                                   type="button"
@@ -623,7 +629,7 @@ function WineDetail() {
                   </div>
                 )}
 
-                {canManageWines && (
+                {canManageReviews && (
                   <div className="review-form-wrapper">
                     {activeFormVintage === vintage.id ? (
                       <ReviewForm

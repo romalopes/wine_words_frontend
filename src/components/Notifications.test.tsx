@@ -189,6 +189,25 @@ describe("Notifications", () => {
     expect(screen.queryByText("not sent yet")).not.toBeInTheDocument();
   });
 
+  it("does not label delivered package lifecycle notifications as unsent email", async () => {
+    mockList.mockResolvedValue({
+      items: [{
+        ...notification,
+        notification_type: "wine_package_accepted",
+        message: "Your review request was accepted.",
+        delivered_at: "2026-10-24T09:00:00Z",
+      }],
+      page: 1,
+      per_page: 20,
+      total_count: 1,
+      total_pages: 1,
+    });
+    renderNotifications();
+
+    expect(await screen.findByText("Your review request was accepted.")).toBeInTheDocument();
+    expect(screen.queryByText("not sent yet")).not.toBeInTheDocument();
+  });
+
   it("shows an empty state", async () => {
     mockList.mockResolvedValue({
       items: [],

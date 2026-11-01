@@ -19,6 +19,8 @@ interface TrackingFormState {
 interface ShipmentTrackingPanelProps {
   packageId: string | number
   canManage: boolean
+  canRefresh?: boolean
+  producerMode?: boolean
   /** Lets the package page refresh itself after a tracking change. */
   onChanged?: () => void
 }
@@ -33,6 +35,8 @@ interface ShipmentTrackingPanelProps {
 function ShipmentTrackingPanel({
   packageId,
   canManage,
+  canRefresh = canManage,
+  producerMode = false,
   onChanged,
 }: ShipmentTrackingPanelProps) {
   const [tracking, setTracking] = useState<ShipmentTracking | null>(null);
@@ -94,7 +98,7 @@ function ShipmentTrackingPanel({
       const payload: ShipmentTrackingWritePayload = {
         carrier: form.carrier,
         number: form.number,
-        status: form.status,
+        ...(producerMode ? {} : { status: form.status }),
         url: form.url || null,
         estimated_delivery_at: form.estimated_delivery_at || null,
       };
@@ -213,7 +217,7 @@ function ShipmentTrackingPanel({
 
           {canManage && (
             <form className={styles.inlineForm} onSubmit={handleSave}>
-              <div className={styles.filterField}>
+              {!producerMode && <div className={styles.filterField}>
                 <label htmlFor="tracking-carrier">Carrier</label>
                 <input
                   id="tracking-carrier"
@@ -224,7 +228,7 @@ function ShipmentTrackingPanel({
                     updateField("carrier", event.target.value)
                   }
                 />
-              </div>
+              </div>}
               <div className={styles.filterField}>
                 <label htmlFor="tracking-number">Consignment number</label>
                 <input
@@ -260,13 +264,13 @@ function ShipmentTrackingPanel({
                 />
               </div>
               <div className={styles.inlineFormActions}>
-                <button
+                {canRefresh && <button
                   type="submit"
                   className="wine-btn wine-btn--primary wine-btn--lg"
                   disabled={saving}
                 >
                   {saving ? "Saving…" : "Save tracking"}
-                </button>
+                </button>}
                 <button
                   type="button"
                   className="wine-btn wine-btn--secondary"

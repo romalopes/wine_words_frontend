@@ -109,8 +109,8 @@ function Header() {
   // Subscriptions) is admin-only only.
   const canManageSettings =
     isAdminUser || canManageWinesRole(effectiveIdentity);
-  // Wine packages are for content managers and Reviewers (the people who
-  // receive and review the wines).
+  // The API capability also includes producer owners/managers, while keeping
+  // contributors and unrelated Readers out of the package area.
   const canSeePackages = canAccessPackages(user);
   const canSeeAnalytics = canAccessAnalytics(user);
   const [settingsOpen, setSettingsOpen] = useState(false);

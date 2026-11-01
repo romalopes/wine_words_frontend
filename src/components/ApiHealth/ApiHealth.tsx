@@ -18,6 +18,7 @@ import { APP_VERSION } from "../../constants/versions";
 import ResponseInspector from "./components/ResponseInspector";
 import WriteSandbox from "./components/WriteSandbox";
 import EmailSendSandbox from "./components/EmailSendSandbox";
+import NotificationSendSandbox from "./components/NotificationSendSandbox";
 import type { DetailedHealthPayload } from "../../types/health";
 import DetailHero from "../DetailHero";
 
@@ -205,11 +206,21 @@ export default function ApiHealth() {
     [],
   );
   const writeChecks = useMemo(
-    () => API_CHECKS.filter((c) => isWriteCheck(c) && c.id !== "email-send-test"),
+    () =>
+      API_CHECKS.filter(
+        (c) =>
+          isWriteCheck(c) &&
+          c.id !== "email-send-test" &&
+          c.id !== "notifications-send-test",
+      ),
     [],
   );
   const emailChecks = useMemo(
     () => API_CHECKS.filter((c) => c.id === "email-send-test" || c.id === "email-transport"),
+    [],
+  );
+  const notificationChecks = useMemo(
+    () => API_CHECKS.filter((c) => c.id === "notifications-send-test"),
     [],
   );
 
@@ -515,6 +526,15 @@ export default function ApiHealth() {
             {expanded[check.id] && <ResponseInspector check={check} result={results[check.id]} />}
           </div>
         )
+      ))}
+
+      {notificationChecks.map((check) => (
+        <NotificationSendSandbox
+          key={check.id}
+          check={check}
+          result={results[check.id] ?? null}
+          running={running[check.id] === true}
+        />
       ))}
 
       {history.length > 0 && (

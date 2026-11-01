@@ -46,6 +46,9 @@ export function createWinePackagesApi(request: ApiRequester): WinePackagesApi {
     markInTransit(id) {
       return request<WinePackage>(`/wine_packages/${id}/mark_in_transit`, { method: "POST", auth: true })
     },
+    startReviewing(id) {
+      return request<WinePackage>(`/wine_packages/${id}/start_reviewing`, { method: "POST", auth: true })
+    },
     markCompleted(id, payload: WinePackageActionPayload = {}) {
       return request<WinePackage>(`/wine_packages/${id}/mark_completed`, { method: "POST", auth: true, body: payload as unknown as Record<string, never> })
     },
@@ -55,11 +58,30 @@ export function createWinePackagesApi(request: ApiRequester): WinePackagesApi {
     cancel(id) {
       return request<WinePackage>(`/wine_packages/${id}/cancel`, { method: "POST", auth: true })
     },
-    accept(id) {
-      return request<WinePackage>(`/wine_packages/${id}/accept`, { method: "POST", auth: true })
+    accept(id, reviewerId) {
+      return request<WinePackage>(`/wine_packages/${id}/accept`, {
+        method: "POST",
+        auth: true,
+        body: reviewerId == null ? {} : { reviewer_id: reviewerId },
+      })
     },
     reject(id, reason) {
       return request<WinePackage>(`/wine_packages/${id}/reject`, { method: "POST", auth: true, body: reason === undefined ? {} : { rejection_reason: reason } })
+    },
+    submit(id) {
+      return request<WinePackage>(`/wine_packages/${id}/submit`, { method: "POST", auth: true })
+    },
+    withdraw(id) {
+      return request<WinePackage>(`/wine_packages/${id}/withdraw`, { method: "POST", auth: true })
+    },
+    restoreDraft(id) {
+      return request<WinePackage>(`/wine_packages/${id}/restore_draft`, { method: "POST", auth: true })
+    },
+    timeline(id) {
+      return request(`/wine_packages/${id}/timeline`, { auth: true })
+    },
+    progress(id) {
+      return request(`/wine_packages/${id}/progress`, { auth: true })
     },
   }
 }

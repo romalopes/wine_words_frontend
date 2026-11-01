@@ -14,6 +14,7 @@ function makeUser(subscriptionName: string | null): User {
     billing_provider: null,
     can_manage_billing: true,
     subscription_status: null,
+    can_access_wine_packages: false,
     subscription_change: null,
   };
 }

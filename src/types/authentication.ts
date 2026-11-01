@@ -42,6 +42,8 @@ export interface User {
   can_manage_billing: boolean
   /** Live `user_subscriptions#status`, if the user has one. */
   subscription_status: string | null
+  /** Server-derived package access for staff and producer owners/managers. */
+  can_access_wine_packages: boolean
   /** A downgrade/upgrade queued for a future date; absent when there is none. */
   subscription_change: SubscriptionChange | null
   /** `admin` is still accepted from older payloads and impersonation. */

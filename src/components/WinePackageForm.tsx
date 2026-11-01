@@ -15,6 +15,7 @@ import { errorMessage } from "../utils/errors";
 import { responseItems } from "../types/common";
 
 import styles from "./winePackages.module.css";
+import ProducerWinePackageForm from "./ProducerWinePackageForm";
 
 /**
  * One entry mode: the copy shown above the form plus the status/source the
@@ -90,6 +91,7 @@ function WinePackageForm() {
   const canPickReviewer = isAdmin(user);
   const [searchParams] = useSearchParams();
   const requestedMode = searchParams.get("mode");
+  const producerRequestMode = !editing && requestedMode === "request";
   // ?mode= only wins when it names a real mode; anything else falls back to draft.
   const initialMode: PackageMode = isPackageMode(requestedMode)
     ? requestedMode
@@ -257,6 +259,8 @@ function WinePackageForm() {
       </div>
     );
   }
+
+  if (producerRequestMode) return <ProducerWinePackageForm />;
 
   const modeConfig = MODES[mode];
 

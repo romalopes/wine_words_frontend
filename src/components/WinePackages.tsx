@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { winePackagesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
-import { canAccessPackages } from "../constants/roles";
+import { canAccessPackages, canCreatePackage } from "../constants/roles";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
 import PackageStatusBadge from "./PackageStatusBadge";
@@ -22,7 +22,8 @@ import styles from "./winePackages.module.css";
 // can be bookmarked and shared.
 function WinePackages() {
   const { user } = useAuth();
-  const canCreate = canAccessPackages(user);
+  const canCreate = canCreatePackage(user);
+  const canRequest = canAccessPackages(user) && !canCreate;
   const [searchParams, setSearchParams] = useSearchParams();
 
   const status = searchParams.get("status") || "";
@@ -80,20 +81,26 @@ function WinePackages() {
         title="Wine Packages"
         intro="Wines received from producers, and the reviews they still need."
         actions={
-          canCreate && (
+          (canCreate || canRequest) && (
             <div className={styles.headerActions}>
-              <Link
+              {canCreate && <Link
                 to="/wine-packages/new?mode=arrived"
                 className="wine-btn wine-btn--primary"
               >
                 + Record Received Package
-              </Link>
-              <Link
+              </Link>}
+              {canCreate && <Link
                 to="/wine-packages/new?mode=announced"
                 className="wine-btn wine-btn--primary"
               >
                 + Add Expected Package
-              </Link>
+              </Link>}
+              {canRequest && <Link
+                to="/wine-packages/new?mode=request"
+                className="wine-btn wine-btn--primary"
+              >
+                + New Package Request
+              </Link>}
             </div>
           )
         }
@@ -160,6 +167,11 @@ function WinePackages() {
           {canCreate && (
             <Link to="/wine-packages/new?mode=arrived" className="wine-btn wine-btn--primary">
               Record Your First Package
+            </Link>
+          )}
+          {canRequest && (
+            <Link to="/wine-packages/new?mode=request" className="wine-btn wine-btn--primary">
+              Create Your First Package Request
             </Link>
           )}
         </div>

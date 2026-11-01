@@ -85,7 +85,7 @@ import type {
   ProducerMembership,
 } from "./user"
 import type { Vintage, Wine, WineListItem } from "./wine"
-import type { WinePackage, WinePackageItem, WinePackageListItem } from "./winePackage"
+import type { ReviewProgress, WinePackage, WinePackageItem, WinePackageListItem } from "./winePackage"
 import type { ArticleProject, ArticleProjectDetail, ArticleProjectLookupItem, ArticleProjectLookupKind, ArticleProjectNotebook, ArticleProjectWritePayload } from "./articleProject"
 
 export interface WineSearchInput {
@@ -255,6 +255,10 @@ export interface WinePackageWritePayload {
   review_deadline?: string | null
   reviewed_at?: string | null
   notes?: string | null
+  producer_reference?: string | null
+  producer_notes?: string | null
+  shipping_notes?: string | null
+  wine_package_items_attributes?: WinePackageItemWritePayload[]
   [key: string]: unknown
 }
 
@@ -272,15 +276,23 @@ export interface WinePackagesApi {
   destroy(id: string | number): Promise<unknown>
   markArrived(id: string | number, payload?: WinePackageActionPayload): Promise<WinePackage>
   markInTransit(id: string | number): Promise<WinePackage>
+  startReviewing(id: string | number): Promise<WinePackage>
   markCompleted(id: string | number, payload?: WinePackageActionPayload): Promise<WinePackage>
   reopen(id: string | number): Promise<WinePackage>
   cancel(id: string | number): Promise<WinePackage>
-  accept(id: string | number): Promise<WinePackage>
+  accept(id: string | number, reviewerId?: string | number | null): Promise<WinePackage>
   reject(id: string | number, reason?: string | null): Promise<WinePackage>
+  submit(id: string | number): Promise<WinePackage>
+  withdraw(id: string | number): Promise<WinePackage>
+  restoreDraft(id: string | number): Promise<WinePackage>
+  timeline(id: string | number): Promise<WinePackageTimelineResponse>
+  progress(id: string | number): Promise<WinePackageProgressResponse>
 }
 
 export interface WinePackageItemWritePayload {
   vintage_id?: number | null
+  proposed_wine_name?: string | null
+  proposed_vintage_year?: number | null
   quantity?: number
   review_requested?: boolean
   condition?: string | null
@@ -288,6 +300,35 @@ export interface WinePackageItemWritePayload {
   received_at?: string | null
   review_id?: number | null
   [key: string]: unknown
+}
+
+export interface WinePackageTimelineEvent {
+  id: number
+  source: "package" | "carrier"
+  event_type: string
+  description?: string | null
+  message?: string | null
+  status?: string | null
+  actor_id?: number | null
+  visibility?: string | null
+  occurred_at?: string | null
+}
+
+export interface WinePackageTimelineResponse {
+  events: WinePackageTimelineEvent[]
+}
+
+export interface WinePackageProgressResponse {
+  id: number
+  status: string
+  review_progress: ReviewProgress
+  items: Array<{
+    id: number
+    label: string
+    review_status?: string | null
+    reviewed: boolean
+    pending_review: boolean
+  }>
 }
 
 export interface WinePackageItemsApi {

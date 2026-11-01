@@ -191,6 +191,7 @@ describe("WinePackageItemForm", () => {
     renderForm();
 
     await screen.findByRole("option", { name: /Grange/i });
+    expect(screen.getByRole("button", { name: /add a new wine/i })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/^wine$/i), { target: { value: "1" } });
 
     // The inline panel replaces the line form and posts its own request.
@@ -243,5 +244,39 @@ describe("WinePackageItemForm", () => {
     expect(mockItemCreate.mock.calls[0]?.[1]).toMatchObject({
       vintage_id: null,
     });
+  });
+
+  it("requires and submits proposed wine details in producer mode", async () => {
+    renderForm({ producerMode: true });
+    await screen.findByRole("option", { name: /Grange/i });
+    expect(screen.getByRole("button", { name: /add a new wine/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/not in the catalogue yet/i));
+    fireEvent.change(screen.getByLabelText("Wine name"), { target: { value: "Estate Shiraz" } });
+    fireEvent.change(screen.getByLabelText(/Vintage year/i), { target: { value: "2022" } });
+    fireEvent.submit(enclosingForm(screen.getByRole("button", { name: /add line/i })));
+
+    await waitFor(() => expect(mockItemCreate).toHaveBeenCalled());
+    expect(mockItemCreate.mock.calls[0]?.[1]).toMatchObject({
+      vintage_id: null,
+      proposed_wine_name: "Estate Shiraz",
+      proposed_vintage_year: 2022,
+    });
+  });
+
+  it("lets a producer owner add a vintage to a catalogue wine", async () => {
+    mockVintageCreate.mockResolvedValue({ id: 99, year: 2024, no_vintage: false });
+    renderForm({ producerMode: true });
+
+    await screen.findByRole("option", { name: /Grange/i });
+    fireEvent.change(screen.getByLabelText(/^wine$/i), { target: { value: "1" } });
+    fireEvent.click(await screen.findByRole("button", { name: /add a vintage/i }));
+    fireEvent.change(await screen.findByLabelText(/^year$/i), { target: { value: "2024" } });
+    fireEvent.submit(enclosingForm(screen.getByRole("button", { name: /^add vintage$/i })));
+
+    await waitFor(() => expect(mockVintageCreate).toHaveBeenCalledWith("grange", {
+      year: 2024,
+      no_vintage: false,
+    }));
   });
 });

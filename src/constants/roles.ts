@@ -12,6 +12,7 @@ export type Role = (typeof ROLES)[keyof typeof ROLES]
 
 export interface RoleUser {
   roles?: readonly string[] | null
+  can_access_wine_packages?: boolean
 }
 
 const WINE_MANAGER_ROLES: readonly string[] = [ROLES.ADMIN, ROLES.EDITOR, ROLES.REVIEWER]
@@ -53,10 +54,11 @@ export function canDeleteProducers(user: RoleUser | null | undefined): boolean {
 }
 
 export function canAccessPackages(user: RoleUser | null | undefined): boolean {
-  return canManageWinesRole(user)
+  return canManageWinesRole(user) || user?.can_access_wine_packages === true
 }
 
-export const canCreatePackage = canAccessPackages
+/** Editorial package creation remains restricted to catalogue staff/reviewers. */
+export const canCreatePackage = canManageWinesRole
 
 export function canAccessAnalytics(user: RoleUser | null | undefined): boolean {
   return user?.roles?.some((role) => role === ROLES.ADMIN || role === ROLES.EDITOR || role === ROLES.REVIEWER) ?? false

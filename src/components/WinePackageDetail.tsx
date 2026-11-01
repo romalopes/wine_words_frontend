@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { winePackageItemsApi, winePackagesApi } from "../services/api";
-import { useAuth } from "../contexts/AuthContext";
-import { canManageAllPackages } from "../constants/roles";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import {
   badgeClass,
@@ -21,6 +19,7 @@ import type {
   WinePackage,
   WinePackageItem,
 } from "../types/winePackage";
+import type { WinePackageTimelineEvent } from "../types/api";
 
 // One wine package: what arrived, who is responsible, how the reviews are
 // going, and the workflow actions available right now.
@@ -31,7 +30,6 @@ import type {
 function WinePackageDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const returnToLink = useReturnToLink();
 
   const [pkg, setPkg] = useState<WinePackage | null>(null);
@@ -43,12 +41,17 @@ function WinePackageDetail() {
   const [reviewItemId, setReviewItemId] = useState<number | null>(null);
   const [showReject, setShowReject] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [timeline, setTimeline] = useState<WinePackageTimelineEvent[]>([]);
 
   const load = useCallback(async () => {
     try {
       setError(null);
-      const data = await winePackagesApi.show(id);
+      const [data, activity] = await Promise.all([
+        winePackagesApi.show(id),
+        winePackagesApi.timeline(id),
+      ]);
       setPkg(data);
+      setTimeline(activity.events || []);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load wine package",
@@ -61,14 +64,6 @@ function WinePackageDetail() {
   useEffect(() => {
     load();
   }, [load]);
-
-  // Mirrors the backend's ownership rule: catalogue managers (Admin/Editor)
-  // manage everything; a Reviewer only manages their own packages.
-  const canManage = Boolean(
-    pkg &&
-    (canManageAllPackages(user) ||
-      Number(pkg.reviewer_id) === Number(user?.id)),
-  );
 
   async function runAction(
     action: () => Promise<unknown>,
@@ -148,6 +143,13 @@ function WinePackageDetail() {
 
   if (!pkg) return null;
 
+  const can = pkg.can || {};
+  const canEdit = Boolean(can.update);
+  const canManageItems = Boolean(can.manage_items);
+  const canManageImages = Boolean(can.manage_attachments);
+  const canCreateReview = Boolean(can.create_review);
+  const producerMode = pkg.source === "producer_request" && !canCreateReview;
+
   const progress: ReviewProgress = (pkg.review_progress as ReviewProgress | undefined) || {
     requested: 0,
     reviewed: 0,
@@ -166,7 +168,7 @@ function WinePackageDetail() {
       <div className={styles.detailHeader}>
         <h1>{pkg.producer_name || `Package #${pkg.id}`}</h1>
         <PackageStatusBadge status={pkg.status} />
-        {canManage && (
+        {canEdit && (
           <Link
             to={`/wine-packages/${pkg.id}/edit`}
             className="wine-btn wine-btn--secondary wine-btn--sm"
@@ -200,12 +202,20 @@ function WinePackageDetail() {
         <p className={styles.cellMuted}>Rejected: {pkg.rejection_reason}</p>
       )}
 
+      {(pkg.producer_reference || pkg.producer_notes || pkg.shipping_notes) && (
+        <div className={styles.cardGrid}>
+          {pkg.producer_reference && <div><strong>Producer reference</strong><p>{pkg.producer_reference}</p></div>}
+          {pkg.producer_notes && <div><strong>Request notes</strong><p>{pkg.producer_notes}</p></div>}
+          {pkg.shipping_notes && <div><strong>Shipping notes</strong><p>{pkg.shipping_notes}</p></div>}
+        </div>
+      )}
+
       {pkg.notes && <p className={styles.cellMuted}>{pkg.notes}</p>}
 
-      {(canManage || (Array.isArray(pkg.images) && pkg.images.length > 0)) && (
+      {(canManageImages || (Array.isArray(pkg.images) && pkg.images.length > 0)) && (
         <div className={styles.section}>
           <h2>Package images</h2>
-          {canManage ? (
+          {canManageImages ? (
             <ImageManager
               imageableType="wine_package"
               imageableId={pkg.id}
@@ -257,8 +267,23 @@ function WinePackageDetail() {
         </div>
       </div>
 
-      {canManage && (
+      {(can.submit || can.withdraw || can.restore_draft || can.accept || can.reject || can.mark_in_transit || can.mark_arrived || can.start_reviewing || can.mark_completed || can.reopen || can.cancel) && (
         <div className={styles.actions}>
+          {can.submit && (
+            <button type="button" className="wine-btn wine-btn--primary" disabled={busy} onClick={() => runAction(() => winePackagesApi.submit(pkg.id))}>
+              Submit Request
+            </button>
+          )}
+          {can.withdraw && (
+            <button type="button" className="wine-btn wine-btn--secondary" disabled={busy} onClick={() => runAction(() => winePackagesApi.withdraw(pkg.id), { confirm: "Withdraw this pending request?" })}>
+              Withdraw Request
+            </button>
+          )}
+          {can.restore_draft && (
+            <button type="button" className="wine-btn wine-btn--secondary" disabled={busy} onClick={() => runAction(() => winePackagesApi.restoreDraft(pkg.id))}>
+              Restore Draft
+            </button>
+          )}
           {pkg.can?.accept && (
             <button
               type="button"
@@ -266,7 +291,7 @@ function WinePackageDetail() {
               disabled={busy}
               onClick={() => runAction(() => winePackagesApi.accept(pkg.id))}
             >
-              Accept request
+              Accept and Assign to Me
             </button>
           )}
           {pkg.can?.reject && (
@@ -303,6 +328,11 @@ function WinePackageDetail() {
               }
             >
               Mark arrived
+            </button>
+          )}
+          {pkg.can?.start_reviewing && (
+            <button type="button" className="wine-btn wine-btn--secondary" disabled={busy} onClick={() => runAction(() => winePackagesApi.startReviewing(pkg.id))}>
+              Start Reviewing
             </button>
           )}
           {pkg.can?.mark_completed && (
@@ -439,9 +469,9 @@ function WinePackageDetail() {
                       )}
                     </td>
                     <td>
-                      {canManage && (
+                      {(canManageItems || canCreateReview) && (
                         <div className={styles.rowActions}>
-                          {item.reviewable && !item.review_id && (
+                          {canCreateReview && item.reviewable && !item.review_id && (
                             <button
                               type="button"
                               className="wine-btn wine-btn--primary wine-btn--sm"
@@ -454,7 +484,7 @@ function WinePackageDetail() {
                               Create review
                             </button>
                           )}
-                          <button
+                          {canManageItems && <button
                             type="button"
                             className="wine-btn wine-btn--ghost wine-btn--sm"
                             onClick={() =>
@@ -464,15 +494,15 @@ function WinePackageDetail() {
                             }
                           >
                             Edit
-                          </button>
-                          <button
+                          </button>}
+                          {canManageItems && <button
                             type="button"
                             className="wine-btn wine-btn--danger"
                             disabled={busy}
                             onClick={() => handleRemoveItem(item)}
                           >
                             Remove
-                          </button>
+                          </button>}
                         </div>
                       )}
                     </td>
@@ -487,7 +517,7 @@ function WinePackageDetail() {
           </p>
         )}
 
-        {canManage && (
+        {canManageItems && (
           <>
             {editingItem != null &&
               (() => {
@@ -501,6 +531,7 @@ function WinePackageDetail() {
                     item={editing}
                     producerId={pkg.producer_id ?? null}
                     producerName={pkg.producer_name ?? null}
+                    producerMode={producerMode}
                     onSaved={() => {
                       setEditingItem(null);
                       load();
@@ -510,7 +541,7 @@ function WinePackageDetail() {
                 );
               })()}
 
-            {reviewItemId != null &&
+            {canCreateReview && reviewItemId != null &&
               (() => {
                 const reviewItem = pkg.items?.find(
                   (candidate) => candidate.id === reviewItemId,
@@ -545,6 +576,7 @@ function WinePackageDetail() {
                 packageId={pkg.id}
                 producerId={pkg.producer_id ?? null}
                 producerName={pkg.producer_name ?? null}
+                producerMode={producerMode}
                 onSaved={() => {
                   setShowAddItem(false);
                   load();
@@ -568,11 +600,28 @@ function WinePackageDetail() {
 
       <ShipmentTrackingPanel
         packageId={pkg.id}
-        canManage={canManage}
+        canManage={Boolean(can.manage_tracking)}
+        canRefresh={Boolean(can.refresh_tracking)}
+        producerMode={producerMode}
         onChanged={load}
       />
 
-      {canManage && (
+      <div className={styles.section}>
+        <h2>Activity</h2>
+        {timeline.length === 0 ? (
+          <p className={styles.cellMuted}>No activity recorded yet.</p>
+        ) : (
+          <ul className={styles.cellMuted}>
+            {timeline.map((event) => (
+              <li key={`${event.source}-${event.id}`}>
+                {formatDateTime(event.occurred_at) || "—"} · {event.description || event.message || event.status || event.event_type.replaceAll("_", " ")}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {can.destroy && (
         <div className={styles.actions}>
           <button
             type="button"

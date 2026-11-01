@@ -22,7 +22,17 @@ vi.mock("../services/api", () => ({
   usersApi: { search: (...args: unknown[]) => mockUsersSearch(...args) },
 }));
 
-let currentUser = { id: 1, display_name: "Reviewer", roles: ["Editor"] };
+let currentUser: {
+  id: number;
+  display_name: string;
+  roles: string[];
+  can_access_wine_packages: boolean;
+} = {
+  id: 1,
+  display_name: "Reviewer",
+  roles: ["Editor"],
+  can_access_wine_packages: true,
+};
 
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({ user: currentUser, loading: false }),
@@ -71,7 +81,12 @@ const packageRow = {
 describe("WinePackages list", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    currentUser = { id: 1, display_name: "Reviewer", roles: ["Editor"] };
+    currentUser = {
+      id: 1,
+      display_name: "Reviewer",
+      roles: ["Editor"],
+      can_access_wine_packages: true,
+    };
     mockPackagesList.mockResolvedValue({
       items: [packageRow],
       page: 1,
@@ -129,7 +144,12 @@ describe("WinePackages list", () => {
   });
 
   it("hides the create actions from a user without a package role", async () => {
-    currentUser = { id: 9, display_name: "Reader", roles: ["Reader"] };
+    currentUser = {
+      id: 9,
+      display_name: "Reader",
+      roles: ["Reader"],
+      can_access_wine_packages: false,
+    };
     renderList();
 
     await screen.findByText("Penfolds");
@@ -139,6 +159,28 @@ describe("WinePackages list", () => {
     expect(
       screen.queryByRole("link", { name: "+ Add Expected Package" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("offers a producer-specific request action while keeping editorial actions hidden", async () => {
+    currentUser = {
+      id: 9,
+      display_name: "Producer Manager",
+      roles: ["Reader"],
+      can_access_wine_packages: true,
+    };
+    renderList();
+
+    await screen.findByText("Penfolds");
+    expect(
+      screen.queryByRole("link", { name: "+ Record Received Package" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "+ Add Expected Package" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "+ New Package Request" })).toHaveAttribute(
+      "href",
+      "/wine-packages/new?mode=request",
+    );
   });
 
   it("shows the empty state when there are no packages", async () => {

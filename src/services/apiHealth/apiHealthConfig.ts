@@ -10,6 +10,7 @@ import {
   isSearchIndexHealthy,
   describeSearchIndexFailure,
   isEmailTestDelivered,
+  isNotificationTestDelivered,
 } from "./apiHealthValidators";
 
 export const API_CATEGORIES = {
@@ -24,6 +25,7 @@ export const API_CATEGORIES = {
   SUBSCRIPTIONS: "Subscriptions",
   WRITE_SANDBOX: "Write Operations (Manual)",
   EMAIL: "Email Diagnostics",
+  NOTIFICATIONS: "Notifications",
 };
 
 export type ApiCategory = (typeof API_CATEGORIES)[keyof typeof API_CATEGORIES];
@@ -321,6 +323,21 @@ export const API_CHECKS: ApiCheck[] = [
     description:
       "Delivers a single test e-mail to the To address you supply (no create/delete\npair, no persisted state). Returns the configured and effective transports on success.",
     validate: isEmailTestDelivered,
+    latencyThresholds: { excellent: 200, good: 500, slow: 1000 },
+  },
+  // --- Notification diagnostics ----------------------------------------------
+  {
+    id: "notifications-send-test",
+    category: API_CATEGORIES.NOTIFICATIONS,
+    name: "Send Test Notification",
+    method: "POST",
+    url: "/health/notifications/test",
+    expectedStatus: 200,
+    requiresAuth: true,
+    requiresManualTrigger: true,
+    description:
+      "Delivers a real in-app test notification to the signed-in admin and reports the\nunread count the notification bell will display — so the bell lighting up can be\nverified end to end. Re-runs re-use today's test row (idempotent, no feed flooding).",
+    validate: isNotificationTestDelivered,
     latencyThresholds: { excellent: 200, good: 500, slow: 1000 },
   },
 ];

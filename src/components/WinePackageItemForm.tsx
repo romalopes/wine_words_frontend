@@ -20,6 +20,8 @@ interface PackageItemDraft {
   review_requested?: boolean | null;
   condition?: string | null;
   notes?: string | null;
+  proposed_wine_name?: string | null;
+  proposed_vintage_year?: number | null;
 }
 
 /** Which create-panel currently replaces this form. */
@@ -45,6 +47,8 @@ interface WinePackageItemFormProps {
   producerName?: string | null;
   onSaved: (saved: Awaited<ReturnType<typeof winePackageItemsApi.create>>) => void;
   onCancel: () => void;
+  /** Producer users are restricted to this package's producer catalogue. */
+  producerMode?: boolean;
 }
 
 // Add or edit one wine line inside a package.
@@ -64,6 +68,7 @@ function WinePackageItemForm({
   producerName,
   onSaved,
   onCancel,
+  producerMode = false,
 }: WinePackageItemFormProps) {
   const [wines, setWines] = useState<WineListItem[]>([]);
   const [loadingWines, setLoadingWines] = useState(false);
@@ -76,6 +81,10 @@ function WinePackageItemForm({
   // A line that exists but has no vintage is the "not in the catalogue yet" case.
   const [unmatched, setUnmatched] = useState(
     item !== undefined && !item.vintage_id,
+  );
+  const [proposedName, setProposedName] = useState(item?.proposed_wine_name || "");
+  const [proposedYear, setProposedYear] = useState(
+    item?.proposed_vintage_year ? String(item.proposed_vintage_year) : "",
   );
   const [form, setForm] = useState<ItemFormState>({
     quantity: item?.quantity ?? 1,
@@ -214,6 +223,15 @@ function WinePackageItemForm({
 
       if (unmatched) {
         payload.vintage_id = null;
+        if (producerMode) {
+          if (!proposedName.trim()) {
+            setError("Enter the wine name when it is not in the catalogue yet.");
+            setSaving(false);
+            return;
+          }
+          payload.proposed_wine_name = proposedName.trim();
+          payload.proposed_vintage_year = proposedYear ? Number(proposedYear) : null;
+        }
       } else if (vintageId) {
         payload.vintage_id = Number(vintageId);
       } else if (!editing) {
@@ -370,6 +388,32 @@ function WinePackageItemForm({
         />
         Not in the catalogue yet
       </label>
+
+      {unmatched && producerMode && (
+        <div className={styles.filters}>
+          <div className={styles.filterField}>
+            <label htmlFor="item-proposed-name">Wine name</label>
+            <input
+              id="item-proposed-name"
+              type="text"
+              required
+              value={proposedName}
+              onChange={(event) => setProposedName(event.target.value)}
+            />
+          </div>
+          <div className={styles.filterField}>
+            <label htmlFor="item-proposed-year">Vintage year (optional)</label>
+            <input
+              id="item-proposed-year"
+              type="number"
+              min="1900"
+              max={new Date().getFullYear() + 2}
+              value={proposedYear}
+              onChange={(event) => setProposedYear(event.target.value)}
+            />
+          </div>
+        </div>
+      )}
 
       <div className={styles.filterField}>
         <label htmlFor="item-quantity">Bottles</label>

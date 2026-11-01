@@ -7,6 +7,8 @@ export interface WinePackageItem {
   wine_package_id: number
   wine_id: number
   vintage_id?: number | null
+  proposed_wine_name?: string | null
+  proposed_vintage_year?: number | null
   review_requested?: boolean
   review?: Review | null
   wine?: Wine | null
@@ -47,8 +49,9 @@ export interface WinePackageListItem {
   producer_name?: string | null
   producer_slug?: string | null
   reviewer_id?: number | null
-  /** Falls back to the reviewer's email when `display_name` is blank. */
   reviewer_name?: string | null
+  requested_by_id?: number | null
+  submitted_at?: string | null
   status: string
   source?: string | null
   expected_at?: string | null
@@ -74,6 +77,18 @@ export interface WinePackage {
   producer_name?: string | null
   /** Assigned reviewer (admin-only on write). */
   reviewer_id?: number | null
+  reviewer_name?: string | null
+  requested_by_id?: number | null
+  requested_at?: string | null
+  submitted_at?: string | null
+  accepted_at?: string | null
+  accepted_by_id?: number | null
+  rejected_at?: string | null
+  rejected_by_id?: number | null
+  producer_reference?: string | null
+  producer_notes?: string | null
+  shipping_notes?: string | null
+  internal_notes?: string | null
   /** How the package entered the workflow — see `sourceLabel`. */
   source?: string | null
   /** Bare `YYYY-MM-DD` date or a full ISO timestamp, as the API sent it. */
@@ -84,7 +99,6 @@ export interface WinePackage {
   reviewed_at?: string | null
   notes?: string | null
   status: string
-  reviewer_name?: string | null
   rejection_reason?: string | null
   auto_completed?: boolean | null
   /** True only for active packages whose deadline has passed. */

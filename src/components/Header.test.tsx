@@ -42,6 +42,7 @@ function makeUser(subscriptionName: string | null): User {
     billing_provider: null,
     can_manage_billing: true,
     subscription_status: null,
+    can_access_wine_packages: false,
     subscription_change: null,
   };
 }
@@ -112,6 +113,26 @@ describe("Header Extras links", () => {
     expect(screen.getByRole("link", { name: "Article Projects" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Analytics" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Users" })).not.toBeInTheDocument();
+  });
+
+  it("shows Wine Packages to a Reader who manages a producer", () => {
+    authState.user = {
+      ...makeUserWithRoles(["Reader"]),
+      can_access_wine_packages: true,
+    };
+    renderHeader();
+    openExtrasMenu();
+
+    expect(screen.getByRole("link", { name: "Wine Packages" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Article Projects" })).not.toBeInTheDocument();
+  });
+
+  it("hides Wine Packages from a Reader without producer management access", () => {
+    authState.user = makeUserWithRoles(["Reader"]);
+    renderHeader();
+    openExtrasMenu();
+
+    expect(screen.queryByRole("link", { name: "Wine Packages" })).not.toBeInTheDocument();
   });
 });
 
