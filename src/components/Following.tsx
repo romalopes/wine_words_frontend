@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { followsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import DetailHero from "./DetailHero";
 import NotificationPreferences from "./NotificationPreferences";
 import type { Follow, FollowableType } from "../types/follow";
 
@@ -55,17 +56,35 @@ export default function Following() {
   }, [filter, isAuthenticated, load]);
 
   if (authLoading) {
-    return <p className="following-page__status">Loading…</p>;
+    return (
+      <main className="wine-app following-page">
+        <p className="following-page__status">Loading…</p>
+      </main>
+    );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="following-page">
-        <h1>Following</h1>
-        <p className="following-page__status">
-          <Link to="/login">Sign in</Link> to follow producers, wines, reviews and articles.
-        </p>
-      </div>
+      <main className="wine-app following-page">
+        <DetailHero
+          kicker="Your cellar"
+          title="Following"
+          intro="Keep the producers, wines, reviews and stories that inspire you close at hand."
+        />
+        <section className="wine-detail__section following-page__section">
+          <div className="following-page__empty">
+            <p className="wine-kicker">A personal collection</p>
+            <h2>Sign in to start following</h2>
+            <p>
+              Follow producers, wines, reviews and articles to build a curated feed of the
+              people and bottles you care about.
+            </p>
+            <Link to="/login" className="following-page__sign-in">
+              Sign in
+            </Link>
+          </div>
+        </section>
+      </main>
     );
   }
 
@@ -84,82 +103,123 @@ export default function Following() {
   };
 
   return (
-    <div className="following-page">
-      <h1>Following</h1>
-
-      <NotificationPreferences />
-
-      <div className="following-page__filters" role="tablist" aria-label="Follow type filter">
-        {TYPE_FILTERS.map(({ label, value }) => (
-          <button
-            key={label}
-            type="button"
-            role="tab"
-            aria-selected={filter === value}
-            className={`following-page__filter${filter === value ? " following-page__filter--active" : ""}`}
-            onClick={() => setFilter(value)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {error && (
-        <p className="following-page__status" role="alert">
-          {error}
-        </p>
-      )}
-
-      {loading ? (
-        <p className="following-page__status">Loading…</p>
-      ) : items.length === 0 ? (
-        <p className="following-page__status">No follows yet.</p>
-      ) : (
-        <ul className="following-page__list" aria-label="Followed content">
-          {items.map((follow) => (
-            <li key={follow.id} className="following-page__row">
-              <span className="following-page__type">{follow.followable_type}</span>
-              {follow.target_path ? (
-                <Link to={follow.target_path} className="following-page__label">
-                  {follow.target_label || "(deleted)"}
-                </Link>
-              ) : (
-                <span className="following-page__label">{follow.target_label || "(deleted)"}</span>
-              )}
-              <button
-                type="button"
-                className="following-page__unfollow"
-                onClick={() => void unfollow(follow)}
-                aria-label={`Unfollow ${follow.target_label ?? follow.followable_type}`}
-              >
-                Unfollow
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {totalPages > 1 && (
-        <div className="following-page__pagination">
-          <button
-            type="button"
-            disabled={page <= 1 || loading}
-            onClick={() => void load(filter, page - 1)}
-          >
-            &larr; Previous
-          </button>
-          <span>
-            Page {page} of {totalPages} ({totalCount} total)
-          </span>
-          <button
-            type="button"
-            disabled={page >= totalPages || loading}
-            onClick={() => void load(filter, page + 1)}
-          >
-            Next &rarr;
-          </button>
+    <main className="wine-app following-page">
+      <DetailHero
+        kicker="Your cellar"
+        title="Following"
+        intro="A personal collection of the producers, wines and stories you want to revisit."
+      >
+        <div className="following-page__summary" aria-label="Following summary">
+          <div className="wine-detail__spec">
+            <span className="wine-detail__spec-label">Following</span>
+            <span className="wine-detail__spec-value">{totalCount}</span>
+          </div>
+          <div className="wine-detail__spec">
+            <span className="wine-detail__spec-label">Viewing</span>
+            <span className="wine-detail__spec-value">
+              {TYPE_FILTERS.find(({ value }) => value === filter)?.label ?? "All"}
+            </span>
+          </div>
         </div>
-      )}
-    </div>
+      </DetailHero>
+
+      <section className="wine-detail__section following-page__section">
+        <div className="following-page__section-heading">
+          <div>
+            <p className="wine-kicker">Saved discoveries</p>
+            <h2>Followed content</h2>
+          </div>
+          <div className="following-page__filters" role="tablist" aria-label="Follow type filter">
+            {TYPE_FILTERS.map(({ label, value }) => (
+              <button
+                key={label}
+                type="button"
+                role="tab"
+                aria-selected={filter === value}
+                className={`following-page__filter${filter === value ? " following-page__filter--active" : ""}`}
+                onClick={() => setFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {error && (
+          <p className="following-page__status following-page__status--error" role="alert">
+            {error}
+          </p>
+        )}
+
+        {loading ? (
+          <p className="following-page__status">Loading your collection…</p>
+        ) : items.length === 0 ? (
+          <div className="following-page__empty following-page__empty--compact">
+            <h3>No follows yet.</h3>
+            <p>Explore Wine Words and follow something that catches your eye.</p>
+          </div>
+        ) : (
+          <ul className="following-page__list" aria-label="Followed content">
+            {items.map((follow) => (
+              <li key={follow.id} className="following-page__row">
+                <span className="following-page__monogram" aria-hidden="true">
+                  {(follow.target_label || follow.followable_type).charAt(0).toUpperCase()}
+                </span>
+                <div className="following-page__item-copy">
+                  <span className="following-page__type">{follow.followable_type}</span>
+                  {follow.target_path ? (
+                    <Link to={follow.target_path} className="following-page__label">
+                      {follow.target_label || "(deleted)"}
+                    </Link>
+                  ) : (
+                    <span className="following-page__label">{follow.target_label || "(deleted)"}</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="following-page__unfollow"
+                  onClick={() => void unfollow(follow)}
+                  aria-label={`Unfollow ${follow.target_label ?? follow.followable_type}`}
+                >
+                  Unfollow
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {totalPages > 1 && (
+          <nav className="following-page__pagination" aria-label="Following pagination">
+            <button
+              type="button"
+              disabled={page <= 1 || loading}
+              onClick={() => void load(filter, page - 1)}
+            >
+              &larr; Previous
+            </button>
+            <span>
+              Page {page} of {totalPages} ({totalCount} total)
+            </span>
+            <button
+              type="button"
+              disabled={page >= totalPages || loading}
+              onClick={() => void load(filter, page + 1)}
+            >
+              Next &rarr;
+            </button>
+          </nav>
+        )}
+      </section>
+
+      <section className="wine-detail__section following-page__section">
+        <div className="following-page__section-heading following-page__section-heading--simple">
+          <div>
+            <p className="wine-kicker">Stay in the loop</p>
+            <h2>Updates</h2>
+          </div>
+        </div>
+        <NotificationPreferences />
+      </section>
+    </main>
   );
 }

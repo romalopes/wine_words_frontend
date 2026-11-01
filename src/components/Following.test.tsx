@@ -81,6 +81,9 @@ describe("Following", () => {
   it("lists the user's follows with links to each target", async () => {
     renderFollowing();
 
+    expect(screen.getByRole("heading", { name: "Following" }).closest("header")).toHaveClass(
+      "wine-app__detail-hero",
+    );
     const producerLink = await screen.findByRole("link", { name: "Penfolds" });
     expect(producerLink).toHaveAttribute("href", "/producers/penfolds");
     expect(screen.getByRole("link", { name: "Bin 389" })).toHaveAttribute(
