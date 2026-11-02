@@ -71,6 +71,14 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium firefox
 
+      - name: Generate temporary Rails E2E secret
+        # The custom e2e environment requires a key for Rails and Devise JWT.
+        # Share one disposable key across database preparation and all servers.
+        run: |
+          e2e_secret=$(ruby -rsecurerandom -e 'print SecureRandom.hex(64)')
+          echo "::add-mask::$e2e_secret"
+          echo "SECRET_KEY_BASE=$e2e_secret" >> "$GITHUB_ENV"
+
       - name: Run Chromium functional coverage
         run: npm run test:e2e:chromium
 
