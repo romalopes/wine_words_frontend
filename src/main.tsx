@@ -8,6 +8,7 @@ import SentryFallback from "./components/SentryFallback";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { registerWineWordsServiceWorker } from "./pwa/registerServiceWorker";
 
 const rootElement = document.getElementById("root");
 
@@ -38,3 +39,5 @@ createRoot(rootElement).render(
     </Sentry.ErrorBoundary>
   </StrictMode>,
 );
+
+registerWineWordsServiceWorker();

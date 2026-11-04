@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { followsApi } from "../services/api";
 import type { NotificationPreferences as PreferencePayload } from "../services/followsApi";
+import PushNotificationControl from "./PushNotificationControl";
 
 /**
  * Follow-notification preferences (issue #192 phase 8): in-app on/off,
@@ -66,6 +67,7 @@ export default function NotificationPreferences() {
             />
             Show follow updates in my notifications feed
           </label>
+          <PushNotificationControl />
           <label className="following-page__pref-row">
             <input
               type="checkbox"

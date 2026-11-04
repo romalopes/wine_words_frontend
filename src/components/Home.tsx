@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   calculateMatch,
   initialTaste,
@@ -6,6 +6,10 @@ import {
   wineProfiles,
 } from "../data/wineData";
 import type { TasteParameterId, TasteValues, WineColor } from "../types/wineFinder";
+import { useIsMobile } from "../hooks/useIsMobile";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import { isOfflineEnabled } from "../constants/featureFlags";
+import { cacheFinderResult, listRecentFinderResults } from "../offline";
 
 /** "All" disables the colour filter, so it sits alongside the real colours. */
 type ColorFilter = WineColor | "All";
@@ -14,8 +18,12 @@ type ColorFilter = WineColor | "All";
 type ScoredProfile = (typeof wineProfiles)[number] & { score: number };
 
 function Home() {
+  const isMobile = useIsMobile();
+  const online = useOnlineStatus();
   const [selectedTaste, setSelectedTaste] = useState<TasteValues>(initialTaste);
   const [selectedColor, setSelectedColor] = useState<ColorFilter>("All");
+  const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
+  const [finderHydrated, setFinderHydrated] = useState(!isOfflineEnabled());
 
   const colorOptions: ColorFilter[] = useMemo(
     () => [
@@ -41,6 +49,28 @@ function Home() {
   // `noUncheckedIndexedAccess`: the list can legitimately be empty when the
   // filter matches nothing, so this is absent rather than undefined-by-index.
   const bestMatch = matches[0];
+
+  useEffect(() => {
+    if (!isOfflineEnabled() || !finderHydrated) return
+    void cacheFinderResult(null, "finder-current", {
+      selectedTaste,
+      selectedColor,
+      matches,
+    })
+  }, [finderHydrated, selectedTaste, selectedColor, matches])
+
+  useEffect(() => {
+    if (!isOfflineEnabled()) return
+    void listRecentFinderResults(null, 1).then(([recent]) => {
+      if (!recent || !recent.data || typeof recent.data !== "object") return
+      const data = recent.data as {
+        selectedTaste?: TasteValues
+        selectedColor?: ColorFilter
+      }
+      if (data.selectedTaste) setSelectedTaste(data.selectedTaste)
+      if (data.selectedColor) setSelectedColor(data.selectedColor)
+    }).finally(() => setFinderHydrated(true))
+  }, [])
 
   function handleTasteChange(parameterId: TasteParameterId, value: string) {
     setSelectedTaste((currentTaste) => ({
@@ -78,7 +108,20 @@ function Home() {
         className="wine-workspace"
         aria-label="Wine identification controls and matches"
       >
-        <form className="wine-panel wine-controls">
+        <button
+          type="button"
+          className="wine-controls-toggle"
+          aria-expanded={mobileControlsOpen}
+          aria-controls="wine-finder-controls"
+          onClick={() => setMobileControlsOpen((open) => !open)}
+        >
+          {mobileControlsOpen ? "Hide taste controls" : "Adjust taste controls"}
+        </button>
+
+        <form
+          id="wine-finder-controls"
+          className={`wine-panel wine-controls${isMobile && !mobileControlsOpen ? " wine-controls--mobile-collapsed" : ""}`}
+        >
           <div className="section-heading">
             <p>Parameters</p>
             <h2>Describe the glass</h2>
@@ -139,6 +182,12 @@ function Home() {
             <p>Suggestions</p>
             <h2 id="matches-title">Most likely styles</h2>
           </div>
+
+          {isOfflineEnabled() && !online && (
+            <p className="offline-inline-status" role="status">
+              Offline suggestions use the bundled Wine Words profile set, not the full database.
+            </p>
+          )}
 
           <div className="wine-match-list">
             {matches.map((match) => (

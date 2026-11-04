@@ -20,6 +20,8 @@ import type {
 import type { SocialProvider } from "../types/api";
 import type { ImpersonationResponse } from "../types/user";
 import { errorStatus } from "../utils/errors";
+import { clearOfflineAccount } from "../offline";
+import { isOfflineEnabled } from "../constants/featureFlags";
 
 interface AuthContextValue {
   user: User | null;
@@ -212,6 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    const signedOutAccountId = user?.id;
     try {
       await authApi.signOut();
     } catch {
@@ -220,7 +223,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     persistToken(null);
     setUser(null);
     setRealUser(null);
-  }, [persistToken]);
+    if (isOfflineEnabled() && signedOutAccountId !== undefined) {
+      await clearOfflineAccount(signedOutAccountId);
+    }
+  }, [persistToken, user?.id]);
 
   // Start impersonating a user. Persists the new token (with the
   // impersonated_user_id claim) and updates user/realUser state.

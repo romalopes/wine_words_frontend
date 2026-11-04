@@ -507,6 +507,34 @@ textarea {
   margin-top: 24px;
 }
 
+.wine-controls-toggle {
+  display: none;
+}
+
+.wine-test__progress {
+  color: #5d514b;
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.wine-test__progress-track {
+  background: #efe5dc;
+  border-radius: 999px;
+  display: block;
+  height: 6px;
+  overflow: hidden;
+}
+
+.wine-test__progress-track > span {
+  background: #27615e;
+  display: block;
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
 .wine-test__intro {
   align-items: stretch;
   display: grid;
@@ -1549,6 +1577,33 @@ textarea {
   flex-shrink: 0;
   gap: 8px;
   margin-left: auto;
+}
+
+.content-scope-filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.content-scope-filter {
+  background: #fff;
+  border: 1px solid #d7c8bb;
+  border-radius: 999px;
+  color: #4f4440;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 8px 14px;
+}
+
+.content-scope-filter--active {
+  background: #27615e;
+  border-color: #27615e;
+  color: #f7fff9;
 }
 
 .wine-management__vintage-count {
@@ -5053,6 +5108,50 @@ a.following-page__label:hover {
   }
 }
 
+.pwa-prompt {
+  align-items: center;
+  background: #fffaf4;
+  border: 1px solid #d7c8bb;
+  border-radius: 12px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  box-shadow: 0 12px 36px rgba(36, 27, 25, 0.2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  left: 50%;
+  max-width: min(34rem, calc(100vw - 24px));
+  padding: 14px 16px;
+  position: fixed;
+  transform: translateX(-50%);
+  width: max-content;
+  z-index: 1200;
+}
+
+.pwa-prompt button {
+  background: #27615e;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 8px 14px;
+}
+
+.pwa-prompt button:last-child {
+  background: transparent;
+  border: 1px solid #d7c8bb;
+  color: #5d514b;
+}
+
+@media (max-width: 768px) {
+  .pwa-prompt {
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    width: calc(100vw - 24px);
+  }
+}
+
 /* ---- Wine form: grape picker tags & sparkling checkbox ---- */
 .grape-search__selected {
   display: flex;
@@ -6754,6 +6853,82 @@ a.admin-user-card:hover {
   padding-bottom: 12px;
 }
 
+.comments__offline-status {
+  color: #766963;
+  font-size: 0.82rem;
+  margin: -8px 0 14px;
+}
+
+.offline-badge {
+  align-items: center;
+  background: #f3ebe2;
+  border: 1px solid #d7c8bb;
+  border-radius: 10px;
+  color: #5d514b;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  gap: 10px;
+  justify-content: space-between;
+  margin: 0 auto 16px;
+  max-width: 42rem;
+  padding: 10px 12px;
+}
+
+.offline-badge button {
+  background: #27615e;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 7px 13px;
+}
+
+.offline-inline-status {
+  background: rgba(39, 97, 94, 0.08);
+  border-left: 3px solid #27615e;
+  color: #4f5f5d;
+  font-size: 0.85rem;
+  margin: 0 0 16px;
+  padding: 9px 12px;
+}
+
+.sync-status {
+  background: #27615e;
+  border-radius: 999px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  left: 50%;
+  padding: 9px 14px;
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 1200;
+}
+
+.push-notification-control {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.push-notification-control > div {
+  display: grid;
+  gap: 3px;
+}
+
+.push-notification-control span {
+  color: #766963;
+  font-size: 0.82rem;
+}
+
+.push-notification-control p {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+}
+
 /* Highlight while the section holds focus after a #comments deep link.
    Driven by a class rather than :focus — :focus-visible does not reliably match
    programmatic focus (it typically stays false for a mouse-click arrival), so a
@@ -7060,6 +7235,236 @@ a.admin-user-card:hover {
      the text column stays readable. */
   .comment--reply {
     padding-left: 10px;
+  }
+}
+
+/* ===== Issue #201: mobile content, Finder and Quiz =======================
+   Keep every override below the shared mobile breakpoint so desktop remains
+   byte-for-byte equivalent in layout and behaviour. */
+@media (max-width: 768px) {
+  .wine-app {
+    overflow-x: hidden;
+  }
+
+  .wine-controls-toggle {
+    align-items: center;
+    background: #27615e;
+    border: 0;
+    border-radius: 999px;
+    color: #f7fff9;
+    display: inline-flex;
+    font: inherit;
+    font-weight: 800;
+    justify-content: center;
+    margin-bottom: 12px;
+    min-height: 48px;
+    padding: 10px 18px;
+    width: 100%;
+  }
+
+  .wine-controls--mobile-collapsed {
+    display: none;
+  }
+
+  .wine-hero,
+  .quiz-hero,
+  .wine-panel {
+    padding: 20px 16px;
+  }
+
+  .wine-hero h1,
+  .quiz-hero h1 {
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+
+  .wine-segmented > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wine-segmented button,
+  .wine-reset,
+  .wine-test-actions button {
+    min-height: 48px;
+  }
+
+  .wine-slider input[type="range"] {
+    min-height: 44px;
+  }
+
+  .wine-match {
+    padding: 16px;
+  }
+
+  .wine-match__media img {
+    max-height: 15rem;
+  }
+
+  .wine-test__intro,
+  .wine-test__grid {
+    gap: 16px;
+  }
+
+  .wine-test__search-input {
+    font-size: 1rem;
+    min-height: 48px;
+  }
+
+  .wine-test__search-results {
+    max-height: min(45vh, 20rem);
+  }
+
+  .wine-test__search-item {
+    min-height: 52px;
+    padding: 12px 14px;
+  }
+
+  .wine-test-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .content-status-filter-row,
+  .content-scope-filter-row {
+    flex-wrap: nowrap;
+    margin-inline: -4px;
+    overflow-x: auto;
+    padding: 2px 4px 8px;
+    scrollbar-width: thin;
+  }
+
+  .content-status-filter,
+  .content-scope-filter {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+
+  .content-grid-group {
+    margin-bottom: 2rem;
+  }
+
+  .content-grid-group__title {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 1.25rem;
+    gap: 6px 0;
+  }
+
+  .group-show-all {
+    margin-left: auto;
+  }
+
+  .wine-management__card {
+    gap: 9px;
+    padding: 16px;
+  }
+
+  .wine-management__card:hover {
+    transform: none;
+  }
+
+  .wine-management__thumb,
+  .wine-management__content-thumb {
+    max-height: 15rem;
+    object-fit: contain;
+    width: 100%;
+  }
+
+  .wine-management__card-header h3 {
+    font-size: 1.05rem;
+    overflow-wrap: anywhere;
+  }
+
+  .wine-management__card-meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .wine-management__card-meta-actions {
+    margin-left: 0;
+  }
+
+  .like-button,
+  .follow-button,
+  .comment-link,
+  .article-page__share,
+  .content-status__btn,
+  .comment-actions button {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .article-page__title {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+    overflow-wrap: anywhere;
+  }
+
+  .article-page__standfirst,
+  .article-page__deck {
+    font-size: 1.08rem;
+  }
+
+  .article-page__byline {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .article-page__byline-actions {
+    flex-wrap: wrap;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .article-page__body {
+    font-size: 1rem;
+    line-height: 1.68;
+  }
+
+  .article-page__gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .article-page__gallery img {
+    height: auto;
+    width: 100%;
+  }
+
+  .comments {
+    scroll-margin-top: 16px;
+  }
+
+  .comment-form {
+    padding: 14px;
+  }
+
+  .comment-form__input {
+    font-size: 1rem;
+    min-height: 7rem;
+  }
+
+  .comment-form__actions {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .comment-form__actions button,
+  .comment-actions button {
+    min-height: 44px;
+  }
+
+  .comment__meta {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .comment__replies {
+    margin-left: 0;
   }
 }
 
@@ -8174,4 +8579,140 @@ a.admin-user-card:hover {
 
 .notifications-page__mark-read {
   margin-left: auto;
+}
+
+/* --- Mobile shell (issue #201, Phase 1) ---------------------------------- */
+/* The bottom navigation and More sheet render only when the mobile layout
+   feature flag is enabled and the viewport is at or below the breakpoint. The
+   desktop navigation (the existing .site-header) is untouched. */
+
+.mobile-bottom-nav {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 30;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  gap: 2px;
+  background: rgba(247, 243, 236, 0.98);
+  border-top: 1px solid #e4d9cd;
+  box-shadow: 0 -2px 10px rgba(36, 27, 25, 0.06);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-bottom-nav__item {
+  flex: 1 1 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b5a4d;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mobile-bottom-nav__item--active {
+  color: #8b5e3c;
+  background: rgba(139, 94, 60, 0.1);
+}
+
+.app-main--with-mobile-nav {
+  padding-bottom: 76px;
+}
+
+.more-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.more-menu__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(36, 27, 25, 0.45);
+}
+
+.more-menu__sheet {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #fffaf4;
+  border-radius: 16px 16px 0 0;
+  padding: 16px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 30px rgba(36, 27, 25, 0.25);
+}
+
+.more-menu__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.more-menu__title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #241b19;
+}
+
+.more-menu__close {
+  border: 0;
+  background: transparent;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #6b5a4d;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.more-menu__group {
+  margin-top: 14px;
+}
+
+.more-menu__group-title {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8b7a6d;
+}
+
+.more-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.more-menu__link {
+  display: block;
+  padding: 12px 10px;
+  border-radius: 10px;
+  color: #241b19;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.more-menu__link:hover,
+.more-menu__link.active {
+  background: rgba(139, 94, 60, 0.1);
+  color: #8b5e3c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .more-menu__sheet {
+    scroll-behavior: auto;
+  }
 }

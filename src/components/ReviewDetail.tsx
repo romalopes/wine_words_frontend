@@ -23,6 +23,14 @@ import type { Review } from "../types/review";
 import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
 import { reviewImage } from "../utils/wineImages";
 import DeadlineBadge from "./DeadlineBadge";
+import OfflineBadge from "./OfflineBadge";
+import { isOfflineEnabled } from "../constants/featureFlags";
+import {
+  cacheContent,
+  getCachedContent,
+  setContentSavedOffline,
+} from "../offline";
+import { mayUseOfflineFallback } from "../offline/fallback";
 
 /**
  * Renders a review comment, which is stored as Trix HTML: sanitised, then
@@ -52,6 +60,10 @@ function ReviewDetail() {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
+  const [cachedAt, setCachedAt] = useState<string | null>(null);
+  const [offlineCopy, setOfflineCopy] = useState(false);
+  const [savedOffline, setSavedOffline] = useState(false);
+  const [offlineBusy, setOfflineBusy] = useState(false);
 
   // Hero image resolution is needed before the early returns below so the
   // orientation hook is always called (rules of hooks). Review imagery wins,
@@ -77,12 +89,46 @@ function ReviewDetail() {
       setError(null);
       const data = await reviewsApi.show(slug);
       setReview(data);
+      setOfflineCopy(false);
+      if (isOfflineEnabled()) {
+        await cacheContent(user?.id, "review", slug, data);
+        const cached = await getCachedContent<Review>(user?.id, "review", slug);
+        setCachedAt(cached?.cachedAt ?? null);
+        setSavedOffline(cached?.savedOffline ?? false);
+      }
     } catch (err) {
+      if (isOfflineEnabled() && mayUseOfflineFallback(err)) {
+        const cached = await getCachedContent<Review>(user?.id, "review", slug);
+        if (cached) {
+          setReview(cached.data);
+          setCachedAt(cached.cachedAt);
+          setSavedOffline(cached.savedOffline);
+          setOfflineCopy(true);
+          return;
+        }
+      }
       setError(errorMessage(err, "Failed to load review"));
     } finally {
       setLoading(false);
     }
-  }, [slug]);
+  }, [slug, user?.id]);
+
+  async function toggleOfflineSave() {
+    if (!slug || !review) return;
+    setOfflineBusy(true);
+    const next = !savedOffline;
+    const cached = await cacheContent(user?.id, "review", slug, review, {
+      savedOffline: next,
+      visibility: review.status === "published" ? "public" : "account",
+    });
+    if (cached) {
+      await setContentSavedOffline(user?.id, "review", slug, next);
+      const row = await getCachedContent<Review>(user?.id, "review", slug);
+      setSavedOffline(next);
+      setCachedAt(row?.cachedAt ?? new Date().toISOString());
+    }
+    setOfflineBusy(false);
+  }
 
   const { trackView } = useAnalyticsBeacon();
 
@@ -189,6 +235,15 @@ function ReviewDetail() {
       {error && <p className="wine-management__error">{error}</p>}
 
       <article className="article-page review-page">
+        {isOfflineEnabled() && (
+          <OfflineBadge
+            cachedAt={cachedAt}
+            offlineCopy={offlineCopy}
+            savedOffline={savedOffline}
+            busy={offlineBusy}
+            onToggleSave={toggleOfflineSave}
+          />
+        )}
         <DetailHero
           className="review-page__hero"
           kicker={

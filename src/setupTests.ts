@@ -19,3 +19,33 @@ if (typeof ElementInternals !== "undefined" && !ElementInternals.prototype.setVa
     value: vi.fn(),
   });
 }
+
+// jsdom does not implement window.matchMedia. Components that read media queries
+// (the mobile shell, issue #201) need it to exist; tests override it to simulate
+// a phone-width viewport. Defaults to `matches: false` (desktop).
+if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
+  window.matchMedia = ((query: string): MediaQueryList => {
+    const listeners = new Set<(event: MediaQueryListEvent) => void>();
+    const mediaQueryList = {
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: (
+        _type: string,
+        listener: (event: MediaQueryListEvent) => void,
+      ) => {
+        listeners.add(listener);
+      },
+      removeEventListener: (
+        _type: string,
+        listener: (event: MediaQueryListEvent) => void,
+      ) => {
+        listeners.delete(listener);
+      },
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    };
+    return mediaQueryList as unknown as MediaQueryList;
+  }) as typeof window.matchMedia;
+}

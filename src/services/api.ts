@@ -29,6 +29,7 @@ import { createImagesApi, createWineProfilesApi } from "./imagesApi";
 import { createLikesApi } from "./likesApi";
 import { createFollowsApi } from "./followsApi";
 import { createCommentsApi } from "./commentsApi";
+import { createPushSubscriptionsApi } from "./pushSubscriptionsApi";
 import { createArticleProjectsApi } from "./articleProjectsApi";
 import {
   createCategoriesApi,
@@ -177,6 +178,7 @@ export const articlesApi = createArticlesApi(request);
 export const articleProjectsApi = createArticleProjectsApi(request);
 
 export const likesApi = createLikesApi(request);
+export const pushSubscriptionsApi = createPushSubscriptionsApi(request);
 
 export const followsApi = createFollowsApi(request);
 

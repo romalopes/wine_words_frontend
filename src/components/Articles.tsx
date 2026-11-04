@@ -327,7 +327,7 @@ function Articles() {
       ) : (
         <>
           {/* Scope: everyone's articles vs my articles */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <div className="content-scope-filter-row">
             {(!canManageContent
               ? []
               : [
@@ -338,17 +338,7 @@ function Articles() {
               <button
                 key={key}
                 type="button"
-                style={{
-                  border: "1px solid #d7c8bb",
-                  borderRadius: "999px",
-                  padding: "8px 14px",
-                  fontWeight: 800,
-                  fontSize: "0.85rem",
-                  cursor: "pointer",
-                  background: scope === key ? "#27615e" : "#fff",
-                  color: scope === key ? "#f7fff9" : "#4f4440",
-                  borderColor: scope === key ? "#27615e" : "#d7c8bb",
-                }}
+                className={`content-scope-filter${scope === key ? " content-scope-filter--active" : ""}`}
                 onClick={() => setScope(key as "all" | "mine")}
               >
                 {label}

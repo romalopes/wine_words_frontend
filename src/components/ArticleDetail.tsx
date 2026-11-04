@@ -23,6 +23,14 @@ import BackToSource from "./BackToSource";
 import DeadlineBadge from "./DeadlineBadge";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
+import OfflineBadge from "./OfflineBadge";
+import { isOfflineEnabled } from "../constants/featureFlags";
+import {
+  cacheContent,
+  getCachedContent,
+  setContentSavedOffline,
+} from "../offline";
+import { mayUseOfflineFallback } from "../offline/fallback";
 
 interface RichBodyProps {
   html: string;
@@ -54,6 +62,10 @@ function ArticleDetail() {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
+  const [cachedAt, setCachedAt] = useState<string | null>(null);
+  const [offlineCopy, setOfflineCopy] = useState(false);
+  const [savedOffline, setSavedOffline] = useState(false);
+  const [offlineBusy, setOfflineBusy] = useState(false);
 
   // Hero image resolution is needed before the early returns below so the
   // orientation hook is always called (rules of hooks). When the article has no
@@ -76,12 +88,46 @@ function ArticleDetail() {
       setError(null);
       const data = await articlesApi.show(slug);
       setArticle(data);
+      setOfflineCopy(false);
+      if (isOfflineEnabled()) {
+        await cacheContent(user?.id, "article", slug, data);
+        const cached = await getCachedContent<Article>(user?.id, "article", slug);
+        setCachedAt(cached?.cachedAt ?? null);
+        setSavedOffline(cached?.savedOffline ?? false);
+      }
     } catch (err) {
+      if (isOfflineEnabled() && mayUseOfflineFallback(err)) {
+        const cached = await getCachedContent<Article>(user?.id, "article", slug);
+        if (cached) {
+          setArticle(cached.data);
+          setCachedAt(cached.cachedAt);
+          setSavedOffline(cached.savedOffline);
+          setOfflineCopy(true);
+          return;
+        }
+      }
       setError(errorMessage(err, "Failed to load article"));
     } finally {
       setLoading(false);
     }
-  }, [slug]);
+  }, [slug, user?.id]);
+
+  async function toggleOfflineSave() {
+    if (!slug || !article) return;
+    setOfflineBusy(true);
+    const next = !savedOffline;
+    const cached = await cacheContent(user?.id, "article", slug, article, {
+      savedOffline: next,
+      visibility: article.status === "published" ? "public" : "account",
+    });
+    if (cached) {
+      await setContentSavedOffline(user?.id, "article", slug, next);
+      const row = await getCachedContent<Article>(user?.id, "article", slug);
+      setSavedOffline(next);
+      setCachedAt(row?.cachedAt ?? new Date().toISOString());
+    }
+    setOfflineBusy(false);
+  }
 
   const { trackView } = useAnalyticsBeacon();
 
@@ -192,6 +238,15 @@ function ArticleDetail() {
       </Link>
 
       <article className="article-page">
+        {isOfflineEnabled() && (
+          <OfflineBadge
+            cachedAt={cachedAt}
+            offlineCopy={offlineCopy}
+            savedOffline={savedOffline}
+            busy={offlineBusy}
+            onToggleSave={toggleOfflineSave}
+          />
+        )}
         <DetailHero
           className="article-page__hero-header"
           kicker={

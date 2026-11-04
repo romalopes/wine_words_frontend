@@ -8,6 +8,10 @@ import type { Wine } from "../types/wine";
 import { errorMessage } from "../utils/errors";
 import { toStringList } from "../utils/stringList";
 import { tasteEndpoints, tasteScoreText } from "../utils/tasteParameters";
+import { useAuth } from "../contexts/AuthContext";
+import { isOfflineEnabled } from "../constants/featureFlags";
+import { getQuizSession, saveQuizSession } from "../offline";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
 
 /** Slug -> score, the shape `calculateMatch` scores against. */
 type ScoreMap = Record<string, number>;
@@ -79,6 +83,8 @@ function calculateMatch(
 }
 
 function Quiz() {
+  const { user } = useAuth();
+  const online = useOnlineStatus();
   const [tasteParams, setTasteParams] = useState<TasteParameter[]>([]);
   const [loadingParams, setLoadingParams] = useState(true);
 
@@ -94,6 +100,7 @@ function Quiz() {
     useState<ScoreMap>({});
   const [testTaste, setTestTaste] = useState<ScoreMap>({});
   const [hasSubmittedTest, setHasSubmittedTest] = useState(false);
+  const [restoredOffline, setRestoredOffline] = useState(false);
 
   // Fetch taste parameters from the database
   useEffect(() => {
@@ -107,13 +114,49 @@ function Quiz() {
         });
         setTestTaste(defaults);
       } catch {
-        // silently fail
+        if (isOfflineEnabled()) {
+          const cached = await getQuizSession(user?.id, "tasting-quiz")
+          if (cached?.data && typeof cached.data === "object") {
+            const session = cached.data as {
+              tasteParams?: TasteParameter[]
+              selectedWine?: QuizSelection | null
+              selectedWineParameters?: ScoreMap
+              testTaste?: ScoreMap
+              hasSubmittedTest?: boolean
+            }
+            if (Array.isArray(session.tasteParams)) setTasteParams(session.tasteParams)
+            if (session.selectedWine !== undefined) setSelectedWine(session.selectedWine)
+            if (session.selectedWineParameters) setSelectedWineParameters(session.selectedWineParameters)
+            if (session.testTaste) setTestTaste(session.testTaste)
+            setHasSubmittedTest(Boolean(session.hasSubmittedTest))
+            setRestoredOffline(true)
+          }
+        }
       } finally {
         setLoadingParams(false);
       }
     }
     loadParams();
-  }, []);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!isOfflineEnabled() || loadingParams || tasteParams.length === 0) return
+    void saveQuizSession(
+      user?.id,
+      "tasting-quiz",
+      "1",
+      { tasteParams, selectedWine, selectedWineParameters, testTaste, hasSubmittedTest },
+      hasSubmittedTest,
+    )
+  }, [
+    user?.id,
+    loadingParams,
+    tasteParams,
+    selectedWine,
+    selectedWineParameters,
+    testTaste,
+    hasSubmittedTest,
+  ])
 
   // Search using the same API as the main search
   const performSearch = useCallback(async (q: string) => {
@@ -127,13 +170,24 @@ function Quiz() {
       setError(null);
       const data = await wineProfilesApi.search(trimmed);
       setSearchResults(data);
+      if (isOfflineEnabled()) {
+        await saveQuizSession(user?.id, `quiz-search:${trimmed.toLowerCase()}`, "1", data)
+      }
     } catch (err) {
+      if (isOfflineEnabled()) {
+        const cached = await getQuizSession(user?.id, `quiz-search:${trimmed.toLowerCase()}`)
+        if (cached?.data) {
+          setSearchResults(cached.data as WineProfileSearchResponse)
+          setError("Offline search result · may be stale")
+          return
+        }
+      }
       setError(errorMessage(err, "Search failed"));
       setSearchResults(null);
     } finally {
       setSearching(false);
     }
-  }, []);
+  }, [user?.id]);
 
   function handleInputChange(e: ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
@@ -194,6 +248,7 @@ function Quiz() {
     selectedWine && tasteParams.length > 0
       ? calculateMatch(selectedWineParameters, tasteParams, testTaste)
       : 0;
+  const quizStep = hasSubmittedTest ? 3 : selectedWine ? 2 : 1;
 
   // Merge wine_profiles and wines from search results
   const allSearchHits = searchResults
@@ -223,6 +278,26 @@ function Quiz() {
         className="wine-panel wine-test"
         aria-labelledby="wine-test-title"
       >
+        {isOfflineEnabled() && (!online || restoredOffline) && (
+          <p className="offline-inline-status" role="status">
+            {restoredOffline
+              ? "Quiz resumed from this device. Results remain provisional until reconnected."
+              : "Offline mode: your current quiz progress is saved on this device."}
+          </p>
+        )}
+        <div
+          className="wine-test__progress"
+          role="progressbar"
+          aria-label="Quiz progress"
+          aria-valuemin={1}
+          aria-valuemax={3}
+          aria-valuenow={quizStep}
+        >
+          <span>Step {quizStep} of 3</span>
+          <span className="wine-test__progress-track" aria-hidden="true">
+            <span style={{ width: `${(quizStep / 3) * 100}%` }} />
+          </span>
+        </div>
         <div className="section-heading">
           <p>Training mode</p>
           <h2 id="wine-test-title">Wine examples</h2>

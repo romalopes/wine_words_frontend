@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default [
-  { ignores: ['dist', 'react-router', 'playwright-report', 'test-results'] },
+  { ignores: ['dist', 'react-router', 'playwright-report', 'test-results', 'android', 'ios'] },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
