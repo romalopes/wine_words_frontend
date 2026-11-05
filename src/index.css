@@ -813,9 +813,9 @@ textarea {
     align-items: center;
     flex-direction: row;
     flex-wrap: wrap;
-    column-gap: 10px;
-    row-gap: 6px;
-    padding: 6px 12px;
+    column-gap: 5px;
+    row-gap: 4px;
+    padding: 5px 6px;
     transition: transform 0.25s ease;
   }
 
@@ -838,7 +838,7 @@ textarea {
   }
 
   .site-logo img {
-    height: 1.75rem !important;
+    height: 1.3rem !important;
   }
 
   .site-header__subtitle {
@@ -855,22 +855,33 @@ textarea {
     flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 6px;
+    gap: 3px;
     border-top: 0;
     padding-top: 0;
     margin-top: 0;
   }
 
-  /* Compact Subscribe pill and account/login buttons. */
+  /* "Exit Test Mode" is a private-access developer control that is almost
+     invisible against the light header (white at 55% opacity). It is also the
+     widest item in the row, and on a 390px phone it forced the header onto
+     three lines. Hidden here; still available on desktop. */
+  .site-header .test-access-exit {
+    display: none;
+  }
+
+  /* Compact Subscribe pill and account/login buttons. `nowrap` stops the
+     labels breaking onto two lines, which is what made the row tall. */
   .site-header__cta {
-    font-size: 0.78rem;
-    padding: 6px 12px;
+    font-size: 0.72rem;
+    padding: 4px 8px;
+    white-space: nowrap;
   }
 
   .site-header__auth {
-    font-size: 0.85rem;
-    padding: 6px 10px;
+    font-size: 0.72rem;
+    padding: 4px 7px;
     text-align: center;
+    white-space: nowrap;
   }
 
   /* Role and subscription badges are account metadata, not header
