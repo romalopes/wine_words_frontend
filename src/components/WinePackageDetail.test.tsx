@@ -14,6 +14,8 @@ const mockCreateReview = vi.fn();
 const mockTrackingShow = vi.fn();
 const mockCategoriesList = vi.fn().mockResolvedValue([]);
 const mockImagesUpload = vi.fn().mockResolvedValue({});
+const mockCachePackageDetail = vi.fn().mockResolvedValue(null);
+const mockGetCachedPackageDetail = vi.fn();
 
 vi.mock("../services/api", () => ({
   winePackagesApi: {
@@ -43,6 +45,14 @@ let currentUser = { id: 1, display_name: "Reviewer", roles: ["Editor"] };
 
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({ user: currentUser, loading: false }),
+}));
+
+// Offline package cache: the component writes every successful load and reads
+// the cache back only when the API fails and a fallback is allowed.
+vi.mock("../offline", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../offline")>()),
+  cachePackageDetail: (...args: unknown[]) => mockCachePackageDetail(...args),
+  getCachedPackageDetail: (...args: unknown[]) => mockGetCachedPackageDetail(...args),
 }));
 
 function isoDaysFromNow(days: number): string {
@@ -169,6 +179,7 @@ describe("WinePackageDetail", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it("shows the producer, status, source and deadline countdown", async () => {
@@ -435,5 +446,41 @@ describe("WinePackageDetail", () => {
     expect(screen.getByRole("button", { name: "+ Add a wine" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Create review" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Delete package" })).not.toBeInTheDocument();
+  });
+
+  it("falls back to the cached copy offline and suppresses every workflow action", async () => {
+    vi.stubEnv("VITE_OFFLINE_ENABLED", "true");
+    mockShow.mockRejectedValue(new Error("Network unavailable"));
+    mockGetCachedPackageDetail.mockResolvedValue({
+      data: packageDetail,
+      cachedAt: "2026-11-04T10:00:00Z",
+    });
+    renderDetail();
+
+    expect(
+      await screen.findByRole("heading", { name: "Penfolds" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Offline copy/)).toBeInTheDocument();
+
+    // Cached details are read-only: even though the cached `can` map allows
+    // every action, no workflow control may be offered offline.
+    expect(
+      screen.queryByRole("button", { name: "Mark completed" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Create review" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "+ Add a wine" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Edit package" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Delete package" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Cancel package" }),
+    ).not.toBeInTheDocument();
   });
 });
