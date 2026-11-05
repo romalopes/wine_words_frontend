@@ -15,6 +15,9 @@ import { isPaidSubscriber } from "../utils/subscription";
 import { responseItems } from "../types/common";
 import type { Category, CategoryFlag } from "../types/catalog";
 import type { CategoryCountType, CategoryCounts } from "../types/api";
+import { useIsMobile } from "../hooks/useIsMobile";
+import { useHideOnScroll } from "../hooks/useHideOnScroll";
+import { isMobileLayoutEnabled } from "../constants/featureFlags";
 
 /** One row in a nav dropdown: the text shown and where it navigates. */
 interface NavDropdownItem {
@@ -120,6 +123,14 @@ function Header() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [counts, setCounts] = useState<CategoryCounts>({});
 
+  // Mobile shell: the same condition App uses (build-time flag + breakpoint).
+  // The compact one-row layout itself is pure CSS; this only drives
+  // hide-on-scroll so the header stops eating vertical space on a phone.
+  const isMobile = useIsMobile();
+  const mobileShell = isMobileLayoutEnabled() && isMobile;
+  // Never hide while the nav panel is open — the user is mid-navigation.
+  const headerHidden = useHideOnScroll(mobileShell && !menuOpen);
+
   useEffect(() => {
     categoriesApi
       .list()
@@ -193,7 +204,11 @@ function Header() {
   const initials = getInitials(displayName || user?.email);
 
   return (
-    <header className="site-header">
+    <header
+      className={
+        headerHidden ? "site-header site-header--hidden" : "site-header"
+      }
+    >
       {isImpersonating && user && (
         <div className="impersonation-banner" role="status">
           <span className="impersonation-banner__text">

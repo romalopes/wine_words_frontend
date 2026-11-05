@@ -799,25 +799,108 @@ textarea {
   }
 }
 
-@media (max-width: 560px) {
+/* ===== Mobile header (<=768px) =====================================
+   Matches MOBILE_BREAKPOINT_PX (768) so the header and the bottom
+   navigation switch at the same width. Previously the header stacked
+   vertically at <=560px while the bottom nav appeared at <=768px, so
+   561-768px rendered the desktop header AND the bottom nav together.
+
+   Collapsed, the header is one row:  [logo] ... [actions] [menu]
+   Nav links sit behind the hamburger and open as a full-width panel
+   below the row. Desktop (>768px) is untouched. */
+@media (max-width: 768px) {
   .site-header {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 10px;
+    row-gap: 6px;
+    padding: 6px 12px;
+    transition: transform 0.25s ease;
   }
 
+  /* Hide-on-scroll (see useHideOnScroll). Sticky + translate means nothing
+     below the header reflows, so the page does not jump. */
+  .site-header--hidden {
+    transform: translateY(-100%);
+  }
+
+  /* The impersonation banner keeps its own full-width row. */
+  .site-header .impersonation-banner {
+    flex-basis: 100%;
+    order: -1;
+  }
+
+  /* Smaller logo, and no tagline, so the row stays a single line. The
+     !important overrides the inline height on the logo <img>. */
+  .site-logo {
+    gap: 8px;
+  }
+
+  .site-logo img {
+    height: 1.75rem !important;
+  }
+
+  .site-header__subtitle {
+    display: none;
+  }
+
+  /* Actions go from a full-width stacked column to one compact,
+     right-aligned row beside the hamburger. */
+  .site-header__actions {
+    width: auto;
+    order: 1;
+    margin-left: auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    border-top: 0;
+    padding-top: 0;
+    margin-top: 0;
+  }
+
+  /* Compact Subscribe pill and account/login buttons. */
+  .site-header__cta {
+    font-size: 0.78rem;
+    padding: 6px 12px;
+  }
+
+  .site-header__auth {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    text-align: center;
+  }
+
+  /* Role and subscription badges are account metadata, not header
+     essentials; they remain available on /account. */
+  .site-header__user-info {
+    display: none;
+  }
+
+  .site-header__user {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  /* Hamburger stays on the top row, at the far right. */
   .site-header__menu-btn {
     display: inline-flex;
     order: 2;
   }
 
+  /* Nav opens as a full-width panel below the row. */
   .site-header nav {
+    order: 3;
+    flex-basis: 100%;
     width: 100%;
     display: none;
     flex-direction: column;
     gap: 0;
     border-top: 1px solid #e4d9cd;
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: 6px;
+    padding-top: 6px;
   }
 
   .site-header nav.site-header__nav--open {
@@ -832,7 +915,7 @@ textarea {
 
   .site-header nav > a {
     text-align: left;
-    padding: 10px 4px;
+    padding: 8px 4px;
     border-bottom: 1px solid #e4d9cd;
   }
 
@@ -846,7 +929,7 @@ textarea {
     width: 100%;
     text-align: left;
     justify-content: space-between;
-    padding: 10px 4px;
+    padding: 8px 4px;
     border-bottom: 1px solid #e4d9cd;
   }
 
@@ -866,24 +949,15 @@ textarea {
     border-bottom: 1px solid #e4d9cd;
   }
 
-  .site-header__actions {
-    width: 100%;
-    justify-content: center;
-    border-top: 1px solid #eee4db;
-    padding-top: 10px;
-    margin-top: 8px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .site-header__user {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
   .wine-hero {
     min-height: 520px;
+  }
+}
+
+/* Reduced motion: hide/show the header instantly rather than sliding. */
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: none;
   }
 }
 
