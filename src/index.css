@@ -2117,12 +2117,29 @@ textarea {
 }
 
 .review-card__meta {
+  align-items: baseline;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
   margin-top: 6px;
 }
 
 .review-card__reviewer {
   color: #9a8c84;
   font-size: 0.75rem;
+}
+
+/* Link from a review shown under a vintage to that review's own page. */
+.review-card__link {
+  color: #27615e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.review-card__link:hover {
+  text-decoration: underline;
 }
 
 .review-card__actions {

@@ -537,6 +537,14 @@ function WineDetail() {
                             <span className="review-card__reviewer">
                               {review.reviewer_name}
                             </span>
+                            {review.slug && (
+                              <Link
+                                to={returnToLink(`/reviews/${review.slug}`)}
+                                className="review-card__link"
+                              >
+                                View review
+                              </Link>
+                            )}
                           </div>
                           {user &&
                             (user.id === review.user_id || canManageReviews) && (
