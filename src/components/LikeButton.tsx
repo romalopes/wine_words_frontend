@@ -24,13 +24,14 @@ export default function LikeButton({
   onChange,
   className = "",
 }: LikeButtonProps) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const { liked, count, pending, error, toggle } = useLike({
     kind,
     identifier,
     initialLiked,
     initialCount,
     enabled: isAuthenticated,
+    ...(user?.id === undefined ? {} : { accountId: user.id }),
     ...(onChange ? { onChange } : {}),
   })
 

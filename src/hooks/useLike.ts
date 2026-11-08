@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { likesApi } from "../services/api"
 import { errorStatus } from "../utils/errors"
 import type { LikeableKind } from "../types/like"
+import { isOfflineEnabled } from "../constants/featureFlags"
+import { putOutboxOperation, queueableFailure } from "../offline"
 
 export interface UseLikeOptions {
   kind: LikeableKind
@@ -11,6 +13,7 @@ export interface UseLikeOptions {
   initialCount: number | null | undefined
   /** When false (anonymous) the control renders read-only and never calls the API. */
   enabled?: boolean
+  accountId?: string | number | null
   onChange?: (state: { liked: boolean; likes_count: number }) => void
 }
 
@@ -26,6 +29,7 @@ export function useLike({
   initialLiked = false,
   initialCount = 0,
   enabled = true,
+  accountId,
   onChange,
 }: UseLikeOptions) {
   const [liked, setLiked] = useState(Boolean(initialLiked))
@@ -51,6 +55,29 @@ export function useLike({
       setCount(result.likes_count)
       onChangeRef.current?.({ liked: result.liked, likes_count: result.likes_count })
     } catch (err) {
+      if (isOfflineEnabled() && accountId != null && queueableFailure(err)) {
+        const desiredLiked = !liked
+        const operationId = `like:${accountId}:${kind}:${identifier}`
+        await putOutboxOperation({
+          id: operationId,
+          idempotencyKey: operationId,
+          accountId: String(accountId),
+          entityType: "like",
+          entityId: `${kind}:${identifier}`,
+          action: "set",
+          payload: { kind, identifier, desiredLiked },
+          createdAt: new Date().toISOString(),
+          attempts: 0,
+          status: "pending",
+        })
+        const nextCount = Math.max(0, count + (desiredLiked ? 1 : -1))
+        setLiked(desiredLiked)
+        setCount(nextCount)
+        onChangeRef.current?.({ liked: desiredLiked, likes_count: nextCount })
+        setError("Waiting to sync")
+        window.dispatchEvent(new CustomEvent("wine-words:outbox-queued"))
+        return
+      }
       if (errorStatus(err) === 401) {
         setError("Sign in to like.")
       } else {
@@ -59,7 +86,7 @@ export function useLike({
     } finally {
       setPending(false)
     }
-  }, [enabled, pending, identifier, kind, liked])
+  }, [enabled, pending, identifier, kind, liked, count, accountId])
 
   return { liked, count, pending, error, toggle, setLiked, setCount }
 }

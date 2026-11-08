@@ -18,6 +18,7 @@ function isValidType(type: string | undefined | null): type is FollowableType {
 export interface NotificationPreferences {
   follow_in_app: boolean
   follow_email: boolean
+  push_enabled?: boolean
   digest_cadence: "none" | "daily" | "weekly"
   digest_last_sent_at: string | null
 }

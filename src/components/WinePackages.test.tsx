@@ -11,6 +11,8 @@ const mockNotificationsList = vi.fn();
 const mockWinesSearch = vi.fn();
 const mockProducersList = vi.fn();
 const mockUsersSearch = vi.fn();
+const mockCachePackageList = vi.fn().mockResolvedValue(null);
+const mockGetCachedPackageList = vi.fn();
 
 vi.mock("../services/api", () => ({
   winePackagesApi: { list: (...args: unknown[]) => mockPackagesList(...args) },
@@ -20,6 +22,14 @@ vi.mock("../services/api", () => ({
   winesApi: { search: (...args: unknown[]) => mockWinesSearch(...args) },
   producersApi: { list: (...args: unknown[]) => mockProducersList(...args) },
   usersApi: { search: (...args: unknown[]) => mockUsersSearch(...args) },
+}));
+
+// Offline list cache: the page writes every successful load and reads the
+// cache back only when the API fails and a fallback is allowed.
+vi.mock("../offline", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../offline")>()),
+  cachePackageList: (...args: unknown[]) => mockCachePackageList(...args),
+  getCachedPackageList: (...args: unknown[]) => mockGetCachedPackageList(...args),
 }));
 
 let currentUser: {
@@ -99,7 +109,9 @@ describe("WinePackages list", () => {
   it("renders the package row with producer, status and review progress", async () => {
     renderList();
 
-    expect(await screen.findByText("Penfolds")).toBeInTheDocument();
+    // The producer name renders twice (desktop table row + mobile card), so
+    // find all instances and assert at least one exists.
+    expect((await screen.findAllByText("Penfolds")).length).toBeGreaterThan(0);
     // Scope the table assertions: the filter dropdowns contain the same labels.
     const table = screen.getByRole("table");
     expect(within(table).getByText("Arrived")).toBeInTheDocument();
@@ -152,7 +164,7 @@ describe("WinePackages list", () => {
     };
     renderList();
 
-    await screen.findByText("Penfolds");
+    await screen.findAllByText("Penfolds");
     expect(
       screen.queryByRole("link", { name: "+ Record Received Package" }),
     ).not.toBeInTheDocument();
@@ -170,7 +182,7 @@ describe("WinePackages list", () => {
     };
     renderList();
 
-    await screen.findByText("Penfolds");
+    await screen.findAllByText("Penfolds");
     expect(
       screen.queryByRole("link", { name: "+ Record Received Package" }),
     ).not.toBeInTheDocument();
@@ -202,5 +214,29 @@ describe("WinePackages list", () => {
 
     expect(await screen.findByText("Network down")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  it("falls back to the cached list when the API is unreachable", async () => {
+    vi.stubEnv("VITE_OFFLINE_ENABLED", "true");
+    mockPackagesList.mockRejectedValue(new Error("Network unavailable"));
+    mockGetCachedPackageList.mockResolvedValue({
+      items: [packageRow],
+      cachedAt: "2026-11-04T10:00:00Z",
+    });
+    renderList();
+
+    // The cached rows render as if the API answered, with no error state.
+    // The producer name renders twice (desktop table row + mobile card).
+    expect((await screen.findAllByText("Penfolds")).length).toBeGreaterThan(0);
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("Arrived")).toBeInTheDocument();
+    expect(screen.queryByText("Network unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(mockGetCachedPackageList).toHaveBeenCalledTimes(1);
+    vi.unstubAllEnvs();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 });

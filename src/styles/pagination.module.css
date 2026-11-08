@@ -48,3 +48,22 @@
   font-size: 0.8rem;
   margin-left: 0.5rem;
 }
+
+@media (max-width: 768px) {
+  .pagination {
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .pageBtn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .summary {
+    flex-basis: 100%;
+    margin: 0.4rem 0 0;
+    text-align: center;
+  }
+}

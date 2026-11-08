@@ -20,6 +20,11 @@ import type {
   WinePackageItem,
 } from "../types/winePackage";
 import type { WinePackageTimelineEvent } from "../types/api";
+import { useAuth } from "../contexts/AuthContext";
+import { isOfflineEnabled } from "../constants/featureFlags";
+import { cachePackageDetail, getCachedPackageDetail } from "../offline";
+import { mayUseOfflineFallback } from "../offline/fallback";
+import OfflineBadge from "./OfflineBadge";
 
 // One wine package: what arrived, who is responsible, how the reviews are
 // going, and the workflow actions available right now.
@@ -31,6 +36,7 @@ function WinePackageDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const returnToLink = useReturnToLink();
+  const { user } = useAuth();
 
   const [pkg, setPkg] = useState<WinePackage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +48,8 @@ function WinePackageDetail() {
   const [showReject, setShowReject] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [timeline, setTimeline] = useState<WinePackageTimelineEvent[]>([]);
+  const [offlineCopy, setOfflineCopy] = useState(false);
+  const [cachedAt, setCachedAt] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -52,14 +60,25 @@ function WinePackageDetail() {
       ]);
       setPkg(data);
       setTimeline(activity.events || []);
+      setOfflineCopy(false);
+      if (isOfflineEnabled() && user?.id) setCachedAt(await cachePackageDetail(user.id, data));
     } catch (err) {
+      if (isOfflineEnabled() && user?.id && mayUseOfflineFallback(err)) {
+        const cached = await getCachedPackageDetail(user.id, id);
+        if (cached) {
+          setPkg(cached.data);
+          setCachedAt(cached.cachedAt);
+          setOfflineCopy(true);
+          return;
+        }
+      }
       setError(
         err instanceof Error ? err.message : "Failed to load wine package",
       );
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user?.id]);
 
   useEffect(() => {
     load();
@@ -143,7 +162,7 @@ function WinePackageDetail() {
 
   if (!pkg) return null;
 
-  const can = pkg.can || {};
+  const can = offlineCopy ? {} : pkg.can || {};
   const canEdit = Boolean(can.update);
   const canManageItems = Boolean(can.manage_items);
   const canManageImages = Boolean(can.manage_attachments);
@@ -164,6 +183,7 @@ function WinePackageDetail() {
       </Link>
 
       {error && <p className="wine-management__error">{error}</p>}
+      {offlineCopy && <OfflineBadge cachedAt={cachedAt} offlineCopy />}
 
       <div className={styles.detailHeader}>
         <h1>{pkg.producer_name || `Package #${pkg.id}`}</h1>
@@ -284,7 +304,7 @@ function WinePackageDetail() {
               Restore Draft
             </button>
           )}
-          {pkg.can?.accept && (
+          {can.accept && (
             <button
               type="button"
               className="wine-btn wine-btn--secondary"
@@ -294,7 +314,7 @@ function WinePackageDetail() {
               Accept and Assign to Me
             </button>
           )}
-          {pkg.can?.reject && (
+          {can.reject && (
             <button
               type="button"
               className="wine-btn wine-btn--danger"
@@ -304,7 +324,7 @@ function WinePackageDetail() {
               Reject request
             </button>
           )}
-          {pkg.can?.mark_in_transit && (
+          {can.mark_in_transit && (
             <button
               type="button"
               className="wine-btn wine-btn--secondary"
@@ -316,7 +336,7 @@ function WinePackageDetail() {
               Mark in transit
             </button>
           )}
-          {pkg.can?.mark_arrived && (
+          {can.mark_arrived && (
             <button
               type="button"
               className="wine-btn wine-btn--secondary"
@@ -330,12 +350,12 @@ function WinePackageDetail() {
               Mark arrived
             </button>
           )}
-          {pkg.can?.start_reviewing && (
+          {can.start_reviewing && (
             <button type="button" className="wine-btn wine-btn--secondary" disabled={busy} onClick={() => runAction(() => winePackagesApi.startReviewing(pkg.id))}>
               Start Reviewing
             </button>
           )}
-          {pkg.can?.mark_completed && (
+          {can.mark_completed && (
             <button
               type="button"
               className="wine-btn wine-btn--primary"
@@ -352,7 +372,7 @@ function WinePackageDetail() {
               Mark completed
             </button>
           )}
-          {pkg.can?.reopen && (
+          {can.reopen && (
             <button
               type="button"
               className="wine-btn wine-btn--secondary"
@@ -362,7 +382,7 @@ function WinePackageDetail() {
               Reopen
             </button>
           )}
-          {pkg.can?.cancel && (
+          {can.cancel && (
             <button
               type="button"
               className="wine-btn wine-btn--danger"

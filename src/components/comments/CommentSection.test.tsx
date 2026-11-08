@@ -141,7 +141,12 @@ describe("CommentSection", () => {
     await user.click(screen.getByRole("button", { name: "Comment" }))
 
     await waitFor(() => expect(screen.getByText("Hello")).toBeInTheDocument())
-    expect(commentsApi.create).toHaveBeenCalledWith("wine", "some-wine", "Hello")
+    expect(commentsApi.create).toHaveBeenCalledWith(
+      "wine",
+      "some-wine",
+      "Hello",
+      expect.any(String),
+    )
   })
 
   it("keeps the typed text when the request fails", async () => {
@@ -178,7 +183,7 @@ describe("CommentSection", () => {
 
     await waitFor(() => expect(screen.getByText("I agree.")).toBeInTheDocument())
     // Only the comment id is sent: the API derives the commentable from it.
-    expect(commentsApi.reply).toHaveBeenCalledWith(1, "I agree.")
+    expect(commentsApi.reply).toHaveBeenCalledWith(1, "I agree.", expect.any(String))
   })
 
   it("puts a reply to a reply in the same thread, as the API's parent says", async () => {
@@ -209,7 +214,7 @@ describe("CommentSection", () => {
     await user.click(within(replyForm).getByRole("button", { name: "Reply" }))
 
     await waitFor(() => expect(screen.getByText("Same thread.")).toBeInTheDocument())
-    expect(commentsApi.reply).toHaveBeenCalledWith(2, "Same thread.")
+    expect(commentsApi.reply).toHaveBeenCalledWith(2, "Same thread.", expect.any(String))
 
     // It sits beside "First reply." inside comment 1's reply list, not under it.
     const replyLists = document.querySelectorAll(".comment__replies")

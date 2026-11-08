@@ -5,6 +5,10 @@
     "directory": "./dist",
     "not_found_handling": "single-page-application",
   },
+  // NOTE: `previews.vars` are Worker RUNTIME variables. They do NOT change the
+  // API URL baked into the browser bundle — Vite inlines VITE_* at build time.
+  // To point a preview at a different API, set VITE_API_BASE_URL in the
+  // Cloudflare Workers Builds *build environment* and rebuild. See README.md.
   "previews": {
     "vars": {
       "VITE_API_BASE_URL": "https://api.wine-words.beachvolleyballhub.com/api/v1",

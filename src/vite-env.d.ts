@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 /// <reference types="vitest" />
 /// <reference types="vitest/globals" />
+/// <reference types="vite-plugin-pwa/client" />
 
 import type {
   AppleSdk,
@@ -33,6 +34,12 @@ interface ImportMetaEnv {
   readonly VITE_MICROSOFT_TENANT_ID?: string
   readonly VITE_FACEBOOK_APP_ID?: string
   readonly VITE_FACEBOOK_GRAPH_VERSION?: string
+  /** Issue #201, Phase 1 — enable the mobile bottom navigation shell. */
+  readonly VITE_MOBILE_LAYOUT_ENABLED?: string
+  /** Issue #201, Phase 4 — register the generated PWA service worker. */
+  readonly VITE_PWA_ENABLED?: string
+  /** Issue #201, Phase 5 — enable IndexedDB repositories and offline UX. */
+  readonly VITE_OFFLINE_ENABLED?: string
 }
 
 interface ImportMeta {

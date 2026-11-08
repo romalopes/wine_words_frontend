@@ -35,6 +35,8 @@ export default function CommentSection({
     loading,
     pending,
     error,
+    offlineCopy,
+    cachedAt,
     create,
     reply,
     update,
@@ -87,6 +89,12 @@ export default function CommentSection({
       <h2 className="comments__title">
         {title} ({count})
       </h2>
+
+      {offlineCopy && (
+        <p className="comments__offline-status" role="status">
+          Offline comments · last updated {cachedAt ? new Date(cachedAt).toLocaleString() : "previously"}
+        </p>
+      )}
 
       {!isAuthenticated ? (
         <p className="comments__status">Please log in to join the discussion.</p>

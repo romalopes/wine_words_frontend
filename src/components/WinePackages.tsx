@@ -16,6 +16,10 @@ import {
 import { formatDate, deadlineLabel } from "../utils/dates";
 import DetailHero from "./DetailHero";
 import styles from "./winePackages.module.css";
+import { isOfflineEnabled } from "../constants/featureFlags";
+import { cachePackageList, getCachedPackageList } from "../offline";
+import type { WinePackageListItem } from "../types/winePackage";
+import { responseItems } from "../types/common";
 
 // Wine packages list: every shipment a reviewer is responsible for, with the
 // review deadline front and centre. Filters live in the URL so a filtered view
@@ -32,8 +36,23 @@ function WinePackages() {
   const query = searchParams.get("query") || "";
   const [queryDraft, setQueryDraft] = useState(query);
 
-  const list = usePagedList({
-    fetcher: (params) => winePackagesApi.list(params),
+  const list = usePagedList<WinePackageListItem>({
+    fetcher: async (params) => {
+      const cacheId = JSON.stringify(params);
+      try {
+        const response = await winePackagesApi.list(params);
+        if (isOfflineEnabled() && user?.id) await cachePackageList(user.id, cacheId, responseItems(response));
+        return response;
+      } catch (error) {
+        if (isOfflineEnabled() && user?.id) {
+          const cached = await getCachedPackageList(user.id, cacheId);
+          if (cached) {
+            return { items: cached.items, page: 1, per_page: cached.items.length, total_count: cached.items.length, total_pages: 1 };
+          }
+        }
+        throw error;
+      }
+    },
     extraParams: { status, source, overdue: overdue ? "true" : "", query },
   });
 
@@ -262,6 +281,25 @@ function WinePackages() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className={styles.mobileCards} aria-label="Wine packages">
+            {list.items.map((pkg) => (
+              <article className={styles.mobileCard} key={pkg.id}>
+                <div className={styles.mobileCardHeader}>
+                  <Link to={`/wine-packages/${pkg.id}`} className={styles.producerLink}>
+                    {pkg.producer_name || `Package #${pkg.id}`}
+                  </Link>
+                  <PackageStatusBadge status={pkg.status} />
+                </div>
+                <p>{sourceLabel(pkg.source)}</p>
+                {pkg.reviewer_name && <p>Reviewer: {pkg.reviewer_name}</p>}
+                <p>{pkg.arrived_at ? `Arrived ${formatDate(pkg.arrived_at)}` : pkg.expected_at ? `Expected ${formatDate(pkg.expected_at)}` : "Date not set"}</p>
+                {pkg.review_deadline && <p className={pkg.overdue ? styles.overdue : undefined}>Deadline {formatDate(pkg.review_deadline)} · {deadlineLabel(pkg.review_deadline)}</p>}
+                <p>{pkg.review_progress?.requested > 0 ? `${pkg.review_progress.percent}% reviewed (${pkg.review_progress.reviewed}/${pkg.review_progress.requested})` : `${pkg.items_count} item(s)`}</p>
+                <Link to={`/wine-packages/${pkg.id}`} className="wine-btn wine-btn--ghost">Open package</Link>
+              </article>
+            ))}
           </div>
 
           <Pagination

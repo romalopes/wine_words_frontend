@@ -15,12 +15,12 @@ function commentsPath(kind: CommentableKind, id: CommentableId): string {
 export interface CommentsApi {
   list(kind: CommentableKind, id: CommentableId): Promise<CommentThread>
   /** New top-level comment on a wine / review / article. */
-  create(kind: CommentableKind, id: CommentableId, body: string): Promise<CommentDTO>
+  create(kind: CommentableKind, id: CommentableId, body: string, idempotencyKey?: string): Promise<CommentDTO>
   /**
    * Reply to a comment. The API derives the commentable from the parent, so no
    * commentable type or id is ever sent here.
    */
-  reply(commentId: number, body: string): Promise<CommentDTO>
+  reply(commentId: number, body: string, idempotencyKey?: string): Promise<CommentDTO>
   update(commentId: number, body: string): Promise<CommentDTO>
   /** Soft delete: the thread keeps its shape and the API returns the tombstone. */
   remove(commentId: number): Promise<CommentDTO>
@@ -36,18 +36,20 @@ export function createCommentsApi(request: ApiRequester): CommentsApi {
     list(kind, id) {
       return request<CommentThread>(commentsPath(kind, id), { method: "GET" })
     },
-    create(kind, id, body) {
+    create(kind, id, body, idempotencyKey) {
       return request<CommentDTO>(commentsPath(kind, id), {
         method: "POST",
         auth: true,
         body: { comment: { body } },
+        ...(idempotencyKey ? { headers: { "Idempotency-Key": idempotencyKey } } : {}),
       })
     },
-    reply(commentId, body) {
+    reply(commentId, body, idempotencyKey) {
       return request<CommentDTO>(`/comments/${commentId}/replies`, {
         method: "POST",
         auth: true,
         body: { comment: { body } },
+        ...(idempotencyKey ? { headers: { "Idempotency-Key": idempotencyKey } } : {}),
       })
     },
     update(commentId, body) {

@@ -23,14 +23,21 @@
     "test:e2e:report": "playwright show-report",
     "type-check": "tsc -b --noEmit",
     "wrangler-deploy": "wrangler deploy",
-    "wrangler-dev": "wrangler dev"
+    "wrangler-dev": "wrangler dev",
+    "native:sync": "npm run build && cap sync",
+    "native:android": "npm run native:sync && cap open android",
+    "native:ios": "npm run native:sync && cap open ios"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/core": "^8.6.0",
     "@heroui/react": "^3.2.6",
     "@heroui/styles": "^3.2.6",
     "@neondatabase/neon-js": "0.6.1-beta",
     "@sentry/react": "^11.7.0",
     "bootstrap": "^5.3.3",
+    "dexie": "^4.4.7",
     "dompurify": "^3.4.14",
     "nouislider": "^15.8.1",
     "react": "^19.0.0",
@@ -43,6 +50,9 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
     "@eslint/js": "^9.21.0",
     "@playwright/test": "^1.64.1",
     "@testing-library/jest-dom": "^7.0.1",
@@ -56,11 +66,13 @@
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
+    "fake-indexeddb": "^6.2.7",
     "globals": "^15.15.0",
     "jsdom": "^29.1.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.70.1",
     "vite": "^6.4.3",
+    "vite-plugin-pwa": "^2.0.0",
     "vitest": "^4.1.11"
   },
   "optionalDependencies": {
