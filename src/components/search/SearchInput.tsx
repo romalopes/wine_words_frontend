@@ -6,6 +6,8 @@ interface SearchInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   debounceMs?: number;
+  /** Id of the input, so a page-level `<label htmlFor>` can name it. */
+  id?: string;
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({
@@ -13,6 +15,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   onChange,
   placeholder = 'Search...',
   debounceMs = 300,
+  id,
 }) => {
   const [inputValue, setInputValue] = useState(value);
 
@@ -51,6 +54,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   return (
     <input
       type="text"
+      id={id}
       value={inputValue}
       onChange={(e) => setInputValue(e.target.value)}
       placeholder={placeholder}
