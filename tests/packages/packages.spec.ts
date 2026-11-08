@@ -3,7 +3,7 @@ import { test, expect } from "../fixtures/test";
 test("privileged users see package workflow data", async ({ reviewerPage }) => {
   await reviewerPage.goto("/wine-packages");
   await expect(reviewerPage.getByRole("heading", { name: "Wine Packages" })).toBeVisible();
-  await expect(reviewerPage.getByText("Playwright Estate", { exact: true })).toBeVisible();
+  await expect(reviewerPage.getByText("Playwright Estate", { exact: true }).first()).toBeVisible();
   await expect(reviewerPage.getByRole("link", { name: "+ Record Received Package" })).toBeVisible();
 });
 
