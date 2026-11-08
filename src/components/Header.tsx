@@ -245,9 +245,6 @@ function Header() {
               borderRadius: ".35rem",
             }}
           />
-          <p className="site-header__subtitle">
-            Explore producers, wines and reviews
-          </p>
         </div>
       </NavLink>
       <button
@@ -295,13 +292,18 @@ function Header() {
         className={menuOpen ? "site-header__nav--open" : undefined}
         aria-label="Primary navigation"
       >
-        <NavDropdown
-          label="Wines"
-          items={[
-            { label: `All Wines (${counts.totals?.wine || 0})`, to: "/wines" },
-            ...navCategories("for_wine", "sort_order_wine"),
-          ]}
-        />
+        {isAdminUser && (
+          <NavDropdown
+            label="Wines"
+            items={[
+              {
+                label: `All Wines (${counts.totals?.wine || 0})`,
+                to: "/wines",
+              },
+              ...navCategories("for_wine", "sort_order_wine"),
+            ]}
+          />
+        )}
         <NavDropdown
           label="Reviews"
           items={[

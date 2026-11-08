@@ -80,8 +80,7 @@ function Dashboard() {
   return (
     <main className="wine-app">
       <p className="lede dashboard__lede">
-        Welcome{user ? `, ${user.email.split("@")[0]}` : ""} to Wine Words. Your
-        cellar command centre.
+        Welcome{user ? `, ${user.email.split("@")[0]}` : ""} to Wine Words.
       </p>
       {!user && (
         <p className="dashboard__sign-in-prompt">
