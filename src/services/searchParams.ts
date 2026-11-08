@@ -21,6 +21,27 @@ export function buildQuery(params: SearchParams): string {
 }
 
 /**
+ * Drops the entries that only restate a default, so a pristine listing keeps a
+ * clean URL (`/reviews`) instead of one that spells the request out
+ * (`/reviews?page=1&per_page=20&sort=relevance`).
+ *
+ * Values are compared as strings because the URL parses numbers (`page: 1`)
+ * while a caller may pass either `20` or `"20"` as its default.
+ */
+export function pruneDefaults(
+  params: SearchParams,
+  defaults: SearchParams = {},
+): SearchParams {
+  const pruned: SearchParams = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (value === defaults[key]) continue;
+    if (String(value) === String(defaults[key])) continue;
+    pruned[key] = value;
+  }
+  return pruned;
+}
+
+/**
  * Parses a query string into SearchParams.
  * Numbers are parsed as numbers if they look like integers.
  */

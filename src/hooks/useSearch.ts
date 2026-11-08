@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { buildQuery, parseQuery } from '../services/searchParams';
+import { buildQuery, parseQuery, pruneDefaults } from '../services/searchParams';
 import type { SearchParams } from '../services/searchParams';
 import type { Paginated, ResourceResponse } from '../types/common';
 import type { RequestSignal } from '../types/api';
@@ -112,6 +112,14 @@ export function useSearch<T>(
   const [data, setData] = useState<PaginatedResult<T> | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Shared by the URL sync below. Callers pass `defaultParams` as an inline
+  // object literal, so the serialised form is what keeps the effect stable.
+  const defaultsKey = JSON.stringify(defaultParams);
+
+  // The keys the URL sync last wrote, so a key that disappears from `params`
+  // can still be removed from the URL (see the sync effect).
+  const syncedKeys = useRef<string[]>([]);
+
   // The typing debounce lives in the search input, which notifies this hook
   // once per pause. Debouncing again here stacked a second 300ms delay on every
   // keystroke — 600ms before a request even started — so the term is used as
@@ -171,16 +179,37 @@ export function useSearch<T>(
 
   // Sync the URL with `params`, touching only the keys this hook owns so the
   // router's own query keys (e.g. `category`) survive untouched.
+  //
+  // Keys that still hold their default are dropped instead of written: the
+  // defaults are an implementation detail of the request (page 1, 20 rows,
+  // relevance), so spelling them out only made for noisy URLs like
+  // `/reviews?page=1&per_page=20&sort=relevance`. The `defaults` object is
+  // serialised into a key because callers pass it inline, which would otherwise
+  // give the effect a fresh identity on every render.
+  //
+  // `syncedKeys` remembers what was written last time: `removeFilter()` drops a
+  // key from `params` entirely, and without the memory that key would stay in
+  // the URL (nothing left in `params` to overwrite or delete it).
   useEffect(() => {
+    const defaults = JSON.parse(defaultsKey) as SearchParams;
+    const pruned = pruneDefaults(params, defaults);
     const next = new URLSearchParams(window.location.search);
-    Object.keys(params).forEach((key) => next.delete(key));
-    new URLSearchParams(buildQuery(params)).forEach((value, key) => {
+    // Delete every key this hook owns — defaults included — so a value that no
+    // longer differs from its default leaves the URL instead of lingering.
+    const owned = new Set([
+      ...syncedKeys.current,
+      ...Object.keys(defaults),
+      ...Object.keys(params),
+    ]);
+    owned.forEach((key) => next.delete(key));
+    new URLSearchParams(buildQuery(pruned)).forEach((value, key) => {
       next.set(key, value);
     });
+    syncedKeys.current = Object.keys(pruned);
     const search = next.toString();
     const newUrl = `${window.location.pathname}${search ? `?${search}` : ""}`;
     window.history.replaceState({ path: newUrl }, "", newUrl);
-  }, [params]);
+  }, [params, defaultsKey]);
 
   // Helper updaters for UI components. Returning the previous object when the
   // value is unchanged lets React bail out of the re-render, so a no-op update
