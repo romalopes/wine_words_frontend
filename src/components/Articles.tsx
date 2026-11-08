@@ -18,7 +18,7 @@ import type { SearchParams } from "../services/searchParams";
 import type { Article } from "../types/article";
 import type { QueryParams } from "../types/common";
 import type { ArticleGroup, RequestSignal } from "../types/api";
-import { SearchBar } from "./search";
+import { AdvancedSearchFilters, SearchBar } from "./search";
 
 function Articles() {
   const { user } = useAuth();
@@ -83,6 +83,11 @@ function Articles() {
   // callback's identity, so changing it forces a refetch even when the page
   // number and filters are unchanged.
   const [reloadToken, setReloadToken] = useState(0);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  // Whether the shared panel's form is expanded (the panel header's
+  // "Hide form" / "Show form" toggle).
+  const [formExpanded, setFormExpanded] = useState(true);
+  const [advancedFilters, setAdvancedFilters] = useState<Record<string, any>>({});
 
   // Fetch function for useSearch. Every non-search filter is passed as a
   // primitive dependency so the callback identity stays stable between
@@ -97,12 +102,13 @@ function Articles() {
           : categoryId
             ? { category_id: categoryId }
             : {}),
+        ...advancedFilters,
         ...params,
       };
       if (merged.per_page === undefined) merged.per_page = 20;
       return articlesApi.list(merged, options);
     },
-    [scope, statusFilter, isUncategorised, categoryId, reloadToken],
+    [scope, statusFilter, isUncategorised, categoryId, reloadToken, advancedFilters],
   );
 
   const {
@@ -150,6 +156,13 @@ function Articles() {
       const params: QueryParams = {};
       if (searchTerm) params.query = searchTerm;
       if (statusFilter !== "all") params.status = statusFilter;
+      // The advanced filters ride along too; the grouped endpoint forwards
+      // them to the same filter chain as the paginated feed.
+      Object.entries(advancedFilters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          params[key] = value;
+        }
+      });
       const rows = await articlesApi.grouped(params, options);
       setGroups(Array.isArray(rows) ? rows : []);
     } catch (error) {
@@ -158,7 +171,7 @@ function Articles() {
     } finally {
       if (!options?.signal?.aborted) setLoadingGroups(false);
     }
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, advancedFilters]);
 
   // Load the grouped view whenever the listing is not scoped to one category,
   // and re-run it when the search term or the status filter changes —
@@ -249,6 +262,11 @@ function Articles() {
   if (scope !== "all") activeFilters.scope = scope;
   if (statusFilter !== "all") activeFilters.status = statusFilter;
   if (selectedCategory) activeFilters.category = selectedCategory;
+  Object.entries(advancedFilters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      activeFilters[key] = Array.isArray(value) ? value.join(",") : String(value);
+    }
+  });
 
   // Each chip is backed by a different owner, so removal is dispatched per key
   // rather than funnelled through the search hook's params.
@@ -264,11 +282,15 @@ function Articles() {
       });
       return;
     }
+    if (Object.prototype.hasOwnProperty.call(advancedFilters, key)) {
+      setAdvancedFilters((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      return;
+    }
     removeFilter(key as keyof SearchParams);
-  };
-
-  const toggleFilterDrawer = () => {
-    // Placeholder for filter drawer toggle logic
   };
 
   return (
@@ -305,22 +327,55 @@ function Articles() {
         </div>
       )}
 
-      {/* Search bar */}
-      <SearchBar
-        placeholder="Search articles…"
-        onSearch={(value) => setFilter("query", effectiveSearchTerm(value))}
-        activeFilters={activeFilters}
-        onRemoveFilter={handleRemoveFilter}
-        sortOptions={[
-          { value: "relevance", label: "Relevance" },
-          { value: "recent", label: "Most recent" },
-          { value: "oldest", label: "Oldest" },
-        ]}
-        currentSort={(params.sort as string) ?? "relevance"}
-        onSortChange={setSort}
-        showFilterButton={true}
-        onFilterToggle={toggleFilterDrawer}
-      />
+      {/* The /wines-style advanced search: one toggle above the search area;
+          the simple search bar hides while the panel is open. Filters apply
+          live through `onChange`. */}
+      <div className="advanced-search-toggle-row">
+        <button
+          type="button"
+          className="advanced-search-toggle"
+          onClick={() => {
+            setAdvancedOpen(!advancedOpen);
+            setFormExpanded(!advancedOpen);
+          }}
+          aria-expanded={advancedOpen}
+        >
+          {advancedOpen ? "Hide advanced search" : "Advanced search →"}
+        </button>
+      </div>
+
+      {!advancedOpen && (
+        <SearchBar
+          placeholder="Search articles…"
+          onSearch={(value) => setFilter("query", effectiveSearchTerm(value))}
+          activeFilters={activeFilters}
+          onRemoveFilter={handleRemoveFilter}
+          sortOptions={[
+            { value: "relevance", label: "Relevance" },
+            { value: "recent", label: "Most recent" },
+            { value: "oldest", label: "Oldest" },
+          ]}
+          currentSort={(params.sort as string) ?? "relevance"}
+          onSortChange={setSort}
+          showSort={false}
+        />
+      )}
+
+      {advancedOpen && (
+        <AdvancedSearchFilters
+          title="Advanced Article Search"
+          open={formExpanded}
+          onToggleOpen={setFormExpanded}
+          initialFilters={advancedFilters}
+          onChange={setAdvancedFilters}
+          submitLabel="Search articles"
+          onSubmit={(filters) => {
+            setAdvancedFilters(filters);
+            setAdvancedOpen(false);
+          }}
+          onClear={() => setAdvancedFilters({})}
+        />
+      )}
 
       {!showForm && loading ? (
         <p className="wine-management__loading">Loading articles…</p>

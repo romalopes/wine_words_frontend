@@ -123,6 +123,55 @@
   box-sizing: border-box;
 }
 
+/* Region / grape pickers (RegionSearch / GrapeSearch render their own markup
+   with global class names). The row label already names the field, so the
+   picker's inner caption is hidden and the input matches the form's inputs;
+   the as-you-type suggestions render as a compact dropdown rather than full
+   review cards. */
+.wideControl :global(.producer-search) input {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.6rem;
+  width: 100%;
+}
+
+.wideControl :global(.producer-search) input:focus {
+  border-color: #8a5a44;
+  outline: 2px solid #8a5a44;
+  outline-offset: 1px;
+}
+
+.wideControl :global(.producer-search) > span {
+  display: none;
+}
+
+.wideControl :global(.review-list) {
+  border-top: none;
+  gap: 2px;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.wideControl :global(.review-list) :global(.review-card) {
+  background: #fff;
+  border: 1px solid #eee4db;
+  border-radius: 6px;
+  box-shadow: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  width: 100%;
+}
+
+.wideControl :global(.review-list) :global(.review-card):hover {
+  background: #f6efe9;
+  border-color: #8a5a44;
+}
+
 .miniLabel {
   font-size: 0.75rem;
   color: #999;

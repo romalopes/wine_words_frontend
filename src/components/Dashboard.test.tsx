@@ -1,4 +1,11 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import Dashboard from "./Dashboard";
@@ -16,6 +23,13 @@ vi.mock("../services/api", () => ({
   statsApi: { get: () => mockStats() },
   articlesApi: { list: (...args: unknown[]) => mockArticlesList(...args) },
   reviewsApi: { all: (...args: unknown[]) => mockReviewsAll(...args) },
+  // Rendered by the advanced search panel's region picker on mount.
+  regionsApi: { list: () => Promise.resolve([]) },
+  // Rendered by the advanced search panel's grape picker on type.
+  grapesApi: { search: () => Promise.resolve([]) },
+  // Loaded by the advanced search panel for taste parameter labels; an empty
+  // catalogue falls back to the humanized slugs ("Acidity", "Body", ...).
+  tasteParametersApi: { list: () => Promise.resolve([]) },
 }));
 
 vi.mock("../contexts/AuthContext", () => ({
@@ -260,5 +274,153 @@ describe("Dashboard search", () => {
     expect(
       await screen.findByRole("heading", { name: "Latest Reviews" }),
     ).toBeInTheDocument();
+  });
+
+  it("opens the advanced panel before any term is typed", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+
+    // The panel renders independently of the search term — this is the
+    // regression case: it used to be nested inside the results block and
+    // only appeared once a term existed.
+    expect(
+      await screen.findByText("Content types"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: "Search reviews" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Search articles" }),
+    ).toBeChecked();
+
+    // The simple search box hides while the panel is open (/wines behavior),
+    // and the panel header carries the wine-style "Hide form" toggle.
+    expect(
+      screen.queryByRole("textbox", { name: "Search reviews and articles" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hide form" })).toBeInTheDocument();
+  });
+
+  it("hides the advanced panel when toggled again", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    const toggle = screen.getByRole("button", { name: /Advanced search/ });
+    await user.click(toggle);
+    expect(await screen.findByText("Content types")).toBeInTheDocument();
+
+    await user.click(toggle);
+    expect(screen.queryByText("Content types")).not.toBeInTheDocument();
+  });
+
+  it("re-runs the search when an advanced filter changes", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      "malbec",
+    );
+    await screen.findByRole("heading", { name: /Reviews \(1\)/ });
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+    await user.type(
+      screen.getByPlaceholderText("e.g. Penfolds"),
+      "Penfolds",
+    );
+
+    await waitFor(() => {
+      const calls = mockReviewsAll.mock.calls.filter(
+        (call) => (call[0] as { query?: string } | undefined)?.query,
+      );
+      const last = calls[calls.length - 1]?.[0] as
+        | { producer_name?: string }
+        | undefined;
+      expect(last?.producer_name).toBe("Penfolds");
+    });
+  });
+
+  it("sends alcohol, closure and style parameters when set", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      "malbec",
+    );
+    await screen.findByRole("heading", { name: /Reviews \(1\)/ });
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+    await user.type(screen.getByLabelText("Alcohol minimum"), "13");
+    await user.selectOptions(screen.getByLabelText("Type of closure"), "Cork");
+    await user.selectOptions(screen.getByLabelText("Sparkling"), "true");
+
+    await waitFor(() => {
+      const calls = mockReviewsAll.mock.calls.filter(
+        (call) => (call[0] as { query?: string } | undefined)?.query,
+      );
+      const last = calls[calls.length - 1]?.[0] as
+        | { alcohol_min?: string; closure?: string; sparkling?: string }
+        | undefined;
+      expect(last?.alcohol_min).toBe("13");
+      expect(last?.closure).toBe("Cork");
+      expect(last?.sparkling).toBe("true");
+    });
+  });
+
+  it("sends a taste parameter range when a slider moves", async () => {
+    // jsdom has no layout, so nouislider needs a non-zero rect — the same stub
+    // the wine advanced-search tests use.
+    Object.defineProperty(HTMLElement.prototype, "getBoundingClientRect", {
+      configurable: true,
+      value: function () {
+        return {
+          left: 0, right: 200, top: 0, bottom: 4,
+          width: 200, height: 4, x: 0, y: 0, toJSON: () => ({}),
+        } as DOMRect;
+      },
+    });
+
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      "malbec",
+    );
+    await screen.findByRole("heading", { name: /Reviews \(1\)/ });
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+
+    const lower = screen
+      .getAllByRole("slider")
+      .find((el) => el.getAttribute("aria-label") === "Acidity minimum");
+    expect(lower).toBeDefined();
+
+    act(() => {
+      lower?.focus();
+      fireEvent.keyDown(lower!, { key: "ArrowRight" });
+    });
+
+    await waitFor(() => {
+      const calls = mockReviewsAll.mock.calls.filter(
+        (call) => (call[0] as { query?: string } | undefined)?.query,
+      );
+      const last = calls[calls.length - 1]?.[0] as
+        | { acidity_min?: number }
+        | undefined;
+      // One arrow step to the right on the 0-10 scale.
+      expect(last?.acidity_min).toBe(1);
+    });
   });
 });

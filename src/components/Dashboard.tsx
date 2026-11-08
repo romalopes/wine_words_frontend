@@ -4,7 +4,7 @@ import { articlesApi, reviewsApi, statsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import ArticleCard from "./ArticleCard";
 import ReviewCard from "./ReviewCard";
-import { SearchInput } from "./search";
+import { SearchInput, AdvancedSearchFilters } from "./search";
 import { isAbortError } from "../hooks/useSearch";
 import {
   effectiveSearchTerm,
@@ -87,10 +87,12 @@ const EMPTY_SEARCH_RESULTS: SearchResults = {
  * rows, so `total_count` is what lets the section say "Reviews (12)" and offer
  * a "see all" link that is honest about how much is left.
  */
-function asList<T>(
-  response: T[] | { items?: T[]; total_count?: number },
-): { items: T[]; total: number } {
-  if (Array.isArray(response)) return { items: response, total: response.length };
+function asList<T>(response: T[] | { items?: T[]; total_count?: number }): {
+  items: T[];
+  total: number;
+} {
+  if (Array.isArray(response))
+    return { items: response, total: response.length };
   const items = response.items ?? [];
   return { items, total: response.total_count ?? items.length };
 }
@@ -107,6 +109,16 @@ function Dashboard() {
     useState<SearchResults>(EMPTY_SEARCH_RESULTS);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  // Whether the shared panel's form is expanded (the panel header's
+  // "Hide form" / "Show form" toggle), separate from whether the panel is
+  // shown at all.
+  const [formExpanded, setFormExpanded] = useState(true);
+  const [searchReviews, setSearchReviews] = useState(true);
+  const [searchArticles, setSearchArticles] = useState(true);
+  const [advancedFilters, setAdvancedFilters] = useState<Record<string, any>>(
+    {},
+  );
   // Blank until the term is long enough to be worth a request, matching the
   // reviews/articles listings (and keeping the API off one-letter searches).
   const searchTerm = effectiveSearchTerm(searchInput, MIN_SEARCH_LENGTH);
@@ -145,11 +157,21 @@ function Dashboard() {
     // could not offer a "see all".
     Promise.all([
       reviewsApi.all(
-        { query: searchTerm, page: 1, per_page: SEARCH_PREVIEW_PER_TYPE },
+        {
+          ...advancedFilters,
+          query: searchTerm,
+          page: 1,
+          per_page: SEARCH_PREVIEW_PER_TYPE,
+        },
         { signal: controller.signal },
       ),
       articlesApi.list(
-        { query: searchTerm, page: 1, per_page: SEARCH_PREVIEW_PER_TYPE },
+        {
+          ...advancedFilters,
+          query: searchTerm,
+          page: 1,
+          per_page: SEARCH_PREVIEW_PER_TYPE,
+        },
         { signal: controller.signal },
       ),
     ])
@@ -177,7 +199,7 @@ function Dashboard() {
       cancelled = true;
       controller.abort();
     };
-  }, [searchTerm]);
+  }, [searchTerm, advancedFilters]);
 
   return (
     <main className="wine-app">
@@ -196,25 +218,96 @@ function Dashboard() {
         className="dashboard__search"
         aria-label="Search reviews and articles"
       >
-        <label className="dashboard__search-label" htmlFor="dashboard-search">
-          Search reviews and articles
-        </label>
-        <SearchInput
-          id="dashboard-search"
-          placeholder="Search reviews and articles…"
-          onChange={setSearchInput}
-        />
+        <div className="advanced-search-toggle-row">
+          <button
+            type="button"
+            className="advanced-search-toggle"
+            onClick={() => {
+              setAdvancedOpen(!advancedOpen);
+              setFormExpanded(!advancedOpen);
+            }}
+            aria-expanded={advancedOpen}
+          >
+            {advancedOpen ? "Hide advanced search" : "Advanced search →"}
+          </button>
+        </div>
+
+        {/* The simple search box hides while the advanced panel is open — the
+            same exclusive-mode behavior as /wines. */}
+        {!advancedOpen && (
+          <>
+            <label className="dashboard__search-label" htmlFor="dashboard-search">
+              Search reviews and articles
+            </label>
+            <SearchInput
+              id="dashboard-search"
+              placeholder="Search reviews and articles…"
+              onChange={setSearchInput}
+            />
+          </>
+        )}
+
+        {/* The advanced panel is independent of the search term: it can be
+            opened before typing anything, and its filter changes re-run the
+            search once a term exists. The panel itself is the shared advanced
+            search (the /wines visual); only the content-type picker is
+            dashboard-specific. */}
+        {advancedOpen && (
+          <div className="dashboard__advanced-area">
+            <div className="dashboard__advanced-contenttypes">
+              <h4>Content types</h4>
+              <div className="dashboard__advanced-checkboxes">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={searchReviews}
+                    onChange={(e) => setSearchReviews(e.target.checked)}
+                    disabled={searching}
+                  />
+                  Search reviews
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={searchArticles}
+                    onChange={(e) => setSearchArticles(e.target.checked)}
+                    disabled={searching}
+                  />
+                  Search articles
+                </label>
+              </div>
+              <p className="dashboard__advanced-note">
+                Both types are selected by default. Clear one to search only
+                that content type.
+              </p>
+            </div>
+
+            <AdvancedSearchFilters
+              title="Advanced Search"
+              open={formExpanded}
+              onToggleOpen={setFormExpanded}
+              initialFilters={advancedFilters}
+              onChange={setAdvancedFilters}
+              submitLabel="Search"
+              onSubmit={(filters) => {
+                setAdvancedFilters(filters);
+                setAdvancedOpen(false);
+              }}
+              onClear={() => setAdvancedFilters({})}
+            />
+          </div>
+        )}
 
         {searchTerm && (
           <div className="dashboard__search-results">
             <p className="dashboard__search-status" role="status">
               {searching
                 ? "Searching…"
-                : searchError ??
+                : (searchError ??
                   (!searchResults.reviews.length &&
                   !searchResults.articles.length
                     ? `No reviews or articles match “${searchTerm}”.`
-                    : "")}
+                    : ""))}
             </p>
 
             {searchResults.reviews.length > 0 && (
@@ -277,7 +370,7 @@ function Dashboard() {
         )}
       </section>
 
-      <div className="content-grid dashboard__stats-grid">
+      {/* <div className="content-grid dashboard__stats-grid">
         {dashboardCards.map((card) => (
           <Link key={card.title} to={card.to} className="dashboard__stat-card">
             <div
@@ -293,7 +386,7 @@ function Dashboard() {
             </div>
           </Link>
         ))}
-      </div>
+      </div> */}
 
       {/* While a term is being searched the listing sections step aside, so the
           page shows the results rather than two competing collections. */}

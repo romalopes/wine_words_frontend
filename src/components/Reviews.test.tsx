@@ -23,6 +23,11 @@ vi.mock("../services/api", () => ({
     destroy: vi.fn().mockResolvedValue({}),
   },
   categoriesApi: { list: () => mockCategoriesList() },
+  // The advanced search panel mounts the region / grape pickers and loads
+  // taste parameter labels.
+  regionsApi: { list: () => Promise.resolve([]) },
+  grapesApi: { search: () => Promise.resolve([]) },
+  tasteParametersApi: { list: () => Promise.resolve([]) },
 }));
 
 // Reviews reads `user` for manage/edit affordances and for gating the
@@ -431,5 +436,38 @@ describe("Reviews", () => {
         screen.queryByRole("button", { name: "Remove status filter" }),
       ).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("Reviews advanced search panel", () => {
+  it("opens the shared panel from the toggle", async () => {
+    const user = userEvent.setup();
+    renderReviews();
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+
+    // The shared panel (/wines visual) mounts inline under the toggle.
+    expect(
+      await screen.findByPlaceholderText("e.g. Penfolds"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Hide advanced search/ }),
+    ).toBeInTheDocument();
+
+    // The simple search bar hides while the panel is open, and the panel
+    // header carries the wine-style "Hide form" toggle.
+    expect(
+      screen.queryByPlaceholderText("Search reviews…"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hide form" })).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /Hide advanced search/ }),
+    );
+    expect(
+      screen.queryByPlaceholderText("e.g. Penfolds"),
+    ).not.toBeInTheDocument();
   });
 });

@@ -13,6 +13,12 @@ interface SearchBarProps {
   sortOptions: { value: string; label: string }[];
   currentSort: string;
   onSortChange: (value: string) => void;
+  /**
+   * Whether to render the sort dropdown. Hidden on /reviews and /articles for
+   * now — the listings still sort by their default; flipping this back on
+   * restores the control with no other changes.
+   */
+  showSort?: boolean;
   /** Whether to show the filter toggle button */
   showFilterButton?: boolean;
   /** Called when the filter toggle button is clicked */
@@ -27,6 +33,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   sortOptions,
   currentSort,
   onSortChange,
+  showSort = true,
   showFilterButton = false,
   onFilterToggle,
 }) => {
@@ -37,11 +44,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
          <ActiveFilters
            filters={activeFilters}
            onRemoveFilter={onRemoveFilter}
-         />        <SortDropdown
-          options={sortOptions}
-          value={currentSort}
-          onChange={onSortChange}
-        />
+         />
+        {showSort && (
+          <SortDropdown
+            options={sortOptions}
+            value={currentSort}
+            onChange={onSortChange}
+          />
+        )}
         {showFilterButton && (
           <button
             type="button"

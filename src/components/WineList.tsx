@@ -11,9 +11,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import usePagedList from "../hooks/usePagedList";
 import Pagination from "./Pagination";
-import WineAdvancedSearch from "./WineAdvancedSearch";
-import type { SearchParams } from "./WineAdvancedSearch";
-import { SearchHighlight, SearchInput } from "./search";
+import { SearchHighlight, SearchInput, AdvancedSearchFilters } from "./search";
+import type { SearchParams } from "./search";
 import { CategoryChip } from "./CategoryChip";
 import LikeButton from "./LikeButton";
 import CommentLink from "./comments/CommentLink";
@@ -175,7 +174,12 @@ function SimpleResultsSummary({
   );
 }
 
-function SearchModeControls({
+/**
+ * One toggle instead of the old Simple/Advanced button pair — the same
+ * pattern the dashboard uses. In simple mode it offers the advanced panel;
+ * in advanced mode it returns to the simple search bar.
+ */
+function SearchModeToggle({
   searchMode,
   onSimple,
   onAdvanced,
@@ -184,27 +188,16 @@ function SearchModeControls({
   onSimple: () => void;
   onAdvanced: () => void;
 }) {
+  const advanced = searchMode === "advanced";
   return (
-    <div
-      role="group"
-      aria-label="Wine search mode"
-      style={{ display: "flex", gap: "0.5rem", margin: "1rem 0" }}
-    >
+    <div className="advanced-search-toggle-row">
       <button
         type="button"
-        onClick={onSimple}
-        aria-pressed={searchMode === "simple"}
-        className={searchMode === "simple" ? "btn-primary" : "btn-secondary"}
+        className="advanced-search-toggle"
+        onClick={advanced ? onSimple : onAdvanced}
+        aria-expanded={advanced}
       >
-        Simple search
-      </button>
-      <button
-        type="button"
-        onClick={onAdvanced}
-        aria-pressed={searchMode === "advanced"}
-        className={searchMode === "advanced" ? "btn-primary" : "btn-secondary"}
-      >
-        Advanced search
+        {advanced ? "Hide advanced search" : "Advanced search →"}
       </button>
     </div>
   );
@@ -268,6 +261,9 @@ function WineList() {
   function showAdvanced() {
     setSearchMode("advanced");
     setSimpleValue("");
+    // Open the form expanded, matching the dashboard toggle: one click brings
+    // up the full field set (the panel's own "Hide form" can still collapse it).
+    setAdvancedOpen(true);
   }
 
   function handleAdvancedClear() {
@@ -400,10 +396,18 @@ function WineList() {
           }
         />
 
-        <WineAdvancedSearch
+        <SearchModeToggle
+          searchMode={searchMode}
+          onSimple={showSimple}
+          onAdvanced={showAdvanced}
+        />
+
+        <AdvancedSearchFilters
+          title="Advanced Wine Search"
           open={advancedOpen}
           onToggleOpen={setAdvancedOpen}
-          onSearch={handleAdvancedSearch}
+          submitLabel="Search wines"
+          onSubmit={handleAdvancedSearch}
           onClear={handleAdvancedClear}
         />
 
@@ -457,7 +461,7 @@ function WineList() {
           }
         />
 
-        <SearchModeControls
+        <SearchModeToggle
           searchMode={searchMode}
           onSimple={showSimple}
           onAdvanced={showAdvanced}
@@ -548,7 +552,7 @@ function WineList() {
           </Link>
         </div>
 
-        <SearchModeControls
+        <SearchModeToggle
           searchMode={searchMode}
           onSimple={showSimple}
           onAdvanced={showAdvanced}
@@ -605,16 +609,18 @@ function WineList() {
 
       {/* Search mode toggle — one mode visible at a time. Simple search is the
           default; the existing Advanced Wine Search stays one click away. */}
-      <SearchModeControls
+      <SearchModeToggle
         searchMode={searchMode}
         onSimple={showSimple}
         onAdvanced={showAdvanced}
       />
       {searchMode === "advanced" && (
-        <WineAdvancedSearch
+        <AdvancedSearchFilters
+          title="Advanced Wine Search"
           open={advancedOpen}
           onToggleOpen={setAdvancedOpen}
-          onSearch={handleAdvancedSearch}
+          submitLabel="Search wines"
+          onSubmit={handleAdvancedSearch}
           onClear={handleAdvancedClear}
         />
       )}

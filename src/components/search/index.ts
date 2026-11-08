@@ -6,3 +6,5 @@ export { SearchFilters } from './SearchFilters';
 export { SortDropdown } from './SortDropdown';
 export { SearchEmptyState } from './SearchEmptyState';
 export { SearchHighlight } from './SearchHighlight';
+export { AdvancedSearchFilters } from './AdvancedSearchFilters';
+export type { SearchParams } from './AdvancedSearchFilters';

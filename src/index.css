@@ -4318,6 +4318,69 @@ a.following-page__label:hover {
   text-decoration: underline;
 }
 
+/* ----- Advanced search toggle (dashboard + wine list) ----- */
+/* One row per page: the toggle sits centered ABOVE the search area, and the
+   simple search box hides while the advanced panel is open (the /wines
+   behavior, shared by every page). */
+.advanced-search-toggle-row {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.advanced-search-toggle {
+  background: transparent;
+  border: 1px solid #d8ccc7;
+  border-radius: 6px;
+  color: #6b5855;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.8rem;
+}
+
+.advanced-search-toggle:hover {
+  border-color: #8a5a44;
+  color: #8a5a44;
+}
+
+/* Wrapper around the content-type picker and the shared advanced panel; the
+   panel itself brings the /wines card styling, so only spacing lives here. */
+.dashboard__advanced-area {
+  margin-top: 0.75rem;
+}
+
+.dashboard__advanced-contenttypes {
+  margin-bottom: 0.75rem;
+}
+
+.dashboard__advanced-contenttypes h4 {
+  color: #8a5a44;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+}
+
+.dashboard__advanced-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dashboard__advanced-checkboxes label {
+  align-items: center;
+  display: flex;
+  font-size: 0.85rem;
+  gap: 0.35rem;
+}
+
+.dashboard__advanced-note {
+  color: #8a7a74;
+  font-size: 0.78rem;
+  margin: 0.6rem 0 0;
+}
+
 /* ===== Content Grid by Category (4 columns) ===== */
 .content-grid-group {
   margin-bottom: 2.5rem;

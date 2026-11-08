@@ -1,25 +1,30 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 import type { API as NoUiSliderAPI } from "nouislider";
-import WineAdvancedSearch from "./WineAdvancedSearch";
+import AdvancedSearchFilters from "./AdvancedSearchFilters";
 
-vi.mock("../services/api", () => ({
+vi.mock("../../services/api", () => ({
   tasteParametersApi: {
     list: () => Promise.resolve({}),
   },
 }));
 
-vi.mock("./RegionSearch", () => ({ default: () => null }));
-vi.mock("./GrapeSearch", () => ({ default: () => null }));
+vi.mock("../RegionSearch", () => ({ default: () => null }));
+vi.mock("../GrapeSearch", () => ({ default: () => null }));
 
-/** Renders the panel with the form expanded. */
+/**
+ * Renders the panel configured the way the /wines page uses it: titled
+ * header, expanded, and the submit-driven action row ("Search wines" + Clear).
+ */
 function renderPanel(onSearch = vi.fn()) {
   return render(
-    <WineAdvancedSearch
-      onSearch={onSearch}
+    <AdvancedSearchFilters
+      title="Advanced Wine Search"
+      onSubmit={onSearch}
       onClear={() => {}}
       open
       onToggleOpen={() => {}}
+      submitLabel="Search wines"
     />
   );
 }
@@ -34,7 +39,7 @@ function sliderInstance(index: number) {
   return api;
 }
 
-describe("WineAdvancedSearch taste sliders", () => {
+describe("AdvancedSearchFilters (wine panel) taste sliders", () => {
   beforeEach(() => {
     // nouislider measures the DOM; jsdom has no layout, so give the target a
     // non-zero size and a stubbed rect.
@@ -181,7 +186,7 @@ describe("WineAdvancedSearch taste sliders", () => {
   });
 });
 
-describe("WineAdvancedSearch layout", () => {
+describe("AdvancedSearchFilters (wine panel) layout", () => {
   afterEach(cleanup);
 
   /** The label text of every row of the "Vintages & reviews" block. */
