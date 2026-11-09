@@ -80,6 +80,7 @@ export default function WineProfileTable({
                           key={`grape-linked-${grape.slug ?? grape.id}`}
                           to={`/grapes/${encodeURIComponent(grape.slug)}`}
                           className="wine-profile-detail__chip wine-profile-detail__chip--region"
+                          onClick={(event) => event.stopPropagation()}
                         >
                           {grape.name}
                         </Link>
@@ -112,6 +113,7 @@ export default function WineProfileTable({
                           key={`region-linked-${region.slug ?? region.id}`}
                           to={`/regions/${encodeURIComponent(region.slug)}`}
                           className="wine-profile-detail__chip wine-profile-detail__chip--region"
+                          onClick={(event) => event.stopPropagation()}
                         >
                           {region.name}
                         </Link>

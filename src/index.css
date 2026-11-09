@@ -161,7 +161,7 @@ textarea {
 .about-page {
   margin: 0 auto;
   max-width: 1180px;
-  padding: 42px clamp(18px, 5vw, 64px) 56px;
+  padding: 25px clamp(18px, 5vw, 64px) 56px;
 }
 
 .wine-hero {
@@ -2383,7 +2383,10 @@ textarea {
   font-size: 0.85rem;
   font-weight: 700;
   padding: 7px 15px;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .following-page__filter:hover {
@@ -2420,7 +2423,9 @@ textarea {
   display: flex;
   gap: 16px;
   padding: 16px 18px;
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
 }
 
 .following-page__row:hover {

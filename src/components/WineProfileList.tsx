@@ -150,7 +150,8 @@ export default function WineProfileList() {
     },
   });
 
-  if (isLoading) return <p>Loading…</p>;
+  // Don't return early for loading - we want to keep the search box visible
+  // and only show loading state on the table/list area
   if (error) {
     console.error(error);
     return (
@@ -242,7 +243,7 @@ export default function WineProfileList() {
           )}
         </div>
       ) : viewMode === "cards" ? (
-        <div className="content-grid">
+        <div className="content-grid" style={{ opacity: isLoading ? 0.5 : 1, pointerEvents: isLoading ? "none" : "auto" }}>
           {wineProfiles.map((profile) => (
             <WineProfileCard
               key={profile.slug}
@@ -250,13 +251,39 @@ export default function WineProfileList() {
               query={effectiveSearchTerm}
             />
           ))}
+          {isLoading && (
+            <div className="wine-profile-loading" style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              color: "#666",
+              fontSize: "0.9rem"
+            }}>
+              Loading…
+            </div>
+          )}
         </div>
       ) : (
-        <WineProfileTable
-          profiles={wineProfiles}
-          canManage={canManageWines}
-          query={effectiveSearchTerm}
-        />
+        <div style={{ opacity: isLoading ? 0.5 : 1, pointerEvents: isLoading ? "none" : "auto", position: "relative" }}>
+          <WineProfileTable
+            profiles={wineProfiles}
+            canManage={canManageWines}
+            query={effectiveSearchTerm}
+          />
+          {isLoading && (
+            <div className="wine-profile-loading" style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              color: "#666",
+              fontSize: "0.9rem"
+            }}>
+              Loading…
+            </div>
+          )}
+        </div>
       )}
 
       <Pagination
