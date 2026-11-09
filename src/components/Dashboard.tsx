@@ -165,8 +165,8 @@ function Dashboard() {
     const listParams = {
       ...advancedFilters,
       // A filters-only search omits the term entirely rather than sending an
-      // empty `query=`.
-      ...(searchTerm ? { query: searchTerm } : {}),
+      // empty `q=`. Use `q` for similarity-based advanced search.
+      ...(searchTerm ? { q: searchTerm } : {}),
       page: 1,
       per_page: SEARCH_PREVIEW_PER_TYPE,
     };

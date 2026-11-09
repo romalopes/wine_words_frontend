@@ -82,15 +82,16 @@ function searchAware<T>(
   latestItems: T[],
   searchTotal = searchItems.length,
 ) {
-  return async (params?: { query?: string; page?: number; per_page?: number }) => {
+  return async (params?: { q?: string; query?: string; page?: number; per_page?: number }) => {
     // The real API returns the paginated envelope whenever `page` and `per_page`
     // are provided, regardless of whether there's a query. The test mock previously
     // returned a bare array for filter-only searches, which hid a bug in `asList`.
+    const hasQuery = params?.q || params?.query;
     if (params?.page && params?.per_page) {
-      const items = params?.query ? searchItems : latestItems;
+      const items = hasQuery ? searchItems : latestItems;
       return envelope(items, searchTotal);
     }
-    return params?.query ? envelope(searchItems, searchTotal) : latestItems;
+    return hasQuery ? envelope(searchItems, searchTotal) : latestItems;
   };
 }
 
@@ -161,11 +162,11 @@ describe("Dashboard search", () => {
     // The term reaches both endpoints, as a paginated preview.
     await waitFor(() => {
       expect(mockReviewsAll).toHaveBeenCalledWith(
-        { query: "malbec", page: 1, per_page: 6 },
+        { q: "malbec", page: 1, per_page: 6 },
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
       expect(mockArticlesList).toHaveBeenCalledWith(
-        { query: "malbec", page: 1, per_page: 6 },
+        { q: "malbec", page: 1, per_page: 6 },
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
     });
