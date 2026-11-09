@@ -333,18 +333,37 @@ describe("Articles", () => {
 });
 
 describe("Articles advanced search panel", () => {
-  it("opens the shared panel from the toggle", async () => {
+  it("opens the shared panel from the toggle and clears the simple search", async () => {
     const user = userEvent.setup();
     renderArticles();
+
+    // A simple search first: the grouped feed re-requests with the term.
+    await user.type(
+      screen.getByPlaceholderText("Search articles…"),
+      "barolo",
+    );
+    await waitFor(() => {
+      const last = mockGrouped.mock.calls[mockGrouped.mock.calls.length - 1]?.[0] as
+        | { query?: string }
+        | undefined;
+      expect(last?.query).toBe("barolo");
+    });
 
     await user.click(
       screen.getByRole("button", { name: /Advanced search/ }),
     );
 
-    // The shared panel (/wines visual) mounts inline under the toggle.
+    // The shared panel (/wines visual) mounts inline under the toggle, and
+    // entering advanced mode abandons the simple term.
     expect(
       await screen.findByPlaceholderText("e.g. Penfolds"),
     ).toBeInTheDocument();
+    await waitFor(() => {
+      const last = mockGrouped.mock.calls[mockGrouped.mock.calls.length - 1]?.[0] as
+        | { query?: string }
+        | undefined;
+      expect(last?.query).toBeUndefined();
+    });
     expect(
       screen.getByRole("button", { name: /Hide advanced search/ }),
     ).toBeInTheDocument();
@@ -362,5 +381,28 @@ describe("Articles advanced search panel", () => {
     expect(
       screen.queryByPlaceholderText("e.g. Penfolds"),
     ).not.toBeInTheDocument();
+  });
+
+  it("submits advanced filters to the grouped API without closing the panel", async () => {
+    const user = userEvent.setup();
+    renderArticles();
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+    await user.type(
+      await screen.findByPlaceholderText("e.g. Penfolds"),
+      "Penfolds",
+    );
+    await user.click(screen.getByRole("button", { name: "Search articles" }));
+
+    await waitFor(() => {
+      expect(
+        mockGrouped.mock.calls.some(
+          ([params]) => (params as { producer_name?: string }).producer_name === "Penfolds",
+        ),
+      ).toBe(true);
+    });
+    expect(screen.getByPlaceholderText("e.g. Penfolds")).toHaveValue("Penfolds");
   });
 });

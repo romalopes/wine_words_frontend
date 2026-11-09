@@ -475,3 +475,40 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Desktop: two parameters side by side — including the region / grape
+   pickers, which share a row. The rows container becomes a two-column grid;
+   each row keeps its own label + Min/Max tracks, resized for the half width.
+   The date pair keeps wider tracks (dd/mm/yyyy needs ~7rem). Below 780px the
+   rows stack in a single column, as before. */
+@media (min-width: 780px) {
+  .rows {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem 1.5rem;
+    align-items: start;
+  }
+
+  .row {
+    grid-template-columns:
+      minmax(6rem, 9rem) 2rem minmax(3.5rem, 1fr)
+      2rem minmax(3.5rem, 1fr);
+  }
+
+  .rowDates {
+    grid-template-columns:
+      minmax(6rem, 9rem) minmax(7rem, 1fr) 1.5rem minmax(7rem, 1fr);
+  }
+
+  .rowDates .inputMin {
+    grid-column: 2;
+  }
+
+  .rowDates .dateSeparator {
+    grid-column: 3;
+  }
+
+  .rowDates .inputMax {
+    grid-column: 4;
+  }
+}

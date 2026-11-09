@@ -110,6 +110,7 @@ function Dashboard() {
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedSearchRevision, setAdvancedSearchRevision] = useState(0);
   // Whether the shared panel's form is expanded (the panel header's
   // "Hide form" / "Show form" toggle), separate from whether the panel is
   // shown at all.
@@ -122,6 +123,10 @@ function Dashboard() {
   // Blank until the term is long enough to be worth a request, matching the
   // reviews/articles listings (and keeping the API off one-letter searches).
   const searchTerm = effectiveSearchTerm(searchInput, MIN_SEARCH_LENGTH);
+  // A search is active when there is a term OR advanced filters; results then
+  // replace the latest rails.
+  const hasAdvancedFilters = Object.keys(advancedFilters).length > 0;
+  const searchActive = searchTerm !== "" || hasAdvancedFilters;
 
   useEffect(() => {
     statsApi
@@ -138,11 +143,13 @@ function Dashboard() {
       .catch(() => setRecentReviews([]));
   }, []);
 
-  // Search both content types for the typed term. One request each, in
-  // parallel, both abortable: a superseded term's response must not overwrite
-  // the newer one, and clearing the box must not leave results behind.
+  // Search both content types for the typed term and/or the advanced filters.
+  // One request each, in parallel, both abortable: a superseded search's
+  // response must not overwrite the newer one, and clearing everything must
+  // not leave results behind.
   useEffect(() => {
-    if (!searchTerm) {
+    const hasFilters = Object.keys(advancedFilters).length > 0;
+    if (!searchTerm && !hasFilters) {
       setSearchResults(EMPTY_SEARCH_RESULTS);
       setSearchError(null);
       setSearching(false);
@@ -155,25 +162,17 @@ function Dashboard() {
     // `page: 1` is what makes the endpoint paginate — without it Rails returns
     // the whole array (no `total_count`), so the preview would be unbounded and
     // could not offer a "see all".
+    const listParams = {
+      ...advancedFilters,
+      // A filters-only search omits the term entirely rather than sending an
+      // empty `query=`.
+      ...(searchTerm ? { query: searchTerm } : {}),
+      page: 1,
+      per_page: SEARCH_PREVIEW_PER_TYPE,
+    };
     Promise.all([
-      reviewsApi.all(
-        {
-          ...advancedFilters,
-          query: searchTerm,
-          page: 1,
-          per_page: SEARCH_PREVIEW_PER_TYPE,
-        },
-        { signal: controller.signal },
-      ),
-      articlesApi.list(
-        {
-          ...advancedFilters,
-          query: searchTerm,
-          page: 1,
-          per_page: SEARCH_PREVIEW_PER_TYPE,
-        },
-        { signal: controller.signal },
-      ),
+      reviewsApi.all(listParams, { signal: controller.signal }),
+      articlesApi.list(listParams, { signal: controller.signal }),
     ])
       .then(([reviewResponse, articleResponse]) => {
         if (cancelled) return;
@@ -199,7 +198,7 @@ function Dashboard() {
       cancelled = true;
       controller.abort();
     };
-  }, [searchTerm, advancedFilters]);
+  }, [searchTerm, advancedFilters, advancedSearchRevision]);
 
   return (
     <main className="wine-app">
@@ -223,8 +222,13 @@ function Dashboard() {
             type="button"
             className="advanced-search-toggle"
             onClick={() => {
-              setAdvancedOpen(!advancedOpen);
-              setFormExpanded(!advancedOpen);
+              const next = !advancedOpen;
+              setAdvancedOpen(next);
+              setFormExpanded(next);
+              // Entering one search mode clears the other, exactly as the
+              // /wines search does between its simple and advanced modes.
+              if (next) setSearchInput("");
+              else setAdvancedFilters({});
             }}
             aria-expanded={advancedOpen}
           >
@@ -291,14 +295,14 @@ function Dashboard() {
               submitLabel="Search"
               onSubmit={(filters) => {
                 setAdvancedFilters(filters);
-                setAdvancedOpen(false);
+                setAdvancedSearchRevision((revision) => revision + 1);
               }}
               onClear={() => setAdvancedFilters({})}
             />
           </div>
         )}
 
-        {searchTerm && (
+        {searchActive && (
           <div className="dashboard__search-results">
             <p className="dashboard__search-status" role="status">
               {searching
@@ -306,7 +310,9 @@ function Dashboard() {
                 : (searchError ??
                   (!searchResults.reviews.length &&
                   !searchResults.articles.length
-                    ? `No reviews or articles match “${searchTerm}”.`
+                    ? searchTerm
+                      ? `No reviews or articles match “${searchTerm}”.`
+                      : "No reviews or articles match your filters."
                     : ""))}
             </p>
 
@@ -314,7 +320,9 @@ function Dashboard() {
               <>
                 <h2 className="dashboard__search-heading">
                   Reviews ({searchResults.reviewTotal})
-                  {searchResults.reviewTotal > searchResults.reviews.length && (
+                  {searchTerm &&
+                    searchResults.reviewTotal >
+                      searchResults.reviews.length && (
                     <Link
                       className="dashboard__search-all"
                       to={`/reviews?query=${encodeURIComponent(searchTerm)}`}
@@ -342,8 +350,9 @@ function Dashboard() {
               <>
                 <h2 className="dashboard__search-heading">
                   Articles ({searchResults.articleTotal})
-                  {searchResults.articleTotal >
-                    searchResults.articles.length && (
+                  {searchTerm &&
+                    searchResults.articleTotal >
+                      searchResults.articles.length && (
                     <Link
                       className="dashboard__search-all"
                       to={`/articles?query=${encodeURIComponent(searchTerm)}`}
@@ -390,7 +399,7 @@ function Dashboard() {
 
       {/* While a term is being searched the listing sections step aside, so the
           page shows the results rather than two competing collections. */}
-      {!searchTerm && recentReviews.length > 0 && (
+      {!searchActive && recentReviews.length > 0 && (
         <>
           <h2 className="dashboard__section-title">Latest Reviews</h2>
           <div className="content-grid">
@@ -405,7 +414,7 @@ function Dashboard() {
         </>
       )}
 
-      {!searchTerm && recentArticles.length > 0 && (
+      {!searchActive && recentArticles.length > 0 && (
         <>
           <h2 className="dashboard__section-title">Latest Articles</h2>
           <div className="content-grid dashboard__content-grid">

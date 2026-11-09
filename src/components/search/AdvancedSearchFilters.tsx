@@ -15,14 +15,25 @@ const COLORS = ["Red", "White", "Rosé", "Dessert"] as const;
 
 // Mirrors Wine::CLOSURES (wine.rb) in the Rails API.
 const CLOSURES = [
-  "Cork", "Screw cap", "Diam", "Crownseal", "Synthetic",
-  "Glass Stopper", "Nomacorc PlantCorc", "Vino-Lok", "Agglomerate",
+  "Cork",
+  "Screw cap",
+  "Diam",
+  "Crownseal",
+  "Synthetic",
+  "Glass Stopper",
+  "Nomacorc PlantCorc",
+  "Vino-Lok",
+  "Agglomerate",
 ] as const;
 
 // Slugs must match Wine::TASTE_PARAMETER_FILTER_SLUGS in the API.
 const TASTE_SLUGS = [
-  "acidity", "alcohol-warmth", "body",
-  "fruit-intensity", "sweetness", "tannin",
+  "acidity",
+  "alcohol-warmth",
+  "body",
+  "fruit-intensity",
+  "sweetness",
+  "tannin",
 ] as const;
 
 type TasteSlug = (typeof TASTE_SLUGS)[number];
@@ -92,7 +103,9 @@ export function AdvancedSearchFilters({
   const [selectedGrapes, setSelectedGrapes] = useState<SelectedGrape[]>([]);
   // slug -> { min, max }; full-range bounds mean "not filtered".
   const [taste, setTaste] = useState<TasteRanges>(DEFAULT_TASTE_RANGES);
-  const [tasteLabels, setTasteLabels] = useState<Partial<Record<TasteSlug, string>>>({});
+  const [tasteLabels, setTasteLabels] = useState<
+    Partial<Record<TasteSlug, string>>
+  >({});
 
   // Load the taste parameter catalogue once for friendly labels. The service
   // is imported lazily: this file is re-exported through the search barrel,
@@ -145,7 +158,9 @@ export function AdvancedSearchFilters({
   }
 
   function emit(nextForm: Record<string, any>, nextTaste: TasteRanges) {
-    onChange?.(buildParams(nextForm, selectedRegions, selectedGrapes, nextTaste));
+    onChange?.(
+      buildParams(nextForm, selectedRegions, selectedGrapes, nextTaste),
+    );
   }
 
   function handleInputChange(name: string, value: string | undefined) {
@@ -171,7 +186,10 @@ export function AdvancedSearchFilters({
    * lets the lower handle cross the upper one), so the values are taken
    * straight from the event rather than clamped against possibly-stale state.
    */
-  function handleTasteChange(slug: TasteSlug, range: { min: number; max: number }) {
+  function handleTasteChange(
+    slug: TasteSlug,
+    range: { min: number; max: number },
+  ) {
     const nextTaste = { ...taste, [slug]: range };
     setTaste(nextTaste);
     onChange?.(buildParams(form, selectedRegions, selectedGrapes, nextTaste));
@@ -229,7 +247,9 @@ export function AdvancedSearchFilters({
                   type="text"
                   name="producer_name"
                   value={form.producer_name ?? ""}
-                  onChange={(e) => handleInputChange("producer_name", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("producer_name", e.target.value)
+                  }
                   placeholder="e.g. Penfolds"
                 />
               </div>
@@ -270,12 +290,17 @@ export function AdvancedSearchFilters({
             </div>
 
             <div className={styles.rows}>
-              {rangeRow("alcohol", "Alcohol %", undefined, { step: 0.1, ariaLabel: "Alcohol" })}
+              {rangeRow("alcohol", "Alcohol %", undefined, {
+                step: 0.1,
+                ariaLabel: "Alcohol",
+              })}
 
               <div className={styles.row}>
                 <div className={styles.rowLabel}>Style</div>
                 <div className={styles.rowInputs}>
-                  <div className={`${styles.checkboxRow} ${styles.wideControl}`}>
+                  <div
+                    className={`${styles.checkboxRow} ${styles.wideControl}`}
+                  >
                     {triSelect("sparkling", "Sparkling")}
                     {triSelect("fortified", "Fortified")}
                   </div>
@@ -285,13 +310,23 @@ export function AdvancedSearchFilters({
 
             <span className={styles.sectionTitle}>Vintages & reviews</span>
             <div className={styles.rows}>
-              {rangeRow("vintage_year", "Vintage year", undefined, { step: 1, min: 1900 })}
-              {rangeRow("price", "Price of vintage", "currency", { step: "0.01", min: 0 })}
-              {rangeRow("score", "Review score", "0-100", { step: 0.5, min: 0, max: 100 })}
+              {rangeRow("vintage_year", "Vintage year", undefined, {
+                step: 1,
+                min: 1900,
+              })}
+              {rangeRow("price", "Price of vintage", "currency", {
+                step: "0.01",
+                min: 0,
+              })}
+              {rangeRow("score", "Review score", "0-100", {
+                step: 0.5,
+                min: 0,
+                max: 100,
+              })}
               {rangeRow("drink_from", "Drink from", "year", { step: 1 })}
               {rangeRow("drink_to", "Drink to", "year", { step: 1 })}
 
-              <div className={styles.row}>
+              <div className={`${styles.row} ${styles.rowDates}`}>
                 <div className={styles.rowLabel}>Review published between</div>
                 <div className={styles.rowInputs}>
                   <input
@@ -299,7 +334,9 @@ export function AdvancedSearchFilters({
                     type="date"
                     name="published_from"
                     value={form.published_from ?? ""}
-                    onChange={(e) => handleInputChange("published_from", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("published_from", e.target.value)
+                    }
                     aria-label="Published from"
                   />
                   <span className={styles.dateSeparator}>→</span>
@@ -308,7 +345,9 @@ export function AdvancedSearchFilters({
                     type="date"
                     name="published_to"
                     value={form.published_to ?? ""}
-                    onChange={(e) => handleInputChange("published_to", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("published_to", e.target.value)
+                    }
                     aria-label="Published to"
                   />
                 </div>
@@ -318,7 +357,10 @@ export function AdvancedSearchFilters({
                 <div className={styles.rowLabel}>Country or Region</div>
                 <div className={styles.rowInputs}>
                   <div className={styles.wideControl}>
-                    <RegionSearch selected={selectedRegions} onChange={handleRegionsChange} />
+                    <RegionSearch
+                      selected={selectedRegions}
+                      onChange={handleRegionsChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -327,7 +369,10 @@ export function AdvancedSearchFilters({
                 <div className={styles.rowLabel}>Grape</div>
                 <div className={styles.rowInputs}>
                   <div className={styles.wideControl}>
-                    <GrapeSearch selected={selectedGrapes} onChange={handleGrapesChange} />
+                    <GrapeSearch
+                      selected={selectedGrapes}
+                      onChange={handleGrapesChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -341,7 +386,11 @@ export function AdvancedSearchFilters({
               <button type="submit" className={styles.searchBtn}>
                 {submitLabel}
               </button>
-              <button type="button" className={styles.clearBtn} onClick={handleClear}>
+              <button
+                type="button"
+                className={styles.clearBtn}
+                onClick={handleClear}
+              >
                 Clear
               </button>
             </div>
@@ -394,7 +443,9 @@ export function AdvancedSearchFilters({
             {...minProps}
             name={`${base}_min`}
             value={form[`${base}_min`] ?? ""}
-            onChange={(e) => handleInputChange(`${base}_min`, e.target.value || undefined)}
+            onChange={(e) =>
+              handleInputChange(`${base}_min`, e.target.value || undefined)
+            }
             placeholder="Min"
             aria-label={`${ariaBase} minimum`}
           />
@@ -406,7 +457,9 @@ export function AdvancedSearchFilters({
             {...minProps}
             name={`${base}_max`}
             value={form[`${base}_max`] ?? ""}
-            onChange={(e) => handleInputChange(`${base}_max`, e.target.value || undefined)}
+            onChange={(e) =>
+              handleInputChange(`${base}_max`, e.target.value || undefined)
+            }
             placeholder="Max"
             aria-label={`${ariaBase} maximum`}
           />
@@ -474,7 +527,10 @@ function TasteParameterSlider({
       range: { min: TASTE_MIN, max: TASTE_MAX },
       step: 1,
       // Show plain integers rather than the default "3.00" formatting.
-      format: { to: (value) => String(Math.round(Number(value))), from: Number },
+      format: {
+        to: (value) => String(Math.round(Number(value))),
+        from: Number,
+      },
       tooltips: false,
       // Label each handle for screen readers. nouislider already adds
       // role="slider", tabindex and the aria-value* attributes.

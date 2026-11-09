@@ -84,6 +84,7 @@ function Articles() {
   // number and filters are unchanged.
   const [reloadToken, setReloadToken] = useState(0);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedSearchRevision, setAdvancedSearchRevision] = useState(0);
   // Whether the shared panel's form is expanded (the panel header's
   // "Hide form" / "Show form" toggle).
   const [formExpanded, setFormExpanded] = useState(true);
@@ -108,7 +109,7 @@ function Articles() {
       if (merged.per_page === undefined) merged.per_page = 20;
       return articlesApi.list(merged, options);
     },
-    [scope, statusFilter, isUncategorised, categoryId, reloadToken, advancedFilters],
+    [scope, statusFilter, isUncategorised, categoryId, reloadToken, advancedFilters, advancedSearchRevision],
   );
 
   const {
@@ -171,7 +172,7 @@ function Articles() {
     } finally {
       if (!options?.signal?.aborted) setLoadingGroups(false);
     }
-  }, [searchTerm, statusFilter, advancedFilters]);
+  }, [searchTerm, statusFilter, advancedFilters, advancedSearchRevision]);
 
   // Load the grouped view whenever the listing is not scoped to one category,
   // and re-run it when the search term or the status filter changes —
@@ -335,8 +336,13 @@ function Articles() {
           type="button"
           className="advanced-search-toggle"
           onClick={() => {
-            setAdvancedOpen(!advancedOpen);
-            setFormExpanded(!advancedOpen);
+            const next = !advancedOpen;
+            setAdvancedOpen(next);
+            setFormExpanded(next);
+            // Entering one search mode clears the other, exactly as the
+            // /wines search does between its simple and advanced modes.
+            if (next) setFilter("query", "");
+            else setAdvancedFilters({});
           }}
           aria-expanded={advancedOpen}
         >
@@ -371,7 +377,7 @@ function Articles() {
           submitLabel="Search articles"
           onSubmit={(filters) => {
             setAdvancedFilters(filters);
-            setAdvancedOpen(false);
+            setAdvancedSearchRevision((revision) => revision + 1);
           }}
           onClear={() => setAdvancedFilters({})}
         />

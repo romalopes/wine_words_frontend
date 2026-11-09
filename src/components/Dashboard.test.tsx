@@ -82,8 +82,16 @@ function searchAware<T>(
   latestItems: T[],
   searchTotal = searchItems.length,
 ) {
-  return async (params?: { query?: string }) =>
-    params?.query ? envelope(searchItems, searchTotal) : latestItems;
+  return async (params?: { query?: string; page?: number; per_page?: number }) => {
+    // The real API returns the paginated envelope whenever `page` and `per_page`
+    // are provided, regardless of whether there's a query. The test mock previously
+    // returned a bare array for filter-only searches, which hid a bug in `asList`.
+    if (params?.page && params?.per_page) {
+      const items = params?.query ? searchItems : latestItems;
+      return envelope(items, searchTotal);
+    }
+    return params?.query ? envelope(searchItems, searchTotal) : latestItems;
+  };
 }
 
 function renderDashboard() {
@@ -337,7 +345,8 @@ describe("Dashboard search", () => {
 
     await waitFor(() => {
       const calls = mockReviewsAll.mock.calls.filter(
-        (call) => (call[0] as { query?: string } | undefined)?.query,
+        (call) =>
+          (call[0] as { producer_name?: string } | undefined)?.producer_name,
       );
       const last = calls[calls.length - 1]?.[0] as
         | { producer_name?: string }
@@ -365,7 +374,7 @@ describe("Dashboard search", () => {
 
     await waitFor(() => {
       const calls = mockReviewsAll.mock.calls.filter(
-        (call) => (call[0] as { query?: string } | undefined)?.query,
+        (call) => (call[0] as { alcohol_min?: string } | undefined)?.alcohol_min,
       );
       const last = calls[calls.length - 1]?.[0] as
         | { alcohol_min?: string; closure?: string; sparkling?: string }
@@ -414,7 +423,7 @@ describe("Dashboard search", () => {
 
     await waitFor(() => {
       const calls = mockReviewsAll.mock.calls.filter(
-        (call) => (call[0] as { query?: string } | undefined)?.query,
+        (call) => (call[0] as { acidity_min?: number } | undefined)?.acidity_min,
       );
       const last = calls[calls.length - 1]?.[0] as
         | { acidity_min?: number }
@@ -422,5 +431,113 @@ describe("Dashboard search", () => {
       // One arrow step to the right on the 0-10 scale.
       expect(last?.acidity_min).toBe(1);
     });
+  });
+
+  it("clears the simple search when the advanced panel opens", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      "malbec",
+    );
+    await screen.findByRole("heading", { name: /Reviews \(1\)/ });
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+
+    // Entering advanced mode abandons the term: the results give way to the
+    // latest rails, exactly as the /wines search does between its modes.
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: /Reviews \(1\)/ }),
+      ).not.toBeInTheDocument();
+    });
+    expect(
+      await screen.findByRole("heading", { name: "Latest Reviews" }),
+    ).toBeInTheDocument();
+  });
+
+  it("clears the advanced filters when the panel closes", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+    await user.type(
+      await screen.findByPlaceholderText("e.g. Penfolds"),
+      "Penfolds",
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /Hide advanced search/ }),
+    );
+
+    // Reopening starts from clean filters.
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+    expect(
+      await screen.findByPlaceholderText("e.g. Penfolds"),
+    ).toHaveValue("");
+  });
+
+  it("submits advanced filters to both APIs without closing the panel", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+    await user.type(
+      await screen.findByPlaceholderText("e.g. Penfolds"),
+      "Penfolds",
+    );
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => {
+      expect(
+        mockReviewsAll.mock.calls.some(
+          ([params]) =>
+            (params as { producer_name?: string } | undefined)?.producer_name ===
+            "Penfolds",
+        ),
+      ).toBe(true);
+      expect(
+        mockArticlesList.mock.calls.some(
+          ([params]) =>
+            (params as { producer_name?: string } | undefined)?.producer_name ===
+            "Penfolds",
+        ),
+      ).toBe(true);
+    });
+    expect(screen.getByPlaceholderText("e.g. Penfolds")).toHaveValue("Penfolds");
+  });
+
+  it("renders search results after submitting advanced filters", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.click(
+      screen.getByRole("button", { name: /Advanced search/ }),
+    );
+    await user.type(
+      await screen.findByPlaceholderText("e.g. Penfolds"),
+      "Penfolds",
+    );
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    // The search results section should appear with the filtered results
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: /Reviews \(1\)/ }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /Articles \(1\)/ }),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByPlaceholderText("e.g. Penfolds")).toHaveValue("Penfolds");
   });
 });

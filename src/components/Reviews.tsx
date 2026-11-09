@@ -102,6 +102,7 @@ function Reviews() {
   // number and filters are unchanged.
   const [reloadToken, setReloadToken] = useState(0);
   const [advancedFilters, setAdvancedFilters] = useState<Record<string, any>>({});
+  const [advancedSearchRevision, setAdvancedSearchRevision] = useState(0);
 
   // Fetch function for useSearch. Every non-search filter is passed as a
   // primitive dependency so the callback identity stays stable between
@@ -122,7 +123,7 @@ function Reviews() {
       if (merged.per_page === undefined) merged.per_page = 20;
       return reviewsApi.all(merged, options);
     },
-    [scope, statusFilter, isUncategorised, categoryId, reloadToken, advancedFilters],
+    [scope, statusFilter, isUncategorised, categoryId, reloadToken, advancedFilters, advancedSearchRevision],
   );
 
   const {
@@ -190,7 +191,7 @@ function Reviews() {
     } finally {
       if (!options?.signal?.aborted) setLoadingGroups(false);
     }
-  }, [searchTerm, statusFilter, scope, advancedFilters]);
+  }, [searchTerm, statusFilter, scope, advancedFilters, advancedSearchRevision]);
 
   // Load the grouped view whenever the listing is not scoped to one category.
   // It backs both the "All Reviews" and "My Reviews" tabs (the latter scoped to
@@ -366,8 +367,13 @@ function Reviews() {
           type="button"
           className="advanced-search-toggle"
           onClick={() => {
-            setAdvancedOpen(!advancedOpen);
-            setFormExpanded(!advancedOpen);
+            const next = !advancedOpen;
+            setAdvancedOpen(next);
+            setFormExpanded(next);
+            // Entering one search mode clears the other, exactly as the
+            // /wines search does between its simple and advanced modes.
+            if (next) setFilter("query", "");
+            else setAdvancedFilters({});
           }}
           aria-expanded={advancedOpen}
         >
@@ -404,7 +410,7 @@ function Reviews() {
           submitLabel="Search reviews"
           onSubmit={(filters) => {
             setAdvancedFilters(filters);
-            setAdvancedOpen(false);
+            setAdvancedSearchRevision((revision) => revision + 1);
           }}
           onClear={() => setAdvancedFilters({})}
         />
