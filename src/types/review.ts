@@ -21,6 +21,8 @@ export interface Review {
   wine_slug?: string | null
   category?: string | null
   categories?: Array<{ id: number; name: string; slug: string }>
+  grapes?: Array<{ id: number; name: string; slug: string }>
+  regions?: Array<{ id: number; name: string; slug: string }>
   category_ids?: number[]
   /**
    * Ordered image URL strings — `image_urls` in Rails (ImageAttributes).

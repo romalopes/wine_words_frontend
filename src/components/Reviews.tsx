@@ -5,6 +5,9 @@ import { reviewsApi, categoriesApi } from "../services/api";
 import { useCategoryOrder, sortCategoryNames } from "../hooks/useCategoryOrder";
 import ReviewForm from "./ReviewForm";
 import ReviewCard from "./ReviewCard";
+import ReviewTable from "./ReviewTable";
+import useViewMode from "../hooks/useViewMode";
+import { ViewModeToggle } from "./viewMode";
 import type { ContentStatus } from "./ContentStatusActions";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
@@ -249,6 +252,13 @@ function Reviews() {
   // disabled, exactly like the detail page's `statusBusy`.
   const [statusBusyId, setStatusBusyId] = useState<number | null>(null);
 
+  // Cards / List preference, persisted per page. List mode renders the shared
+  // ReviewTable, which carries the same status / edit / delete actions.
+  const [viewMode, setViewMode] = useViewMode(
+    "wine-words:view-mode:reviews",
+    "cards",
+  );
+
   // Status change and delete handlers
   const onStatusChange = async (review: Review, newStatus: ContentStatus) => {
     if (newStatus === review.status) return;
@@ -417,6 +427,14 @@ function Reviews() {
       )}
 
       
+      <div className="listing-toolbar listing-toolbar--end">
+        <ViewModeToggle
+          value={viewMode}
+          onChange={setViewMode}
+          ariaLabel="Reviews view"
+        />
+      </div>
+
       {!showForm && loading ? (
         <p className="wine-management__loading">Loading reviews…</p>
       ) : (
@@ -511,32 +529,48 @@ function Reviews() {
                 </p>
               );
             }
-            // When a category is selected, show a flat list (no grouping).
+              // When a category is selected, show a flat list (no grouping).
             if (selectedCategory) {
               return (
-                <div className="content-grid">
-                  {deduped.map((review) => (
-                    <ReviewCard
-                      key={review.id}
-                      review={review}
-                      query={searchTerm}
-                      onOpen={() => navigate(`/reviews/${review.slug}`)}
-                      canManage={canManage(review)}
-                      onEdit={() => setEditingReview(review)}
-                      onStatusChange={(status) => onStatusChange(review, status)}
+                <>
+                  {viewMode === "list" ? (
+                    <ReviewTable
+                      reviews={deduped}
+                      canManage={deduped.some(canManage)}
                       user={user}
-                      statusBusy={statusBusyId === review.id}
-                      onDelete={() => onDelete(review.id)}
-                    >
-                      <InlineReviewEdit
-                        review={review}
-                        editingReview={editingReview}
-                        onSaved={onSaved}
-                        onClose={() => setEditingReview(null)}
-                      />
-                    </ReviewCard>
-                  ))}
-                </div>
+                      onStatusChange={onStatusChange}
+                      statusBusy={statusBusyId !== null}
+                      onEdit={setEditingReview}
+                      onDelete={onDelete}
+                    />
+                  ) : (
+                    <div className="content-grid">
+                      {deduped.map((review) => (
+                        <ReviewCard
+                          key={review.id}
+                          review={review}
+                          query={searchTerm}
+                          onOpen={() => navigate(`/reviews/${review.slug}`)}
+                          canManage={canManage(review)}
+                          onEdit={() => setEditingReview(review)}
+                          onStatusChange={(status) =>
+                            onStatusChange(review, status)
+                          }
+                          user={user}
+                          statusBusy={statusBusyId === review.id}
+                          onDelete={() => onDelete(review.id)}
+                        >
+                          <InlineReviewEdit
+                            review={review}
+                            editingReview={editingReview}
+                            onSaved={onSaved}
+                            onClose={() => setEditingReview(null)}
+                          />
+                        </ReviewCard>
+                      ))}
+                    </div>
+                  )}
+                </>
               );
             }
 
@@ -597,31 +631,43 @@ function Reviews() {
                         )
                       </Link>
                     </h2>
-                    <div className="content-grid">
-                      {(grouped[category] ?? []).slice(0, 12).map((review) => (
-                        <ReviewCard
-                          key={review.id}
-                          review={review}
-                          query={searchTerm}
-                          onOpen={() => navigate(`/reviews/${review.slug}`)}
-                          canManage={canManage(review)}
-                          onEdit={() => setEditingReview(review)}
-                          onStatusChange={(status) =>
-                            onStatusChange(review, status)
-                          }
-                          user={user}
-                          statusBusy={statusBusyId === review.id}
-                          onDelete={() => onDelete(review.id)}
-                        >
-                          <InlineReviewEdit
+                    {viewMode === "list" ? (
+                      <ReviewTable
+                        reviews={(grouped[category] ?? []).slice(0, 12)}
+                        canManage={(grouped[category] ?? []).some(canManage)}
+                        user={user}
+                        onStatusChange={onStatusChange}
+                        statusBusy={statusBusyId !== null}
+                        onEdit={setEditingReview}
+                        onDelete={onDelete}
+                      />
+                    ) : (
+                      <div className="content-grid">
+                        {(grouped[category] ?? []).slice(0, 12).map((review) => (
+                          <ReviewCard
+                            key={review.id}
                             review={review}
-                            editingReview={editingReview}
-                            onSaved={onSaved}
-                            onClose={() => setEditingReview(null)}
-                          />
-                        </ReviewCard>
-                      ))}
-                    </div>
+                            query={searchTerm}
+                            onOpen={() => navigate(`/reviews/${review.slug}`)}
+                            canManage={canManage(review)}
+                            onEdit={() => setEditingReview(review)}
+                            onStatusChange={(status) =>
+                              onStatusChange(review, status)
+                            }
+                            user={user}
+                            statusBusy={statusBusyId === review.id}
+                            onDelete={() => onDelete(review.id)}
+                          >
+                            <InlineReviewEdit
+                              review={review}
+                              editingReview={editingReview}
+                              onSaved={onSaved}
+                              onClose={() => setEditingReview(null)}
+                            />
+                          </ReviewCard>
+                        ))}
+                      </div>
+                    )}
                   </section>
                 ))}
               </div>

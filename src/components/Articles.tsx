@@ -5,6 +5,9 @@ import { articlesApi, categoriesApi } from "../services/api";
 import { useCategoryOrder, sortCategoryNames } from "../hooks/useCategoryOrder";
 import ArticleForm from "./ArticleForm";
 import ArticleCard from "./ArticleCard";
+import ArticleTable from "./ArticleTable";
+import useViewMode from "../hooks/useViewMode";
+import { ViewModeToggle } from "./viewMode";
 import { type ContentStatus } from "./ContentStatusActions";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
@@ -219,6 +222,13 @@ function Articles() {
   // disabled, exactly like the detail page's `statusBusy`.
   const [statusBusyId, setStatusBusyId] = useState<number | null>(null);
 
+  // Cards / List preference, persisted per page. List mode renders the shared
+  // ArticleTable, whose Actions column carries the same status control.
+  const [viewMode, setViewMode] = useViewMode(
+    "wine-words:view-mode:articles",
+    "cards",
+  );
+
   async function changeStatus(article: Article, next: ContentStatus) {
     if (next === article.status) return;
     try {
@@ -383,6 +393,14 @@ function Articles() {
         />
       )}
 
+      <div className="listing-toolbar listing-toolbar--end">
+        <ViewModeToggle
+          value={viewMode}
+          onChange={setViewMode}
+          ariaLabel="Articles view"
+        />
+      </div>
+
       {!showForm && loading ? (
         <p className="wine-management__loading">Loading articles…</p>
       ) : (
@@ -487,7 +505,15 @@ function Articles() {
 
             // When a category is selected, show a flat list (no grouping).
             if (selectedCategory) {
-              return (
+              return viewMode === "list" ? (
+                <ArticleTable
+                  articles={deduped}
+                  canManage={deduped.some(canManage)}
+                  user={user}
+                  onStatusChange={changeStatus}
+                  statusBusy={statusBusyId !== null}
+                />
+              ) : (
                 <div className="content-grid">
                   {deduped.map((article) => (
                     <ArticleCard
@@ -563,23 +589,33 @@ function Articles() {
                         )
                       </Link>
                     </h2>
-                    <div className="content-grid">
-                      {(grouped[category] ?? []).slice(0, 12).map((article) => (
-                        <ArticleCard
-                          key={article.id}
-                          article={article}
-                          query={searchTerm}
-                          canManage={canManage(article)}
-                          canManageContent={canManageContent}
-                          onOpen={() => navigate(`/articles/${article.slug}`)}
-                          onStatusChange={(status) =>
-                            changeStatus(article, status)
-                          }
-                          user={user}
-                          statusBusy={statusBusyId === article.id}
-                        />
-                      ))}
-                    </div>
+                    {viewMode === "list" ? (
+                      <ArticleTable
+                        articles={(grouped[category] ?? []).slice(0, 12)}
+                        canManage={(grouped[category] ?? []).some(canManage)}
+                        user={user}
+                        onStatusChange={changeStatus}
+                        statusBusy={statusBusyId !== null}
+                      />
+                    ) : (
+                      <div className="content-grid">
+                        {(grouped[category] ?? []).slice(0, 12).map((article) => (
+                          <ArticleCard
+                            key={article.id}
+                            article={article}
+                            query={searchTerm}
+                            canManage={canManage(article)}
+                            canManageContent={canManageContent}
+                            onOpen={() => navigate(`/articles/${article.slug}`)}
+                            onStatusChange={(status) =>
+                              changeStatus(article, status)
+                            }
+                            user={user}
+                            statusBusy={statusBusyId === article.id}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </section>
                 ))}
               </div>

@@ -6,13 +6,13 @@ import { errorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import usePagedList from "../hooks/usePagedList";
+import useViewMode from "../hooks/useViewMode";
 import Pagination from "./Pagination";
 import { SearchHighlight, SearchInput } from "../components/search";
+import { ViewModeToggle } from "./viewMode";
 import WineProfileTable from "./WineProfileTable";
 import DetailHero from "./DetailHero";
 import styles from "./WineProfileList.module.css";
-
-type ViewMode = "cards" | "list";
 
 function WineProfileCard({
   profile,
@@ -113,7 +113,12 @@ export default function WineProfileList() {
   const { user } = useAuth();
   const canManageWines = canManageWinesRole(user);
   const [searchValue, setSearchValue] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  // Persisted per page, so the choice outlives a navigation to a profile and
+  // back. Wine profiles default to the table — the previous fixed view.
+  const [viewMode, setViewMode] = useViewMode(
+    "wine-words:view-mode:wine-profiles",
+    "list",
+  );
 
   const effectiveSearchTerm = searchValue.trim();
 
@@ -209,25 +214,11 @@ export default function WineProfileList() {
           </p>
         </div>
 
-        <div className={styles.viewToggle} aria-label="Wine profile view">
-          <span className={styles.viewToggleLabel}>View</span>
-          <button
-            type="button"
-            className={`${styles.viewToggleButton} ${viewMode === "cards" ? styles.viewToggleButtonActive : ""}`}
-            aria-pressed={viewMode === "cards"}
-            onClick={() => setViewMode("cards")}
-          >
-            Cards
-          </button>
-          <button
-            type="button"
-            className={`${styles.viewToggleButton} ${viewMode === "list" ? styles.viewToggleButtonActive : ""}`}
-            aria-pressed={viewMode === "list"}
-            onClick={() => setViewMode("list")}
-          >
-            List
-          </button>
-        </div>
+        <ViewModeToggle
+          value={viewMode}
+          onChange={setViewMode}
+          ariaLabel="Wine profile view"
+        />
       </div>
 
       {wineProfiles.length === 0 ? (

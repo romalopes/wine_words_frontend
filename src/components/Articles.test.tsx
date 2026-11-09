@@ -77,6 +77,9 @@ describe("Articles", () => {
     // `useSearch` persists the query back to window.location, so without this
     // a previous test's `?query=…` would leak into the next one.
     window.history.replaceState({}, "", "/");
+    // The Cards / List choice is persisted, so a previous test's selection
+    // must not decide how the next one renders.
+    localStorage.clear();
     mockList.mockReset().mockResolvedValue([]);
     mockGrouped.mockReset().mockResolvedValue([]);
     mockMyArticles.mockReset().mockResolvedValue([]);
@@ -404,5 +407,54 @@ describe("Articles advanced search panel", () => {
       ).toBe(true);
     });
     expect(screen.getByPlaceholderText("e.g. Penfolds")).toHaveValue("Penfolds");
+  });
+
+  it("renders the grouped feed as a table in list mode", async () => {
+    mockGrouped.mockResolvedValue([
+      { category: "Tasting notes", count: 1, articles: [makeArticle()] },
+    ]);
+    const user = userEvent.setup();
+
+    renderArticles();
+
+    expect(
+      await screen.findByRole("heading", { name: /Tasting notes/ }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "List" }));
+
+    expect(
+      await screen.findByRole("columnheader", { name: "Title" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Actions" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Barolo vertical" }),
+    ).toHaveAttribute("href", "/articles/barolo-vertical");
+    // Cards are replaced by the table, not shown alongside it.
+    expect(
+      document.querySelector(".wine-management__card"),
+    ).not.toBeInTheDocument();
+    // Articles offer status transitions only — no inline edit or delete.
+    expect(
+      screen.getByRole("button", { name: "Set status to Archive" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+  });
+
+  it("shows the view toggle with cards selected by default", async () => {
+    // This describe has no shared beforeEach, so clear any mode a previous
+    // test persisted before asserting the default.
+    localStorage.clear();
+    renderArticles();
+
+    expect(
+      await screen.findByRole("button", { name: "Cards" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "List" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 });

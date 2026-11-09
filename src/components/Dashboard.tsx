@@ -4,6 +4,10 @@ import { articlesApi, reviewsApi, statsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import ArticleCard from "./ArticleCard";
 import ReviewCard from "./ReviewCard";
+import ArticleTable from "./ArticleTable";
+import ReviewTable from "./ReviewTable";
+import useViewMode from "../hooks/useViewMode";
+import { ViewModeToggle } from "./viewMode";
 import { SearchInput, AdvancedSearchFilters } from "./search";
 import { isAbortError } from "../hooks/useSearch";
 import {
@@ -111,6 +115,12 @@ function Dashboard() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [advancedSearchRevision, setAdvancedSearchRevision] = useState(0);
+  // Cards / List preference for the search previews and the latest rails,
+  // persisted per page so it survives a trip to a detail page and back.
+  const [viewMode, setViewMode] = useViewMode(
+    "wine-words:view-mode:dashboard",
+    "cards",
+  );
   // Whether the shared panel's form is expanded (the panel header's
   // "Hide form" / "Show form" toggle), separate from whether the panel is
   // shown at all.
@@ -236,6 +246,14 @@ function Dashboard() {
           </button>
         </div>
 
+        <div className="listing-toolbar listing-toolbar--end">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel="Dashboard view"
+          />
+        </div>
+
         {/* The simple search box hides while the advanced panel is open — the
             same exclusive-mode behavior as /wines. */}
         {!advancedOpen && (
@@ -331,18 +349,22 @@ function Dashboard() {
                     </Link>
                   )}
                 </h2>
-                <div className="content-grid">
-                  {searchResults.reviews.map((review) => (
-                    <ReviewCard
-                      key={review.id}
-                      review={review}
-                      query={searchTerm}
-                      onOpen={() =>
-                        navigate(`/reviews/${review.slug || review.id}`)
-                      }
-                    />
-                  ))}
-                </div>
+                {viewMode === "list" ? (
+                  <ReviewTable reviews={searchResults.reviews} />
+                ) : (
+                  <div className="content-grid">
+                    {searchResults.reviews.map((review) => (
+                      <ReviewCard
+                        key={review.id}
+                        review={review}
+                        query={searchTerm}
+                        onOpen={() =>
+                          navigate(`/reviews/${review.slug || review.id}`)
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
               </>
             )}
 
@@ -361,18 +383,22 @@ function Dashboard() {
                     </Link>
                   )}
                 </h2>
-                <div className="content-grid">
-                  {searchResults.articles.map((article) => (
-                    <ArticleCard
-                      key={article.id}
-                      article={article}
-                      query={searchTerm}
-                      onOpen={() =>
-                        navigate(`/articles/${article.slug || article.id}`)
-                      }
-                    />
-                  ))}
-                </div>
+                {viewMode === "list" ? (
+                  <ArticleTable articles={searchResults.articles} />
+                ) : (
+                  <div className="content-grid">
+                    {searchResults.articles.map((article) => (
+                      <ArticleCard
+                        key={article.id}
+                        article={article}
+                        query={searchTerm}
+                        onOpen={() =>
+                          navigate(`/articles/${article.slug || article.id}`)
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -402,32 +428,40 @@ function Dashboard() {
       {!searchActive && recentReviews.length > 0 && (
         <>
           <h2 className="dashboard__section-title">Latest Reviews</h2>
-          <div className="content-grid">
-            {recentReviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                onOpen={() => navigate(`/reviews/${review.slug || review.id}`)}
-              />
-            ))}
-          </div>
+          {viewMode === "list" ? (
+            <ReviewTable reviews={recentReviews} />
+          ) : (
+            <div className="content-grid">
+              {recentReviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  onOpen={() => navigate(`/reviews/${review.slug || review.id}`)}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
 
       {!searchActive && recentArticles.length > 0 && (
         <>
           <h2 className="dashboard__section-title">Latest Articles</h2>
-          <div className="content-grid dashboard__content-grid">
-            {recentArticles.map((article) => (
-              <ArticleCard
-                key={article.id}
-                article={article}
-                onOpen={() =>
-                  navigate(`/articles/${article.slug || article.id}`)
-                }
-              />
-            ))}
-          </div>
+          {viewMode === "list" ? (
+            <ArticleTable articles={recentArticles} />
+          ) : (
+            <div className="content-grid dashboard__content-grid">
+              {recentArticles.map((article) => (
+                <ArticleCard
+                  key={article.id}
+                  article={article}
+                  onOpen={() =>
+                    navigate(`/articles/${article.slug || article.id}`)
+                  }
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </main>

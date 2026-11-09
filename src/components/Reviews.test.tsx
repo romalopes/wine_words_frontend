@@ -98,6 +98,9 @@ describe("Reviews", () => {
     // `useSearch` persists the query back to window.location, so without this
     // a previous test's `?query=…` would leak into the next one.
     window.history.replaceState({}, "", "/");
+    // The Cards / List choice is persisted, so a previous test's selection
+    // must not decide how the next one renders.
+    localStorage.clear();
     mockAuthUser = { id: 1, display_name: "Reviewer", roles: ["Editor"] };
     mockAll.mockReset().mockResolvedValue(envelope([]));
     mockGrouped.mockReset().mockResolvedValue([]);
@@ -508,5 +511,52 @@ describe("Reviews advanced search panel", () => {
       ).toBe(true);
     });
     expect(screen.getByPlaceholderText("e.g. Penfolds")).toHaveValue("Penfolds");
+  });
+
+  it("renders the grouped feed as a table with management actions in list mode", async () => {
+    mockGrouped.mockResolvedValue(groupedPayload());
+    mockAll.mockResolvedValue(envelope([makeReview()]));
+    const user = userEvent.setup();
+
+    renderReviews();
+
+    // Start from the card grid, then switch.
+    expect(
+      await screen.findByRole("heading", { name: /Tasting notes/ }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "List" }));
+
+    expect(await screen.findByRole("columnheader", { name: "Score" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Actions" })).toBeInTheDocument();
+    // The row links straight to the wine, not just the review.
+    expect(screen.getByRole("link", { name: "Château Test" })).toHaveAttribute(
+      "href",
+      "/wines/chateau-test",
+    );
+    // Cards are replaced by the table, not shown alongside it.
+    expect(document.querySelector(".wine-management__card")).not.toBeInTheDocument();
+    // Management parity: the Actions column offers the same controls as the card.
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Set status to Archive" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the list view unmanaged for signed-out readers", async () => {
+    mockAuthUser = null;
+    mockGrouped.mockResolvedValue(groupedPayload());
+    const user = userEvent.setup();
+
+    renderReviews();
+
+    await waitFor(() => expect(mockGrouped).toHaveBeenCalled());
+    await user.click(screen.getByRole("button", { name: "List" }));
+
+    expect(await screen.findByRole("columnheader", { name: "Score" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("columnheader", { name: "Actions" }),
+    ).not.toBeInTheDocument();
   });
 });

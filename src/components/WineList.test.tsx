@@ -33,16 +33,16 @@ function renderWineList(path = "/wines") {
   );
 }
 
+const listWine = {
+  id: 1,
+  slug: "chardonnay-2022",
+  name: "Chardonnay 2022",
+  producer_name: "Test Estate",
+  region: "Barossa Valley",
+};
+
 const winePayload = {
-  items: [
-    {
-      id: 1,
-      slug: "chardonnay-2022",
-      name: "Chardonnay 2022",
-      producer_name: "Test Estate",
-      region: "Barossa Valley",
-    },
-  ],
+  items: [listWine],
   page: 1,
   per_page: 20,
   total_count: 1,
@@ -52,6 +52,9 @@ const winePayload = {
 describe("WineList category view", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // The Cards / List choice is persisted, so a previous test's selection
+    // must not decide how the next one renders.
+    localStorage.clear();
     vi.mocked(winesApi.list).mockResolvedValue(winePayload);
     vi.mocked(winesApi.grouped).mockResolvedValue([]);
     vi.mocked(winesApi.advancedSearch).mockResolvedValue(winePayload);
@@ -113,5 +116,68 @@ describe("WineList category view", () => {
         screen.getByRole("heading", { name: "Wine List" }),
       ).toBeInTheDocument();
     });
+  });
+
+  it("renders the category wines as a table in list mode", async () => {
+    const user = userEvent.setup();
+    renderWineList("/wines?category=Chardonnay");
+
+    expect(await screen.findByText("Chardonnay 2022")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "List" }));
+
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Name" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Chardonnay 2022" })).toHaveAttribute(
+      "href",
+      "/wines/chardonnay-2022",
+    );
+  });
+
+  it("renders one table per category group in list mode", async () => {
+    vi.mocked(winesApi.grouped).mockResolvedValue([
+      {
+        category: "Chardonnay",
+        count: 1,
+        wines: [listWine],
+      },
+    ]);
+    const user = userEvent.setup();
+    renderWineList("/wines");
+
+    expect(
+      await screen.findByRole("heading", { name: "Wine List" }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "List" }));
+
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    // The category heading and its "Show all" link survive the switch.
+    expect(
+      screen.getByRole("heading", { name: /Chardonnay/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Chardonnay 2022" })).toBeInTheDocument();
+  });
+
+  it("marks the active view mode on the toggle", async () => {
+    const user = userEvent.setup();
+    renderWineList("/wines?category=Chardonnay");
+
+    expect(
+      await screen.findByRole("button", { name: "Cards" }),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(screen.getByRole("button", { name: "List" }));
+
+    expect(screen.getByRole("button", { name: "List" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Cards" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 });

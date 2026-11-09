@@ -21,6 +21,10 @@ import {
   MIN_SEARCH_LENGTH,
 } from "../services/searchParams";
 import { wineImage } from "../utils/wineImages";
+import useViewMode from "../hooks/useViewMode";
+import { ViewModeToggle } from "./viewMode";
+import type { ViewMode } from "./viewMode";
+import WineTable from "./WineTable";
 
 /**
  * Shared wine card used by every listing on this page (advanced search,
@@ -183,23 +187,39 @@ function SearchModeToggle({
   searchMode,
   onSimple,
   onAdvanced,
+  viewMode,
+  onViewModeChange,
 }: {
   searchMode: "simple" | "advanced";
   onSimple: () => void;
   onAdvanced: () => void;
+  /** Cards / List switch, rendered under the toggle row for every wine view. */
+  viewMode?: ViewMode;
+  onViewModeChange?: (value: ViewMode) => void;
 }) {
   const advanced = searchMode === "advanced";
   return (
-    <div className="advanced-search-toggle-row">
-      <button
-        type="button"
-        className="advanced-search-toggle"
-        onClick={advanced ? onSimple : onAdvanced}
-        aria-expanded={advanced}
-      >
-        {advanced ? "Hide advanced search" : "Advanced search →"}
-      </button>
-    </div>
+    <>
+      <div className="advanced-search-toggle-row">
+        <button
+          type="button"
+          className="advanced-search-toggle"
+          onClick={advanced ? onSimple : onAdvanced}
+          aria-expanded={advanced}
+        >
+          {advanced ? "Hide advanced search" : "Advanced search →"}
+        </button>
+      </div>
+      {viewMode && onViewModeChange && (
+        <div className="listing-toolbar listing-toolbar--end">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={onViewModeChange}
+            ariaLabel="Wine list view"
+          />
+        </div>
+      )}
+    </>
   );
 }
 
@@ -223,6 +243,11 @@ function WineList() {
   const [searchMode, setSearchMode] = useState<WineSearchMode>("simple");
   const [simpleValue, setSimpleValue] = useState("");
   const simpleQuery = effectiveSearchTerm(simpleValue, MIN_SEARCH_LENGTH);
+
+  // Cards / List preference, persisted per page. Applies to every render path
+  // below — advanced results, simple results, a selected category, and the
+  // grouped-by-category view.
+  const [viewMode, setViewMode] = useViewMode("wine-words:view-mode:wines", "cards");
 
   // --- Advanced search state ---------------------------------------------
   // null => normal browsing; an object => show the advanced-search results.
@@ -400,6 +425,8 @@ function WineList() {
           searchMode={searchMode}
           onSimple={showSimple}
           onAdvanced={showAdvanced}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
         <AdvancedSearchFilters
@@ -421,11 +448,15 @@ function WineList() {
           </div>
         ) : (
           <>
-            <div className="content-grid">
-              {advancedPaged.items.map((wine) => (
-                <WineCard key={wine.slug} wine={wine} />
-              ))}
-            </div>
+            {viewMode === "list" ? (
+              <WineTable wines={advancedPaged.items} />
+            ) : (
+              <div className="content-grid">
+                {advancedPaged.items.map((wine) => (
+                  <WineCard key={wine.slug} wine={wine} />
+                ))}
+              </div>
+            )}
             <Pagination
               page={advancedPaged.page}
               totalPages={advancedPaged.totalPages}
@@ -465,6 +496,8 @@ function WineList() {
           searchMode={searchMode}
           onSimple={showSimple}
           onAdvanced={showAdvanced}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
         <SearchInput
           value={simpleValue}
@@ -493,18 +526,22 @@ function WineList() {
               {simplePaged.totalCount}{" "}
               {simplePaged.totalCount !== 1 ? "wines" : "wine"} found
             </p>
-            <div className="content-grid">
-              {simplePaged.items.map((wine) => (
-                <WineCard
-                  key={wine.slug}
-                  wine={wine}
-                  query={simpleQuery}
-                  showImage={false}
-                  showSparkling={false}
-                  showInteractions
-                />
-              ))}
-            </div>
+            {viewMode === "list" ? (
+              <WineTable wines={simplePaged.items} />
+            ) : (
+              <div className="content-grid">
+                {simplePaged.items.map((wine) => (
+                  <WineCard
+                    key={wine.slug}
+                    wine={wine}
+                    query={simpleQuery}
+                    showImage={false}
+                    showSparkling={false}
+                    showInteractions
+                  />
+                ))}
+              </div>
+            )}
             <Pagination
               page={simplePaged.page}
               totalPages={simplePaged.totalPages}
@@ -556,6 +593,8 @@ function WineList() {
           searchMode={searchMode}
           onSimple={showSimple}
           onAdvanced={showAdvanced}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
         <SearchInput
           value={simpleValue}
@@ -571,11 +610,15 @@ function WineList() {
           </div>
         ) : (
           <>
-            <div className="content-grid">
-              {pagedWines.items.map((wine) => (
-                <WineCard key={wine.slug} wine={wine} />
-              ))}
-            </div>
+            {viewMode === "list" ? (
+              <WineTable wines={pagedWines.items} />
+            ) : (
+              <div className="content-grid">
+                {pagedWines.items.map((wine) => (
+                  <WineCard key={wine.slug} wine={wine} />
+                ))}
+              </div>
+            )}
             <Pagination
               page={pagedWines.page}
               totalPages={pagedWines.totalPages}
@@ -613,6 +656,8 @@ function WineList() {
         searchMode={searchMode}
         onSimple={showSimple}
         onAdvanced={showAdvanced}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
       {searchMode === "advanced" && (
         <AdvancedSearchFilters
@@ -672,11 +717,15 @@ function WineList() {
                   Show all ({group.count})
                 </Link>
               </h2>
-              <div className="content-grid">
-                {group.wines.map((wine) => (
-                  <WineCard key={wine.slug} wine={wine} showInteractions />
-                ))}
-              </div>
+              {viewMode === "list" ? (
+                <WineTable wines={group.wines} />
+              ) : (
+                <div className="content-grid">
+                  {group.wines.map((wine) => (
+                    <WineCard key={wine.slug} wine={wine} showInteractions />
+                  ))}
+                </div>
+              )}
             </section>
           ))}
         </div>

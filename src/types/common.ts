@@ -48,3 +48,10 @@ export interface ApiResponse<T> {
   status: number
 }
 
+/**
+ * How a listing renders its rows: an image-card grid, or a table. Shared by
+ * every page that offers the Cards / List switch so the persisted preference
+ * and the toggle component speak the same vocabulary.
+ */
+export type ViewMode = "cards" | "list"
+

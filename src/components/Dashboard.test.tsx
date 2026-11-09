@@ -105,6 +105,9 @@ function renderDashboard() {
 
 describe("Dashboard search", () => {
   beforeEach(() => {
+    // The Cards / List choice is persisted, so a previous test's selection
+    // must not decide how the next one renders.
+    localStorage.clear();
     mockStats.mockReset().mockResolvedValue(STATS);
     mockReviewsAll
       .mockReset()
@@ -540,5 +543,26 @@ describe("Dashboard search", () => {
       ).toBeInTheDocument();
     });
     expect(screen.getByPlaceholderText("e.g. Penfolds")).toHaveValue("Penfolds");
+  });
+
+  it("renders the latest rails as tables in list mode", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    expect(
+      await screen.findByRole("heading", { name: "Latest Reviews" }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "List" }));
+
+    expect(await screen.findByRole("columnheader", { name: "Score" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument();
+    expect(screen.getByText("Latest article")).toBeInTheDocument();
+    // The card grid is replaced, not merely supplemented.
+    expect(document.querySelector(".wine-management__card")).not.toBeInTheDocument();
+    // The dashboard is read-only: no management column is offered.
+    expect(
+      screen.queryByRole("columnheader", { name: "Actions" }),
+    ).not.toBeInTheDocument();
   });
 });

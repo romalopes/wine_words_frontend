@@ -4349,6 +4349,28 @@ a.following-page__label:hover {
   color: #8a5a44;
 }
 
+/* ----- Listing view-mode toolbar (Cards / List) ----- */
+/* A row that holds the Cards/List switch; `--end` right-aligns it so the row
+   reads as a single control instead of stretching. Shared by every listing
+   page, next to the page-specific filter rows. */
+.listing-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin: 1rem 0;
+}
+
+.listing-toolbar--end {
+  justify-content: flex-end;
+  margin: 0.5rem 0 1rem;
+}
+
+.listing-toolbar__spacer {
+  flex: 1;
+}
+
 /* Wrapper around the content-type picker and the shared advanced panel; the
    panel itself brings the /wines card styling, so only spacing lives here. */
 .dashboard__advanced-area {

@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
+import type { RoleUser } from "../constants/roles";
 import LinkArticleDialog from "./LinkArticleDialog";
 import DeadlineBadge from "./DeadlineBadge";
+import ContentStatusActions from "./ContentStatusActions";
+import type { ContentStatus } from "./ContentStatusActions";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import type { Article } from "../types/article";
 
@@ -25,15 +28,55 @@ interface ArticleTableProps {
   /** When set, management users get a "+ Link an Article" action. */
   linkContext?: ArticleLinkContext;
   onArticleLinked?: () => void;
+  /**
+   * Management column. Opt-in, so the read-only detail-page call sites stay
+   * unchanged and only a listing that asks for it grows an Actions column.
+   * Articles have no inline edit or delete on their cards, so neither appears
+   * here either.
+   */
+  canManage?: boolean;
+  user?: RoleUser | null;
+  /** Receives the row's article, so one handler can serve every row. */
+  onStatusChange?:
+    | ((article: Article, status: ContentStatus) => void)
+    | undefined;
+  /** Disables the status buttons for the row whose transition is in flight. */
+  statusBusy?: boolean;
 }
+
+/**
+ * One entry per physical column, in render order. Article rows have no inline
+ * edit form, so no `colSpan` depends on this list — it exists to keep the
+ * header and the body in step.
+ */
+const BASE_COLUMNS = [
+  "Image",
+  "Title",
+  "Author",
+  "Status",
+  "Deadline",
+  "Published",
+];
 
 // Shared table of articles (one article per row): Title, Author, Status and
 // Published date. Rows navigate to the article detail page.
 // When `linkContext` is provided, shows a "+ Link an Article" button that
 // opens a dialog to search and link articles to the given entity.
-function ArticleTable({ articles, linkContext, onArticleLinked }: ArticleTableProps) {
-  const { user } = useAuth();
-  const canManage = canManageWinesRole(user);
+function ArticleTable({
+  articles,
+  linkContext,
+  onArticleLinked,
+  canManage = false,
+  user,
+  onStatusChange,
+  statusBusy = false,
+}: ArticleTableProps) {
+  const { user: currentUser } = useAuth();
+  // The "+ Link an Article" affordance stays role-gated (unchanged behaviour);
+  // the Actions column is strictly opt-in so read-only listings such as the
+  // dashboard never grow an empty column.
+  const canManageLink = canManageWinesRole(currentUser);
+  const showActions = canManage === true;
   const navigate = useNavigate();
   const returnToLink = useReturnToLink();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,7 +84,11 @@ function ArticleTable({ articles, linkContext, onArticleLinked }: ArticleTablePr
     ? articles.flatMap((a) => [a.id, a.slug].filter(Boolean) as (number | string)[])
     : [];
 
-  const linkButton = canManage && linkContext && (
+  const columns = showActions
+    ? [ ...BASE_COLUMNS, "Actions" ]
+    : BASE_COLUMNS;
+
+  const linkButton = canManageLink && linkContext && (
     <div style={{ margin: "0 0 1rem" }}>
       <button
         type="button"
@@ -80,12 +127,16 @@ function ArticleTable({ articles, linkContext, onArticleLinked }: ArticleTablePr
       <table className="grapes-table producers-table">
         <thead>
           <tr>
-            <th className="producers-table__image-col">Image</th>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Status</th>
-            <th>Deadline</th>
-            <th>Published</th>
+            {columns.map((column) => (
+              <th
+                key={column}
+                className={
+                  column === "Image" ? "producers-table__image-col" : undefined
+                }
+              >
+                {column}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -134,6 +185,18 @@ function ArticleTable({ articles, linkContext, onArticleLinked }: ArticleTablePr
                   ? new Date(article.published_at).toLocaleDateString()
                   : "—"}
               </td>
+              {showActions && (
+                <td className="actions" onClick={(e) => e.stopPropagation()}>
+                  {onStatusChange && (
+                    <ContentStatusActions
+                      status={article.status}
+                      user={user ?? currentUser ?? null}
+                      busy={statusBusy}
+                      onChange={(status) => onStatusChange(article, status)}
+                    />
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
