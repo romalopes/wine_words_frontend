@@ -21,6 +21,12 @@ function isDetailPath(path: string | null | undefined): boolean {
   )
 }
 
+function isDashboardPath(path: string | null | undefined): boolean {
+  if (!path) return false
+  const [pathname = ""] = path.split("?")
+  return pathname === "/" || pathname === ""
+}
+
 export type ReturnToLink = (targetPath: string) => string
 
 export function useReturnToLink(): ReturnToLink {
@@ -29,7 +35,17 @@ export function useReturnToLink(): ReturnToLink {
 
   return (targetPath) => {
     if (!targetPath) return targetPath
-    if (!isDetailPath(targetPath) || !isDetailPath(location.pathname)) return targetPath
+    // When navigating from the dashboard to a detail page, remember the
+    // dashboard as the origin so detail pages can link back to it.
+    if (
+      isDashboardPath(location.pathname) &&
+      isDetailPath(targetPath)
+    ) {
+      const separator = targetPath.includes("?") ? "&" : "?"
+      return `${targetPath}${separator}returnTo=${encodeURIComponent(currentPath)}`
+    }
+    if (!isDetailPath(targetPath) || !isDetailPath(location.pathname))
+      return targetPath
 
     const separator = targetPath.includes("?") ? "&" : "?"
     return `${targetPath}${separator}returnTo=${encodeURIComponent(currentPath)}`

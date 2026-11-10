@@ -38,6 +38,7 @@ function renderLoginAt(path: string, state?: unknown) {
   return render(
     <MemoryRouter initialEntries={[{ pathname: path, state }]}>
       <Routes>
+        <Route path="/" element={<LocationProbe />} />
         <Route path="/login" element={<Login />} />
         <Route path="/wines" element={<LocationProbe />} />
         <Route path="/subscribe" element={<LocationProbe />} />
@@ -69,7 +70,7 @@ describe("Login return redirect", () => {
     });
   });
 
-  it("falls back to /wines with no return state", async () => {
+  it("falls back to the dashboard with no return state", async () => {
     const user = userEvent.setup();
     renderLoginAt("/login");
 
@@ -78,7 +79,9 @@ describe("Login return redirect", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("location")).toHaveTextContent("/wines");
+      // Exact match: "/wines" also contains "/", so a substring assertion
+      // would not prove the fallback changed.
+      expect(screen.getByTestId("location").textContent).toBe("/");
     });
   });
 
@@ -91,7 +94,7 @@ describe("Login return redirect", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("location")).toHaveTextContent("/wines");
+      expect(screen.getByTestId("location").textContent).toBe("/");
     });
   });
 });

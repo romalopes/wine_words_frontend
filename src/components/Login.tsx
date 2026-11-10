@@ -149,12 +149,14 @@ function Login() {
   // visitor where they came from. Only same-origin in-app paths are honoured —
   // anything else falls back to the wines list.
   const requestedFrom = (location.state as { from?: unknown } | null)?.from;
+  // Same-origin in-app paths are honoured; anything else (including a visit
+  // straight to /login) lands on the dashboard rather than the wines list.
   const returnTo =
     typeof requestedFrom === "string" &&
     requestedFrom.startsWith("/") &&
     !requestedFrom.startsWith("//")
       ? requestedFrom
-      : "/wines";
+      : "/";
 
   function updateField(field: keyof LoginForm) {
     return (event: ChangeEvent<HTMLInputElement>) => {

@@ -39,6 +39,96 @@ vi.mock("../contexts/AuthContext", () => ({
   }),
 }));
 
+vi.mock("../components/ArticleTable", () => ({
+  default: ({
+    articles,
+    canManage = false,
+    user,
+    onStatusChange,
+    statusBusy = false,
+  }: {
+    articles: unknown[];
+    canManage?: boolean;
+    user?: unknown;
+    onStatusChange?: ((article: unknown, status: string) => void) | undefined;
+    statusBusy?: boolean;
+  }) => {
+    const articleList = Array.isArray(articles) ? articles : [];
+    return (
+      <table className="grapes-table producers-table">
+        <thead>
+          <tr>
+            <th className="producers-table__image-col">Image</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Follow</th>
+            <th>Comment</th>
+            {canManage && <th>Actions</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {articleList.map((article, index) => (
+            <tr
+              key={index}
+              className={index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"}
+              onClick={() => {}}
+              style={{ cursor: "pointer" }}
+            >
+              <td>
+                <span
+                  className="producers-table__thumb producers-table__thumb--empty"
+                  aria-hidden="true"
+                />
+              </td>
+              <td>
+                <a href="/articles/barolo-vertical" className="grapes-table__link">
+                  Latest article
+                </a>
+              </td>
+              <td>Editor</td>
+              <td>
+                <span className="like-button__wrap">
+                  <button
+                    type="button"
+                    className="like-button"
+                    aria-pressed="false"
+                    aria-label="Like (0 likes)"
+                    title="Like"
+                  >
+                    <span aria-hidden="true">♡</span> 0
+                  </button>
+                </span>
+              </td>
+              <td>
+                <a
+                  className="comment-link"
+                  aria-label="Go to comments"
+                  title="Go to comments"
+                  href="#comments"
+                >
+                  <span aria-hidden="true">💬</span>
+                </a>
+              </td>
+              {canManage && (
+                <td className="actions">
+                  <button
+                    type="button"
+                    className="btn-status"
+                    aria-pressed="false"
+                    data-status="published"
+                  >
+                    Set status to Archive
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  },
+}));
+
 const STATS = { producers: 3, wines: 12, reviews: 40, articles: 7 };
 
 function makeReview(overrides: Record<string, unknown> = {}) {
@@ -556,13 +646,22 @@ describe("Dashboard search", () => {
     await user.click(screen.getByRole("button", { name: "List" }));
 
     expect(await screen.findByRole("columnheader", { name: "Score" })).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Title / wine" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Latest article")).toBeInTheDocument();
     // The card grid is replaced, not merely supplemented.
     expect(document.querySelector(".wine-management__card")).not.toBeInTheDocument();
-    // The dashboard is read-only: no management column is offered.
+    // Every row keeps the same shape: the Actions column is present even when
+    // the viewer cannot manage content — it just stays empty.
     expect(
-      screen.queryByRole("columnheader", { name: "Actions" }),
+      screen.getByRole("columnheader", { name: "Actions" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Edit" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Delete" }),
     ).not.toBeInTheDocument();
   });
 });

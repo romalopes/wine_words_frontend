@@ -70,7 +70,16 @@ function ReviewTable({
   onDelete,
 }: ReviewTableProps) {
   const { user: currentUser } = useAuth();
-  const canManageTable = canManage || canManageWinesRole(user);
+  // Server truth for the Actions column: the explicit prop wins, otherwise the
+  // signed-in viewer's role decides. Anonymous viewers get no Actions column
+  // at all, and management users get the full "Image Score Title / wine
+  // Grapes Regions Content Follow Comment Actions" header for consistency.
+  const canManageTable = canManage || canManageWinesRole(currentUser ?? user);
+  const showActions = canManageTable;
+
+  const columns = showActions
+    ? [...BASE_COLUMNS, "Actions"]
+    : BASE_COLUMNS;
   const navigate = useNavigate();
   const returnToLink = useReturnToLink();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -92,14 +101,9 @@ function ReviewTable({
     </div>
   );
 
-  // The "+ Link a Review" affordance stays role-gated (unchanged behaviour),
-  // but the Actions column is strictly opt-in: a read-only listing such as the
-  // dashboard must not grow an empty column just because the viewer manages
-  // content.
-  const showActions = canManageTable === true;
-  const columns = showActions
-    ? [...BASE_COLUMNS, "Actions"]
-    : BASE_COLUMNS;
+  // The "+ Link a Review" affordance stays role-gated (unchanged behaviour).
+  // The Actions column always renders so every row has identical structure
+  // regardless of role; management buttons inside it are gated by canManage.
 
   if (!Array.isArray(reviews) || reviews.length === 0) {
     return (
@@ -250,36 +254,38 @@ function ReviewTable({
                   identifier={review.slug}
                 />
               </td>
-              {showActions && (
-                <td className="actions" onClick={(e) => e.stopPropagation()}>
-                  {onStatusChange && (
-                    <ContentStatusActions
-                      status={review.status}
-                      user={user ?? currentUser ?? null}
-                      busy={statusBusy}
-                      onChange={(status) => onStatusChange(review, status)}
-                    />
-                  )}
-                  {onEdit && (
-                    <button
-                      type="button"
-                      className="btn-action"
-                      onClick={() => onEdit(review)}
-                    >
-                      Edit
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button
-                      type="button"
-                      className="btn-action btn-action--delete"
-                      onClick={() => onDelete(review.id)}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </td>
-              )}
+              <td className="actions" onClick={(e) => e.stopPropagation()}>
+                {canManageTable && (
+                  <>
+                    {onStatusChange && (
+                      <ContentStatusActions
+                        status={review.status}
+                        user={user ?? currentUser ?? null}
+                        busy={statusBusy}
+                        onChange={(status) => onStatusChange(review, status)}
+                      />
+                    )}
+                    {onEdit && (
+                      <button
+                        type="button"
+                        className="btn-action"
+                        onClick={() => onEdit(review)}
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        type="button"
+                        className="btn-action btn-action--delete"
+                        onClick={() => onDelete(review.id)}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

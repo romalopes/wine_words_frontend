@@ -3,10 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
 import type { RoleUser } from "../constants/roles";
+import LikeButton from "./LikeButton";
+import CommentLink from "./comments/CommentLink";
 import LinkArticleDialog from "./LinkArticleDialog";
-import DeadlineBadge from "./DeadlineBadge";
 import ContentStatusActions from "./ContentStatusActions";
 import type { ContentStatus } from "./ContentStatusActions";
+import { excerpt } from "./ArticleCard";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import type { Article } from "../types/article";
 
@@ -52,10 +54,10 @@ interface ArticleTableProps {
 const BASE_COLUMNS = [
   "Image",
   "Title",
+  "Content",
   "Author",
-  "Status",
-  "Deadline",
-  "Published",
+  "Follow",
+  "Comment",
 ];
 
 // Shared table of articles (one article per row): Title, Author, Status and
@@ -170,20 +172,21 @@ function ArticleTable({
                   {article.title}
                 </Link>
               </td>
+              <td>{excerpt(article.abstract || article.body)}</td>
               <td>{article.author_name || "—"}</td>
-              <td>{article.status || "—"}</td>
               <td>
-                <DeadlineBadge
-                  deadline={article.deadline}
-                  status={article.status}
-                  overdue={article.overdue}
-                  daysUntilDeadline={article.days_until_deadline}
+                <LikeButton
+                  kind="article"
+                  identifier={article.slug || article.id}
+                  initialLiked={article.liked_by_current_user}
+                  initialCount={article.likes_count}
                 />
               </td>
               <td>
-                {article.published_at
-                  ? new Date(article.published_at).toLocaleDateString()
-                  : "—"}
+                <CommentLink
+                  kind="article"
+                  identifier={article.slug || article.id}
+                />
               </td>
               {showActions && (
                 <td className="actions" onClick={(e) => e.stopPropagation()}>

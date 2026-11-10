@@ -555,8 +555,19 @@ describe("Reviews advanced search panel", () => {
     await user.click(screen.getByRole("button", { name: "List" }));
 
     expect(await screen.findByRole("columnheader", { name: "Score" })).toBeInTheDocument();
+    // The Actions column is management-only; anonymous readers see no
+    // Actions column or controls.
     expect(
       screen.queryByRole("columnheader", { name: "Actions" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Edit" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Delete" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Set status to Archive" }),
     ).not.toBeInTheDocument();
   });
 });

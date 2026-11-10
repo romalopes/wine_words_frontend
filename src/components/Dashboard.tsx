@@ -10,6 +10,7 @@ import useViewMode from "../hooks/useViewMode";
 import { ViewModeToggle } from "./viewMode";
 import { SearchInput, AdvancedSearchFilters } from "./search";
 import { isAbortError } from "../hooks/useSearch";
+import { useReturnToLink } from "../hooks/useReturnToLink";
 import {
   effectiveSearchTerm,
   MIN_SEARCH_LENGTH,
@@ -104,6 +105,7 @@ function asList<T>(response: T[] | { items?: T[]; total_count?: number }): {
 function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const returnToLink = useReturnToLink();
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
   const [recentArticles, setRecentArticles] = useState<Article[]>([]);
   const [recentReviews, setRecentReviews] = useState<Review[]>([]);
@@ -359,7 +361,7 @@ function Dashboard() {
                         review={review}
                         query={searchTerm}
                         onOpen={() =>
-                          navigate(`/reviews/${review.slug || review.id}`)
+                          navigate(returnToLink(`/reviews/${review.slug || review.id}`))
                         }
                       />
                     ))}
@@ -393,7 +395,7 @@ function Dashboard() {
                         article={article}
                         query={searchTerm}
                         onOpen={() =>
-                          navigate(`/articles/${article.slug || article.id}`)
+                          navigate(returnToLink(`/articles/${article.slug || article.id}`))
                         }
                       />
                     ))}
@@ -436,7 +438,7 @@ function Dashboard() {
                 <ReviewCard
                   key={review.id}
                   review={review}
-                  onOpen={() => navigate(`/reviews/${review.slug || review.id}`)}
+                  onOpen={() => navigate(returnToLink(`/reviews/${review.slug || review.id}`))}
                 />
               ))}
             </div>
@@ -456,7 +458,7 @@ function Dashboard() {
                   key={article.id}
                   article={article}
                   onOpen={() =>
-                    navigate(`/articles/${article.slug || article.id}`)
+                    navigate(returnToLink(`/articles/${article.slug || article.id}`))
                   }
                 />
               ))}

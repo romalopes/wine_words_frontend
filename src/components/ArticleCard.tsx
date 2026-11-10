@@ -9,7 +9,7 @@ import type { Article } from "../types/article";
 import { SearchHighlight } from "./search";
 
 /** Strips HTML tags and truncates, for the plain-text excerpt on a card. */
-function excerpt(text: string | null | undefined, max = 80): string {
+export function excerpt(text: string | null | undefined, max = 80): string {
   if (!text) return "";
   const stripped = text.replace(/<[^>]+>/g, "").trim();
   if (stripped.length <= max) return stripped;

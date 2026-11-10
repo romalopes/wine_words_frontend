@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Articles from "./Articles";
 
 /**
@@ -35,6 +36,96 @@ vi.mock("../contexts/AuthContext", () => ({
     user: { id: 1, display_name: "Editor", roles: ["Editor"] },
     loading: false,
   }),
+}));
+
+vi.mock("./ArticleTable", () => ({
+  default: ({
+    articles,
+    canManage = false,
+    user,
+    onStatusChange,
+    statusBusy = false,
+  }: {
+    articles: unknown[];
+    canManage?: boolean;
+    user?: unknown;
+    onStatusChange?: ((article: unknown, status: string) => void) | undefined;
+    statusBusy?: boolean;
+  }) => {
+    const articleList = Array.isArray(articles) ? articles : [];
+    return (
+      <table className="grapes-table producers-table">
+        <thead>
+          <tr>
+            <th className="producers-table__image-col">Image</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Follow</th>
+            <th>Comment</th>
+            {canManage && <th>Actions</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {articleList.map((article, index) => (
+            <tr
+              key={index}
+              className={index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"}
+              onClick={() => {}}
+              style={{ cursor: "pointer" }}
+            >
+              <td>
+                <span
+                  className="producers-table__thumb producers-table__thumb--empty"
+                  aria-hidden="true"
+                />
+              </td>
+              <td>
+                <a href="/articles/barolo-vertical" className="grapes-table__link">
+                  Barolo vertical
+                </a>
+              </td>
+              <td>Editor</td>
+              <td>
+                <span className="like-button__wrap">
+                  <button
+                    type="button"
+                    className="like-button"
+                    aria-pressed="false"
+                    aria-label="Like (0 likes)"
+                    title="Like"
+                  >
+                    <span aria-hidden="true">♡</span> 0
+                  </button>
+                </span>
+              </td>
+              <td>
+                <a
+                  className="comment-link"
+                  aria-label="Go to comments"
+                  title="Go to comments"
+                  href="#comments"
+                >
+                  <span aria-hidden="true">💬</span>
+                </a>
+              </td>
+              {canManage && (
+                <td className="actions">
+                  <button
+                    type="button"
+                    className="btn-status"
+                    aria-pressed="false"
+                    data-status="published"
+                  >
+                    Set status to Archive
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  },
 }));
 
 vi.mock("./ArticleForm", () => ({ default: () => <div>New article form</div> }));
