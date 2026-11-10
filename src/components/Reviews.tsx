@@ -373,6 +373,28 @@ function Reviews() {
           the simple search bar hides while the panel is open. Filters apply
           live through `onChange`. */}
       <div className="search-toolbar">
+        {/* 1. Search text box on the left */}
+        {!advancedOpen && (
+          <div className="search-bar-wrapper">
+            <SearchBar
+              placeholder="Search reviews…"
+              onSearch={(value) => setFilter("query", effectiveSearchTerm(value))}
+              activeFilters={activeFilters}
+              onRemoveFilter={handleRemoveFilter}
+              sortOptions={[
+                { value: "relevance", label: "Relevance" },
+                { value: "recent", label: "Most recent" },
+                { value: "oldest", label: "Oldest" },
+                { value: "score_high", label: "Score high→low" },
+                { value: "score_low", label: "Score low→high" },
+              ]}
+              currentSort={(params.sort as string) ?? "relevance"}
+              onSortChange={setSort}
+              showSort={false}
+            />
+          </div>
+        )}
+
         <div className="advanced-search-toggle-row">
           <button
             type="button"
@@ -391,28 +413,16 @@ function Reviews() {
             {advancedOpen ? "Hide advanced search" : "Advanced search →"}
           </button>
         </div>
-      </div>
 
-      {!advancedOpen && (
-        <div className="search-bar-wrapper">
-          <SearchBar
-            placeholder="Search reviews…"
-            onSearch={(value) => setFilter("query", effectiveSearchTerm(value))}
-            activeFilters={activeFilters}
-            onRemoveFilter={handleRemoveFilter}
-            sortOptions={[
-              { value: "relevance", label: "Relevance" },
-              { value: "recent", label: "Most recent" },
-              { value: "oldest", label: "Oldest" },
-              { value: "score_high", label: "Score high→low" },
-              { value: "score_low", label: "Score low→high" },
-            ]}
-            currentSort={(params.sort as string) ?? "relevance"}
-            onSortChange={setSort}
-            showSort={false}
+        {/* 3. View (Cards/List) on the right */}
+        <div className="listing-toolbar listing-toolbar--end">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel="Reviews view"
           />
         </div>
-      )}
+      </div>
 
       {advancedOpen && (
         <AdvancedSearchFilters
@@ -429,15 +439,6 @@ function Reviews() {
           onClear={() => setAdvancedFilters({})}
         />
       )}
-
-      
-      <div className="listing-toolbar listing-toolbar--end">
-        <ViewModeToggle
-          value={viewMode}
-          onChange={setViewMode}
-          ariaLabel="Reviews view"
-        />
-      </div>
 
       {!showForm && loading ? (
         <p className="wine-management__loading">Loading reviews…</p>

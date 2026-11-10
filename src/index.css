@@ -9029,31 +9029,60 @@ a.admin-user-card:hover {
   }
 }
 /* ----- Dashboard search toolbar: three controls in a horizontal row ----- */
-/* Shown when no advanced search term is active; each control shrinks to its
-   natural width and the row centers them with space between. */
+/* Order: 1. Search input (left, flexible)  2. Advanced search (middle)  3. View toggle (right) */
 .dashboard-search-toolbar {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  justify-content: center;
+  justify-content: space-between;
   margin: 1rem 0;
 }
 
-/* The search label + input group keeps together at a minimum width */
-.dashboard-search-toolbar .dashboard__search-label {
-  white-space: nowrap;
-  margin-right: 0.5rem;
+/* 1. Search input wrapper on the left - takes remaining space */
+.dashboard-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 280px;
 }
 
-/* The advanced search toggle shrinks to its content */
+.dashboard-search-input-wrapper .dashboard__search-label {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dashboard-search-input-wrapper #dashboard-search {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 2. Advanced search button in the middle - fixed width */
 .dashboard-search-toolbar .advanced-search-toggle-row {
   flex-shrink: 0;
 }
 
-/* The view toolbar (Cards/List) keeps its right-aligned behavior */
+/* 3. View toolbar (Cards/List) on the right - fixed width */
 .dashboard-search-toolbar .listing-toolbar--end {
   flex-shrink: 0;
   justify-content: flex-end;
   margin: 0;
+}
+
+/* When advanced panel is open, search input is hidden but we still want
+   the advanced search and view toggle centered */
+.dashboard-search-toolbar:has(> .advanced-search-toggle-row:first-child) {
+  justify-content: center;
+}
+
+/* ----- Search input width: match the Dashboard search box ----- */
+/* /reviews and /articles use the shared SearchBar; /wines uses SearchInput
+   directly. Both ship a CSS-module input fixed at 250px. Stretch them to the
+   Dashboard 34rem cap so all three listing pages line up with "/". */
+.search-toolbar .search-bar-wrapper input,
+.search-toolbar .container input,
+.search-toolbar .input {
+  max-width: 34rem;
+  width: 100%;
 }

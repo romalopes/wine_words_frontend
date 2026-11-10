@@ -242,7 +242,7 @@ describe("Dashboard search", () => {
       await screen.findByText(/Welcome, romalopes to Wine Words\./),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
     ).toBeInTheDocument();
   });
 
@@ -251,7 +251,7 @@ describe("Dashboard search", () => {
     renderDashboard();
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
       "malbec",
     );
 
@@ -288,7 +288,7 @@ describe("Dashboard search", () => {
     renderDashboard();
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
       "ma",
     );
     // Give the input's debounce time to fire (inside act, because the debounced
@@ -316,7 +316,7 @@ describe("Dashboard search", () => {
     renderDashboard();
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
       "zweigelt",
     );
 
@@ -338,7 +338,7 @@ describe("Dashboard search", () => {
     ).toBeInTheDocument();
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
       "malbec",
     );
     await screen.findByRole("heading", { name: /Reviews \(1\)/ });
@@ -358,7 +358,7 @@ describe("Dashboard search", () => {
     renderDashboard();
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
       "malbec",
     );
 
@@ -377,9 +377,7 @@ describe("Dashboard search", () => {
     const user = userEvent.setup();
     renderDashboard();
 
-    const input = screen.getByRole("textbox", {
-      name: "Search reviews and articles",
-    });
+    const input = screen.getByPlaceholderText("Search reviews and articles…");
     await user.type(input, "malbec");
     await screen.findByRole("heading", { name: /Reviews \(1\)/ });
 
@@ -420,7 +418,7 @@ describe("Dashboard search", () => {
     // The simple search box hides while the panel is open (/wines behavior),
     // and the panel header carries the wine-style "Hide form" toggle.
     expect(
-      screen.queryByRole("textbox", { name: "Search reviews and articles" }),
+      screen.queryByPlaceholderText("Search reviews and articles…"),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Hide form" })).toBeInTheDocument();
   });
@@ -442,7 +440,7 @@ describe("Dashboard search", () => {
     renderDashboard();
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
       "malbec",
     );
     await screen.findByRole("heading", { name: /Reviews \(1\)/ });
@@ -472,7 +470,7 @@ describe("Dashboard search", () => {
     renderDashboard();
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
       "malbec",
     );
     await screen.findByRole("heading", { name: /Reviews \(1\)/ });
@@ -514,7 +512,7 @@ describe("Dashboard search", () => {
     renderDashboard();
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
       "malbec",
     );
     await screen.findByRole("heading", { name: /Reviews \(1\)/ });
@@ -550,7 +548,7 @@ describe("Dashboard search", () => {
     renderDashboard();
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search reviews and articles" }),
+      screen.getByPlaceholderText("Search reviews and articles…"),
       "malbec",
     );
     await screen.findByRole("heading", { name: /Reviews \(1\)/ });

@@ -298,47 +298,47 @@ function Dashboard() {
         className="dashboard__search"
         aria-label="Search reviews and articles"
       >
-        <div className="advanced-search-toggle-row">
-          <button
-            type="button"
-            className="advanced-search-toggle"
-            onClick={() => {
-              const next = !advancedOpen;
-              setAdvancedOpen(next);
-              setFormExpanded(next);
-              // Entering one search mode clears the other, exactly as the
-              // /wines search does between its simple and advanced modes.
-              if (next) setSearchInput("");
-              else setAdvancedFilters({});
-            }}
-            aria-expanded={advancedOpen}
-          >
-            {advancedOpen ? "Hide advanced search" : "Advanced search →"}
-          </button>
-        </div>
+        <div className="dashboard-search-toolbar">
+          {/* 1. Search text box on the left */}
+          {!advancedOpen && (
+            <div className="dashboard-search-input-wrapper">
+              <SearchInput
+                id="dashboard-search"
+                placeholder="Search reviews and articles…"
+                onChange={setSearchInput}
+              />
+            </div>
+          )}
 
-        <div className="listing-toolbar listing-toolbar--end">
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            ariaLabel="Dashboard view"
-          />
-        </div>
+          {/* 2. Advanced search button in the middle */}
+          <div className="advanced-search-toggle-row">
+            <button
+              type="button"
+              className="advanced-search-toggle"
+              onClick={() => {
+                const next = !advancedOpen;
+                setAdvancedOpen(next);
+                setFormExpanded(next);
+                // Entering one search mode clears the other, exactly as the
+                // /wines search does between its simple and advanced modes.
+                if (next) setSearchInput("");
+                else setAdvancedFilters({});
+              }}
+              aria-expanded={advancedOpen}
+            >
+              {advancedOpen ? "Hide advanced search" : "Advanced search →"}
+            </button>
+          </div>
 
-        {/* The simple search box hides while the advanced panel is open — the
-            same exclusive-mode behavior as /wines. */}
-        {!advancedOpen && (
-          <>
-            <label className="dashboard__search-label" htmlFor="dashboard-search">
-              Search reviews and articles
-            </label>
-            <SearchInput
-              id="dashboard-search"
-              placeholder="Search reviews and articles…"
-              onChange={setSearchInput}
+          {/* 3. View (Cards/List) on the right */}
+          <div className="listing-toolbar listing-toolbar--end">
+            <ViewModeToggle
+              value={viewMode}
+              onChange={setViewMode}
+              ariaLabel="Dashboard view"
             />
-          </>
-        )}
+          </div>
+        </div>
 
         {/* The advanced panel is independent of the search term: it can be
             opened before typing anything, and its filter changes re-run the

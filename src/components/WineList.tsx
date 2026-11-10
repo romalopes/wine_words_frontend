@@ -189,6 +189,9 @@ function SearchModeToggle({
   onAdvanced,
   viewMode,
   onViewModeChange,
+  simpleValue,
+  onSimpleChange,
+  showSimpleInput = true,
 }: {
   searchMode: "simple" | "advanced";
   onSimple: () => void;
@@ -196,10 +199,25 @@ function SearchModeToggle({
   /** Cards / List switch, rendered under the toggle row for every wine view. */
   viewMode?: ViewMode;
   onViewModeChange?: (value: ViewMode) => void;
+  simpleValue?: string;
+  onSimpleChange?: (value: string) => void;
+  showSimpleInput?: boolean;
 }) {
   const advanced = searchMode === "advanced";
   return (
-    <>
+    <div className="search-toolbar">
+      {/* 1. Search text box on the left */}
+      {showSimpleInput && !advanced && simpleValue !== undefined && onSimpleChange && (
+        <div className="search-bar-wrapper">
+          <SearchInput
+            value={simpleValue}
+            onChange={onSimpleChange}
+            placeholder="Search wines by name, producer, region, or grape…"
+          />
+        </div>
+      )}
+
+      {/* 2. Advanced search button in the middle */}
       <div className="advanced-search-toggle-row">
         <button
           type="button"
@@ -210,6 +228,8 @@ function SearchModeToggle({
           {advanced ? "Hide advanced search" : "Advanced search →"}
         </button>
       </div>
+
+      {/* 3. View (Cards/List) on the right */}
       {viewMode && onViewModeChange && (
         <div className="listing-toolbar listing-toolbar--end">
           <ViewModeToggle
@@ -219,7 +239,7 @@ function SearchModeToggle({
           />
         </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -427,6 +447,9 @@ function WineList() {
           onAdvanced={showAdvanced}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          simpleValue={simpleValue}
+          onSimpleChange={setSimpleValue}
+          showSimpleInput={true}
         />
 
         <AdvancedSearchFilters
@@ -498,15 +521,9 @@ function WineList() {
           onAdvanced={showAdvanced}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-        />
-        <SearchInput
-          value={simpleValue}
-          onChange={setSimpleValue}
-          placeholder="Search wines by name, producer, region, or grape…"
-        />
-        <SimpleResultsSummary
-          simpleQuery={simpleQuery}
-          onClear={handleSimpleClear}
+          simpleValue={simpleValue}
+          onSimpleChange={setSimpleValue}
+          showSimpleInput={true}
         />
 
         {simplePaged.loading ? (
@@ -595,11 +612,9 @@ function WineList() {
           onAdvanced={showAdvanced}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-        />
-        <SearchInput
-          value={simpleValue}
-          onChange={setSimpleValue}
-          placeholder="Search wines by name, producer, region, or grape…"
+          simpleValue={simpleValue}
+          onSimpleChange={setSimpleValue}
+          showSimpleInput={true}
         />
 
         {pagedWines.loading ? (
@@ -652,13 +667,58 @@ function WineList() {
 
       {/* Search mode toggle — one mode visible at a time. Simple search is the
           default; the existing Advanced Wine Search stays one click away. */}
-      <SearchModeToggle
-        searchMode={searchMode}
-        onSimple={showSimple}
-        onAdvanced={showAdvanced}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
+      <div className="search-toolbar">
+        {searchMode === "advanced" && (
+          <div className="advanced-search-toggle-row">
+            <button
+              type="button"
+              className="advanced-search-toggle"
+              onClick={() => {
+                const next = !advancedOpen;
+                setAdvancedOpen(next);
+                setFormExpanded(next);
+                if (next) setSearchInput("");
+                else setAdvancedFilters({});
+              }}
+              aria-expanded={advancedOpen}
+            >
+              {advancedOpen ? "Hide advanced search" : "Advanced search →"}
+            </button>
+          </div>
+        )}
+        {searchMode === "simple" && (
+          <div className="search-bar-wrapper">
+            <SearchInput
+              value={simpleValue}
+              onChange={setSimpleValue}
+              placeholder="Search wines by name, producer, region, or grape…"
+            />
+          </div>
+        )}
+        <div className="advanced-search-toggle-row">
+          <button
+            type="button"
+            className="advanced-search-toggle"
+            onClick={() => {
+              const next = !advancedOpen;
+              setAdvancedOpen(next);
+              setFormExpanded(next);
+              if (next) setSearchInput("");
+              else setAdvancedFilters({});
+            }}
+            aria-expanded={advancedOpen}
+          >
+            {advancedOpen ? "Hide advanced search" : "Advanced search →"}
+          </button>
+        </div>
+        <div className="listing-toolbar listing-toolbar--end">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel="Wine list view"
+          />
+        </div>
+      </div>
       {searchMode === "advanced" && (
         <AdvancedSearchFilters
           title="Advanced Wine Search"
@@ -670,26 +730,19 @@ function WineList() {
         />
       )}
       {searchMode === "simple" && (
-        <div style={{ marginBottom: "1rem" }}>
-          <SearchInput
-            value={simpleValue}
-            onChange={setSimpleValue}
-            placeholder="Search wines by name, producer, region, or grape…"
-          />
-          <p
-            style={{
-              fontSize: "0.8rem",
-              color: "#666",
-              margin: "0.35rem 0 0",
-            }}
-          >
-            Matches wine names, producers, regions and grapes
-            {simpleValue.trim() !== "" &&
-              simpleValue.trim().length < MIN_SEARCH_LENGTH &&
-              ` — keep typing (at least ${MIN_SEARCH_LENGTH} characters)`}
-            .
-          </p>
-        </div>
+        <p
+          style={{
+            fontSize: "0.8rem",
+            color: "#666",
+            margin: "0.35rem 0 0",
+          }}
+        >
+          Matches wine names, producers, regions and grapes
+          {simpleValue.trim() !== "" &&
+            simpleValue.trim().length < MIN_SEARCH_LENGTH &&
+            ` — keep typing (at least ${MIN_SEARCH_LENGTH} characters)`}
+          .
+        </p>
       )}
 
       {groups.length === 0 ? (
