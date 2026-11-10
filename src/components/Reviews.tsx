@@ -104,7 +104,9 @@ function Reviews() {
   // callback's identity, so changing it forces a refetch even when the page
   // number and filters are unchanged.
   const [reloadToken, setReloadToken] = useState(0);
-  const [advancedFilters, setAdvancedFilters] = useState<Record<string, any>>({});
+  const [advancedFilters, setAdvancedFilters] = useState<Record<string, any>>(
+    {},
+  );
   const [advancedSearchRevision, setAdvancedSearchRevision] = useState(0);
 
   // Fetch function for useSearch. Every non-search filter is passed as a
@@ -126,7 +128,15 @@ function Reviews() {
       if (merged.per_page === undefined) merged.per_page = 20;
       return reviewsApi.all(merged, options);
     },
-    [scope, statusFilter, isUncategorised, categoryId, reloadToken, advancedFilters, advancedSearchRevision],
+    [
+      scope,
+      statusFilter,
+      isUncategorised,
+      categoryId,
+      reloadToken,
+      advancedFilters,
+      advancedSearchRevision,
+    ],
   );
 
   const {
@@ -162,39 +172,42 @@ function Reviews() {
   // `signal` lets a superseded load be cancelled: the term changes on every
   // debounced pause, and a late response for the previous term must neither
   // overwrite the new one nor clear its spinner.
-  const loadGroups = useCallback(async (options?: RequestSignal) => {
-    setLoadingGroups(true);
-    try {
-      // The grouped view backs the no-category listing, so it must honour the
-      // same free-text search as the paginated feed; otherwise the query would
-      // be fetched and then thrown away. It must also honour the active status
-      // filter: the per-category window caps each section at `per_group` rows,
-      // so if drafts aren't filtered server-side they get crowded out by the
-      // newest published reviews and never reach the client-side filter.
-      const params: QueryParams = {};
-      if (searchTerm) params.query = searchTerm;
-      if (statusFilter !== "all") params.status = statusFilter;
-      // The advanced filters ride along too; the grouped endpoint forwards
-      // them to the same filter chain as the paginated feed.
-      Object.entries(advancedFilters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          params[key] = value;
-        }
-      });
-      if (scope === "mine") params.scope = "mine";
-      // The grouped endpoint also backs "My Reviews" — scoped to the author — so
-      // both tabs render through the same per-category-capped response instead of
-      // shipping the author's whole, unpaginated library.
-      if (scope === "mine") params.scope = "mine";
-      const rows = await reviewsApi.grouped(params, options);
-      setGroups(Array.isArray(rows) ? rows : []);
-    } catch (error) {
-      // An abort is the expected outcome of a superseded search, not a failure.
-      if (!isAbortError(error)) setGroups([]);
-    } finally {
-      if (!options?.signal?.aborted) setLoadingGroups(false);
-    }
-  }, [searchTerm, statusFilter, scope, advancedFilters, advancedSearchRevision]);
+  const loadGroups = useCallback(
+    async (options?: RequestSignal) => {
+      setLoadingGroups(true);
+      try {
+        // The grouped view backs the no-category listing, so it must honour the
+        // same free-text search as the paginated feed; otherwise the query would
+        // be fetched and then thrown away. It must also honour the active status
+        // filter: the per-category window caps each section at `per_group` rows,
+        // so if drafts aren't filtered server-side they get crowded out by the
+        // newest published reviews and never reach the client-side filter.
+        const params: QueryParams = {};
+        if (searchTerm) params.query = searchTerm;
+        if (statusFilter !== "all") params.status = statusFilter;
+        // The advanced filters ride along too; the grouped endpoint forwards
+        // them to the same filter chain as the paginated feed.
+        Object.entries(advancedFilters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            params[key] = value;
+          }
+        });
+        if (scope === "mine") params.scope = "mine";
+        // The grouped endpoint also backs "My Reviews" — scoped to the author — so
+        // both tabs render through the same per-category-capped response instead of
+        // shipping the author's whole, unpaginated library.
+        if (scope === "mine") params.scope = "mine";
+        const rows = await reviewsApi.grouped(params, options);
+        setGroups(Array.isArray(rows) ? rows : []);
+      } catch (error) {
+        // An abort is the expected outcome of a superseded search, not a failure.
+        if (!isAbortError(error)) setGroups([]);
+      } finally {
+        if (!options?.signal?.aborted) setLoadingGroups(false);
+      }
+    },
+    [searchTerm, statusFilter, scope, advancedFilters, advancedSearchRevision],
+  );
 
   // Load the grouped view whenever the listing is not scoped to one category.
   // It backs both the "All Reviews" and "My Reviews" tabs (the latter scoped to
@@ -209,8 +222,7 @@ function Reviews() {
   }, [selectedCategory, loadGroups]);
 
   // The grouped view has its own loader, so either one counts as "loading".
-  const loading =
-    listLoading || (!selectedCategory && loadingGroups);
+  const loading = listLoading || (!selectedCategory && loadingGroups);
 
   // Refetch the active listing. Bumping the token guarantees a request even
   // when the page number is already 1 and no filter changed.
@@ -224,9 +236,7 @@ function Reviews() {
   // `ReviewForm` owns its own field state (including its wine search picker),
   // so only the review being edited needs to live here.
   const createRequested = searchParams.get("new") === "true";
-  const [showForm, setShowForm] = useState(
-    createRequested && canManageContent,
-  );
+  const [showForm, setShowForm] = useState(createRequested && canManageContent);
   useEffect(() => {
     if (createRequested && canManageContent) setShowForm(true);
   }, [createRequested, canManageContent]);
@@ -309,7 +319,9 @@ function Reviews() {
   if (selectedCategory) activeFilters.category = selectedCategory;
   Object.entries(advancedFilters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
-      activeFilters[key] = Array.isArray(value) ? value.join(",") : String(value);
+      activeFilters[key] = Array.isArray(value)
+        ? value.join(",")
+        : String(value);
     }
   });
 
@@ -344,7 +356,7 @@ function Reviews() {
         &larr; Back to Dashboard
       </Link>
       <DetailHero
-        kicker={selectedCategory ? "Category" : "Editorial"}
+        kicker={selectedCategory ? "Category" : ""}
         title="Reviews"
         intro="Browse and manage wine reviews, ratings, and notes."
         actions={
@@ -365,7 +377,11 @@ function Reviews() {
           {/* New review: render ReviewForm with no pre-supplied bottle so its
               wine/vintage search picker opens immediately — the same flow edit
               review uses behind its "Change wine/vintage" button. */}
-          <ReviewForm vintageYear={null} onSaved={onSaved} onCancel={cancelForm} />
+          <ReviewForm
+            vintageYear={null}
+            onSaved={onSaved}
+            onCancel={cancelForm}
+          />
         </div>
       )}
 
@@ -378,7 +394,9 @@ function Reviews() {
           <div className="search-bar-wrapper">
             <SearchBar
               placeholder="Search reviews…"
-              onSearch={(value) => setFilter("query", effectiveSearchTerm(value))}
+              onSearch={(value) =>
+                setFilter("query", effectiveSearchTerm(value))
+              }
               activeFilters={activeFilters}
               onRemoveFilter={handleRemoveFilter}
               sortOptions={[
@@ -444,28 +462,28 @@ function Reviews() {
         <p className="wine-management__loading">Loading reviews…</p>
       ) : (
         <>
-          {/* Scope: everyone's reviews vs my reviews */}
-          <div className="content-scope-filter-row">
-            {(!canManageContent
-              ? []
-              : [
-                  { key: "all", label: "All Reviews" },
-                  ...(user ? [{ key: "mine", label: "My Reviews" }] : []),
-                ]
-            ).map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                className={`content-scope-filter${scope === key ? " content-scope-filter--active" : ""}`}
-                onClick={() => setScope(key as "all" | "mine")}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {/* Scope: everyone's reviews vs my reviews & Status filter */}
+          <div className="content-filter-row">
+            <div className="content-scope-filter-row">
+              {(!canManageContent
+                ? []
+                : [
+                    { key: "all", label: "All Reviews" },
+                    ...(user ? [{ key: "mine", label: "My Reviews" }] : []),
+                  ]
+              ).map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`content-scope-filter${scope === key ? " content-scope-filter--active" : ""}`}
+                  onClick={() => setScope(key as "all" | "mine")}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
-          {canManageContent && (
-            <div className="content-filter-row">
+            {canManageContent && (
               <div className="content-status-filter-row">
                 {["all", "draft", "published", "archived"].map((filter) => (
                   <button
@@ -478,8 +496,8 @@ function Reviews() {
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {(() => {
             // Guests/Readers only ever see published reviews.
@@ -487,12 +505,11 @@ function Reviews() {
             const effectiveStatus = canManageContent
               ? statusFilter
               : "published";
-            const source: Review[] =
-              selectedCategory
-                ? (data?.data ?? [])
-                : groups.flatMap((group) =>
-                    Array.isArray(group.reviews) ? group.reviews : [],
-                  );
+            const source: Review[] = selectedCategory
+              ? (data?.data ?? [])
+              : groups.flatMap((group) =>
+                  Array.isArray(group.reviews) ? group.reviews : [],
+                );
             const filtered = (
               effectiveStatus === "all"
                 ? source
@@ -536,7 +553,7 @@ function Reviews() {
                 </p>
               );
             }
-              // When a category is selected, show a flat list (no grouping).
+            // When a category is selected, show a flat list (no grouping).
             if (selectedCategory) {
               return (
                 <>
@@ -605,15 +622,14 @@ function Reviews() {
             // True per-category totals from the grouped API (the rendered cards
             // are capped at 12 per group, so counts can't be derived from
             // `grouped`).
-            const groupCounts =
-              selectedCategory
-                ? null
-                : Object.fromEntries(
-                    groups.map((g) => [
-                      g.category,
-                      g.count ?? (g.reviews || []).length,
-                    ]),
-                  );
+            const groupCounts = selectedCategory
+              ? null
+              : Object.fromEntries(
+                  groups.map((g) => [
+                    g.category,
+                    g.count ?? (g.reviews || []).length,
+                  ]),
+                );
 
             // Sort categories: by admin-defined sort order, Uncategorised last
             const sortedCategories = sortCategoryNames(
@@ -650,29 +666,31 @@ function Reviews() {
                       />
                     ) : (
                       <div className="content-grid">
-                        {(grouped[category] ?? []).slice(0, 12).map((review) => (
-                          <ReviewCard
-                            key={review.id}
-                            review={review}
-                            query={searchTerm}
-                            onOpen={() => navigate(`/reviews/${review.slug}`)}
-                            canManage={canManage(review)}
-                            onEdit={() => setEditingReview(review)}
-                            onStatusChange={(status) =>
-                              onStatusChange(review, status)
-                            }
-                            user={user}
-                            statusBusy={statusBusyId === review.id}
-                            onDelete={() => onDelete(review.id)}
-                          >
-                            <InlineReviewEdit
+                        {(grouped[category] ?? [])
+                          .slice(0, 12)
+                          .map((review) => (
+                            <ReviewCard
+                              key={review.id}
                               review={review}
-                              editingReview={editingReview}
-                              onSaved={onSaved}
-                              onClose={() => setEditingReview(null)}
-                            />
-                          </ReviewCard>
-                        ))}
+                              query={searchTerm}
+                              onOpen={() => navigate(`/reviews/${review.slug}`)}
+                              canManage={canManage(review)}
+                              onEdit={() => setEditingReview(review)}
+                              onStatusChange={(status) =>
+                                onStatusChange(review, status)
+                              }
+                              user={user}
+                              statusBusy={statusBusyId === review.id}
+                              onDelete={() => onDelete(review.id)}
+                            >
+                              <InlineReviewEdit
+                                review={review}
+                                editingReview={editingReview}
+                                onSaved={onSaved}
+                                onClose={() => setEditingReview(null)}
+                              />
+                            </ReviewCard>
+                          ))}
                       </div>
                     )}
                   </section>

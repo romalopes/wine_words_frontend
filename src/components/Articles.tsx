@@ -346,7 +346,7 @@ function Articles() {
         &larr; Back to Dashboard
       </Link>
       <DetailHero
-        kicker={selectedCategory ? "Category" : "Editorial"}
+        kicker={selectedCategory ? "Category" : ""}
         title="Articles"
         intro="Browse and manage editorial articles. Use the filters to narrow by category, status, or search."
         actions={

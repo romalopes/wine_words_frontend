@@ -676,9 +676,9 @@ function WineList() {
               onClick={() => {
                 const next = !advancedOpen;
                 setAdvancedOpen(next);
-                setFormExpanded(next);
-                if (next) setSearchInput("");
-                else setAdvancedFilters({});
+                
+                if (next) setSimpleValue("");
+                else setSearchFilters(null);
               }}
               aria-expanded={advancedOpen}
             >
@@ -702,9 +702,9 @@ function WineList() {
             onClick={() => {
               const next = !advancedOpen;
               setAdvancedOpen(next);
-              setFormExpanded(next);
-              if (next) setSearchInput("");
-              else setAdvancedFilters({});
+              
+              if (next) setSimpleValue("");
+              else setSearchFilters(null);
             }}
             aria-expanded={advancedOpen}
           >
