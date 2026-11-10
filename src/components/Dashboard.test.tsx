@@ -46,12 +46,16 @@ vi.mock("../components/ArticleTable", () => ({
     user,
     onStatusChange,
     statusBusy = false,
+    onEdit,
+    onDelete,
   }: {
     articles: unknown[];
     canManage?: boolean;
     user?: unknown;
     onStatusChange?: ((article: unknown, status: string) => void) | undefined;
     statusBusy?: boolean;
+    onEdit?: ((article: unknown) => void) | undefined;
+    onDelete?: ((id: number) => void) | undefined;
   }) => {
     const articleList = Array.isArray(articles) ? articles : [];
     return (
@@ -60,9 +64,8 @@ vi.mock("../components/ArticleTable", () => ({
           <tr>
             <th className="producers-table__image-col">Image</th>
             <th>Title</th>
-            <th>Author</th>
-            <th>Follow</th>
-            <th>Comment</th>
+            <th>Content</th>
+            <th>Engagement</th>
             {canManage && <th>Actions</th>}
           </tr>
         </thead>
@@ -85,29 +88,34 @@ vi.mock("../components/ArticleTable", () => ({
                   Latest article
                 </a>
               </td>
-              <td>Editor</td>
+              <td>Article content excerpt</td>
               <td>
-                <span className="like-button__wrap">
-                  <button
-                    type="button"
-                    className="like-button"
-                    aria-pressed="false"
-                    aria-label="Like (0 likes)"
-                    title="Like"
+                <div className="engagement-buttons">
+                  <span className="follow-button__wrap">
+                    <button type="button" className="follow-button" aria-pressed="false" aria-label="Follow" title="Follow">
+                      <span aria-hidden="true">☆</span> Follow
+                    </button>
+                  </span>
+                  <span className="like-button__wrap">
+                    <button
+                      type="button"
+                      className="like-button"
+                      aria-pressed="false"
+                      aria-label="Like (0 likes)"
+                      title="Like"
+                    >
+                      <span aria-hidden="true">♡</span> 0
+                    </button>
+                  </span>
+                  <a
+                    className="comment-link"
+                    aria-label="Go to comments"
+                    title="Go to comments"
+                    href="#comments"
                   >
-                    <span aria-hidden="true">♡</span> 0
-                  </button>
-                </span>
-              </td>
-              <td>
-                <a
-                  className="comment-link"
-                  aria-label="Go to comments"
-                  title="Go to comments"
-                  href="#comments"
-                >
-                  <span aria-hidden="true">💬</span>
-                </a>
+                    <span aria-hidden="true">💬</span>
+                  </a>
+                </div>
               </td>
               {canManage && (
                 <td className="actions">
@@ -119,6 +127,16 @@ vi.mock("../components/ArticleTable", () => ({
                   >
                     Set status to Archive
                   </button>
+                  {onEdit && (
+                    <button type="button" className="btn-action">
+                      Edit
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button type="button" className="btn-action btn-action--delete">
+                      Delete
+                    </button>
+                  )}
                 </td>
               )}
             </tr>
@@ -652,16 +670,16 @@ describe("Dashboard search", () => {
     expect(screen.getByText("Latest article")).toBeInTheDocument();
     // The card grid is replaced, not merely supplemented.
     expect(document.querySelector(".wine-management__card")).not.toBeInTheDocument();
-    // Every row keeps the same shape: the Actions column is present even when
-    // the viewer cannot manage content — it just stays empty.
+    // Every row keeps the same shape: the Actions column is present for management users
+    // with Edit/Delete/Status buttons.
+    // There are two tables (reviews + articles), each with its own Actions column.
     expect(
-      screen.getByRole("columnheader", { name: "Actions" }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("columnheader", { name: "Actions" }),
+    ).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "Edit" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "Delete" })).toHaveLength(2);
     expect(
-      screen.queryByRole("button", { name: "Edit" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Delete" }),
-    ).not.toBeInTheDocument();
+      screen.getAllByRole("button", { name: "Set status to Archive" }),
+    ).toHaveLength(2);
   });
 });

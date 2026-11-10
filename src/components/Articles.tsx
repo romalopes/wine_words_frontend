@@ -38,7 +38,9 @@ function Articles() {
   // the "You haven't written any articles yet." empty state while loading).
   const [mineLoaded, setMineLoaded] = useState<boolean>(false);
   // Category name -> id map for resolving ?category= to category_id
-  const [categoryNameToId, setCategoryNameToId] = useState<Record<string, number>>({});
+  const [categoryNameToId, setCategoryNameToId] = useState<
+    Record<string, number>
+  >({});
   // Add-article form visibility.
   const createRequested = searchParams.get("new") === "true";
   const [showForm, setShowForm] = useState<boolean>(
@@ -91,7 +93,11 @@ function Articles() {
   // Whether the shared panel's form is expanded (the panel header's
   // "Hide form" / "Show form" toggle).
   const [formExpanded, setFormExpanded] = useState(true);
-  const [advancedFilters, setAdvancedFilters] = useState<Record<string, any>>({});
+  const [advancedFilters, setAdvancedFilters] = useState<Record<string, any>>(
+    {},
+  );
+  // Inline editing state for articles (similar to reviews).
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
 
   // Fetch function for useSearch. Every non-search filter is passed as a
   // primitive dependency so the callback identity stays stable between
@@ -112,7 +118,15 @@ function Articles() {
       if (merged.per_page === undefined) merged.per_page = 20;
       return articlesApi.list(merged, options);
     },
-    [scope, statusFilter, isUncategorised, categoryId, reloadToken, advancedFilters, advancedSearchRevision],
+    [
+      scope,
+      statusFilter,
+      isUncategorised,
+      categoryId,
+      reloadToken,
+      advancedFilters,
+      advancedSearchRevision,
+    ],
   );
 
   const {
@@ -132,7 +146,10 @@ function Articles() {
       sort: "relevance",
       query: "",
     },
-    { minQueryLength: MIN_SEARCH_LENGTH, enabled: Boolean(selectedCategory) && scope !== "mine" },
+    {
+      minQueryLength: MIN_SEARCH_LENGTH,
+      enabled: Boolean(selectedCategory) && scope !== "mine",
+    },
   );
 
   // The term that is actually searched for: blank until the user has typed
@@ -148,34 +165,37 @@ function Articles() {
   // `signal` lets a superseded load be cancelled: the term changes on every
   // debounced pause, and a late response for the previous term must neither
   // overwrite the new one nor clear its spinner.
-  const loadGroups = useCallback(async (options?: RequestSignal) => {
-    setLoadingGroups(true);
-    try {
-      // The grouped view backs the no-category listing, so it must honour the
-      // same free-text search as the paginated feed; otherwise the query would
-      // be fetched and then thrown away. It must also honour the active status
-      // filter: the per-category window caps each section at `per_group` rows,
-      // so if archived articles aren't filtered server-side they get crowded
-      // out by the newest published ones and never reach the client-side filter.
-      const params: QueryParams = {};
-      if (searchTerm) params.query = searchTerm;
-      if (statusFilter !== "all") params.status = statusFilter;
-      // The advanced filters ride along too; the grouped endpoint forwards
-      // them to the same filter chain as the paginated feed.
-      Object.entries(advancedFilters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          params[key] = value;
-        }
-      });
-      const rows = await articlesApi.grouped(params, options);
-      setGroups(Array.isArray(rows) ? rows : []);
-    } catch (error) {
-      // An abort is the expected outcome of a superseded search, not a failure.
-      if (!isAbortError(error)) setGroups([]);
-    } finally {
-      if (!options?.signal?.aborted) setLoadingGroups(false);
-    }
-  }, [searchTerm, statusFilter, advancedFilters, advancedSearchRevision]);
+  const loadGroups = useCallback(
+    async (options?: RequestSignal) => {
+      setLoadingGroups(true);
+      try {
+        // The grouped view backs the no-category listing, so it must honour the
+        // same free-text search as the paginated feed; otherwise the query would
+        // be fetched and then thrown away. It must also honour the active status
+        // filter: the per-category window caps each section at `per_group` rows,
+        // so if archived articles aren't filtered server-side they get crowded
+        // out by the newest published ones and never reach the client-side filter.
+        const params: QueryParams = {};
+        if (searchTerm) params.query = searchTerm;
+        if (statusFilter !== "all") params.status = statusFilter;
+        // The advanced filters ride along too; the grouped endpoint forwards
+        // them to the same filter chain as the paginated feed.
+        Object.entries(advancedFilters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            params[key] = value;
+          }
+        });
+        const rows = await articlesApi.grouped(params, options);
+        setGroups(Array.isArray(rows) ? rows : []);
+      } catch (error) {
+        // An abort is the expected outcome of a superseded search, not a failure.
+        if (!isAbortError(error)) setGroups([]);
+      } finally {
+        if (!options?.signal?.aborted) setLoadingGroups(false);
+      }
+    },
+    [searchTerm, statusFilter, advancedFilters, advancedSearchRevision],
+  );
 
   // Load the grouped view whenever the listing is not scoped to one category,
   // and re-run it when the search term or the status filter changes —
@@ -256,9 +276,7 @@ function Articles() {
       );
       if (scope === "mine") {
         setMyArticles((prev) =>
-          prev.map((a) =>
-            a.id === article.id ? { ...a, ...patch } : a,
-          ),
+          prev.map((a) => (a.id === article.id ? { ...a, ...patch } : a)),
         );
       }
     } catch (err) {
@@ -268,6 +286,22 @@ function Articles() {
     }
   }
 
+  // Inline edit handlers for articles (mirroring Reviews pattern).
+  const onSaved = () => {
+    setEditingArticle(null);
+    setReloadToken((t) => t + 1);
+  };
+
+  const onDelete = async (id: number) => {
+    if (!window.confirm("Delete this article?")) return;
+    try {
+      await articlesApi.destroy(id);
+      setReloadToken((t) => t + 1);
+    } catch (err) {
+      alert((err as Error).message || "Failed to delete article");
+    }
+  };
+
   // Active-filter chips shown in the search bar.
   const activeFilters: Record<string, string> = {};
   if (scope !== "all") activeFilters.scope = scope;
@@ -275,7 +309,9 @@ function Articles() {
   if (selectedCategory) activeFilters.category = selectedCategory;
   Object.entries(advancedFilters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
-      activeFilters[key] = Array.isArray(value) ? value.join(",") : String(value);
+      activeFilters[key] = Array.isArray(value)
+        ? value.join(",")
+        : String(value);
     }
   });
 
@@ -341,64 +377,69 @@ function Articles() {
       {/* The /wines-style advanced search: one toggle above the search area;
           the simple search bar hides while the panel is open. Filters apply
           live through `onChange`. */}
-      <div className="advanced-search-toggle-row">
-        <button
-          type="button"
-          className="advanced-search-toggle"
-          onClick={() => {
-            const next = !advancedOpen;
-            setAdvancedOpen(next);
-            setFormExpanded(next);
-            // Entering one search mode clears the other, exactly as the
-            // /wines search does between its simple and advanced modes.
-            if (next) setFilter("query", "");
-            else setAdvancedFilters({});
-          }}
-          aria-expanded={advancedOpen}
-        >
-          {advancedOpen ? "Hide advanced search" : "Advanced search →"}
-        </button>
-      </div>
+      <div className="search-toolbar">
+        {!advancedOpen && (
+          <div className="search-bar-wrapper">
+            <SearchBar
+              placeholder="Search articles…"
+              onSearch={(value) =>
+                setFilter("query", effectiveSearchTerm(value))
+              }
+              activeFilters={activeFilters}
+              onRemoveFilter={handleRemoveFilter}
+              sortOptions={[
+                { value: "relevance", label: "Relevance" },
+                { value: "recent", label: "Most recent" },
+                { value: "oldest", label: "Oldest" },
+              ]}
+              currentSort={(params.sort as string) ?? "relevance"}
+              onSortChange={setSort}
+              showSort={false}
+            />
+          </div>
+        )}
+        <div className="advanced-search-toggle-row">
+          <button
+            type="button"
+            className="advanced-search-toggle"
+            onClick={() => {
+              const next = !advancedOpen;
+              setAdvancedOpen(next);
+              setFormExpanded(next);
+              // Entering one search mode clears the other, exactly as the
+              // /wines search does between its simple and advanced modes.
+              if (next) setFilter("query", "");
+              else setAdvancedFilters({});
+            }}
+            aria-expanded={advancedOpen}
+          >
+            {advancedOpen ? "Hide advanced search" : "Advanced search →"}
+          </button>
+        </div>
 
-      {!advancedOpen && (
-        <SearchBar
-          placeholder="Search articles…"
-          onSearch={(value) => setFilter("query", effectiveSearchTerm(value))}
-          activeFilters={activeFilters}
-          onRemoveFilter={handleRemoveFilter}
-          sortOptions={[
-            { value: "relevance", label: "Relevance" },
-            { value: "recent", label: "Most recent" },
-            { value: "oldest", label: "Oldest" },
-          ]}
-          currentSort={(params.sort as string) ?? "relevance"}
-          onSortChange={setSort}
-          showSort={false}
-        />
-      )}
+        {advancedOpen && (
+          <AdvancedSearchFilters
+            title="Advanced Article Search"
+            open={formExpanded}
+            onToggleOpen={setFormExpanded}
+            initialFilters={advancedFilters}
+            onChange={setAdvancedFilters}
+            submitLabel="Search articles"
+            onSubmit={(filters) => {
+              setAdvancedFilters(filters);
+              setAdvancedSearchRevision((revision) => revision + 1);
+            }}
+            onClear={() => setAdvancedFilters({})}
+          />
+        )}
 
-      {advancedOpen && (
-        <AdvancedSearchFilters
-          title="Advanced Article Search"
-          open={formExpanded}
-          onToggleOpen={setFormExpanded}
-          initialFilters={advancedFilters}
-          onChange={setAdvancedFilters}
-          submitLabel="Search articles"
-          onSubmit={(filters) => {
-            setAdvancedFilters(filters);
-            setAdvancedSearchRevision((revision) => revision + 1);
-          }}
-          onClear={() => setAdvancedFilters({})}
-        />
-      )}
-
-      <div className="listing-toolbar listing-toolbar--end">
-        <ViewModeToggle
-          value={viewMode}
-          onChange={setViewMode}
-          ariaLabel="Articles view"
-        />
+        <div className="listing-toolbar listing-toolbar--end">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel="Articles view"
+          />
+        </div>
       </div>
 
       {!showForm && loading ? (
@@ -426,17 +467,19 @@ function Articles() {
           </div>
 
           {canManageContent && (
-            <div className="content-status-filter-row">
-              {["all", "draft", "published", "archived"].map((filter) => (
-                <button
-                  key={filter}
-                  type="button"
-                  className={`content-status-filter ${statusFilter === filter ? "content-status-filter--active" : ""}`}
-                  onClick={() => setStatusFilter(filter)}
-                >
-                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                </button>
-              ))}
+            <div className="content-filter-row">
+              <div className="content-status-filter-row">
+                {["all", "draft", "published", "archived"].map((filter) => (
+                  <button
+                    key={filter}
+                    type="button"
+                    className={`content-status-filter ${statusFilter === filter ? "content-status-filter--active" : ""}`}
+                    onClick={() => setStatusFilter(filter)}
+                  >
+                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -512,6 +555,8 @@ function Articles() {
                   user={user}
                   onStatusChange={changeStatus}
                   statusBusy={statusBusyId !== null}
+                  onEdit={setEditingArticle}
+                  onDelete={onDelete}
                 />
               ) : (
                 <div className="content-grid">
@@ -596,24 +641,30 @@ function Articles() {
                         user={user}
                         onStatusChange={changeStatus}
                         statusBusy={statusBusyId !== null}
+                        onEdit={setEditingArticle}
+                        onDelete={onDelete}
                       />
                     ) : (
                       <div className="content-grid">
-                        {(grouped[category] ?? []).slice(0, 12).map((article) => (
-                          <ArticleCard
-                            key={article.id}
-                            article={article}
-                            query={searchTerm}
-                            canManage={canManage(article)}
-                            canManageContent={canManageContent}
-                            onOpen={() => navigate(`/articles/${article.slug}`)}
-                            onStatusChange={(status) =>
-                              changeStatus(article, status)
-                            }
-                            user={user}
-                            statusBusy={statusBusyId === article.id}
-                          />
-                        ))}
+                        {(grouped[category] ?? [])
+                          .slice(0, 12)
+                          .map((article) => (
+                            <ArticleCard
+                              key={article.id}
+                              article={article}
+                              query={searchTerm}
+                              canManage={canManage(article)}
+                              canManageContent={canManageContent}
+                              onOpen={() =>
+                                navigate(`/articles/${article.slug}`)
+                              }
+                              onStatusChange={(status) =>
+                                changeStatus(article, status)
+                              }
+                              user={user}
+                              statusBusy={statusBusyId === article.id}
+                            />
+                          ))}
                       </div>
                     )}
                   </section>
@@ -637,4 +688,3 @@ function Articles() {
 }
 
 export default Articles;
-

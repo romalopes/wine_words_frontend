@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { articlesApi, reviewsApi, statsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import { canManageWinesRole } from "../constants/roles";
 import ArticleCard from "./ArticleCard";
 import ReviewCard from "./ReviewCard";
 import ArticleTable from "./ArticleTable";
@@ -123,6 +124,10 @@ function Dashboard() {
     "wine-words:view-mode:dashboard",
     "cards",
   );
+  // Management access for the current user.
+  const canManage = canManageWinesRole(user);
+  // Inline editing state for reviews/articles (mirroring listing pages).
+  const [editingItem, setEditingItem] = useState<Article | Review | null>(null);
   // Whether the shared panel's form is expanded (the panel header's
   // "Hide form" / "Show form" toggle), separate from whether the panel is
   // shown at all.
@@ -211,6 +216,70 @@ function Dashboard() {
       controller.abort();
     };
   }, [searchTerm, advancedFilters, advancedSearchRevision]);
+
+  // Handlers for inline actions on reviews/articles (dashboard preview).
+  const handleStatusChange = async (
+    item: Article | Review,
+    next: string,
+  ) => {
+    if (next === (item as Article).status || next === (item as Review).status)
+      return;
+    try {
+      if ("wine_name" in item) {
+        // It's a review
+        await reviewsApi.updateStatus(item.id, { status: next });
+      } else {
+        // It's an article
+        const payload =
+          next === "published" && !(item as Article).published_at
+            ? { status: next, published_at: new Date().toISOString() }
+            : { status: next };
+        await articlesApi.updateStatus(item.id, payload);
+      }
+      // Refresh the relevant list
+      setSearchResults((prev) => ({
+        ...prev,
+        reviews: prev.reviews.map((r) =>
+          r.id === item.id ? { ...r, status: next } : r,
+        ),
+        articles: prev.articles.map((a) =>
+          a.id === item.id ? { ...a, status: next } : a,
+        ),
+      }));
+      setRecentReviews((prev) =>
+        prev.map((r) => (r.id === item.id ? { ...r, status: next } : r)),
+      );
+      setRecentArticles((prev) =>
+        prev.map((a) => (a.id === item.id ? { ...a, status: next } : a)),
+      );
+    } catch (err) {
+      alert((err as Error).message || "Failed to update status");
+    }
+  };
+
+  const handleEdit = (item: Article | Review) => {
+    setEditingItem(item);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Delete this item?")) return;
+    try {
+      // We need to know if it's a review or article; we'll try both
+      await Promise.all([
+        reviewsApi.destroy(id).catch(() => {}),
+        articlesApi.destroy(id).catch(() => {}),
+      ]);
+      setSearchResults((prev) => ({
+        ...prev,
+        reviews: prev.reviews.filter((r) => r.id !== id),
+        articles: prev.articles.filter((a) => a.id !== id),
+      }));
+      setRecentReviews((prev) => prev.filter((r) => r.id !== id));
+      setRecentArticles((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      alert((err as Error).message || "Failed to delete");
+    }
+  };
 
   return (
     <main className="wine-app">
@@ -352,7 +421,14 @@ function Dashboard() {
                   )}
                 </h2>
                 {viewMode === "list" ? (
-                  <ReviewTable reviews={searchResults.reviews} />
+                  <ReviewTable
+                    reviews={searchResults.reviews}
+                    canManage={canManage}
+                    user={user}
+                    onStatusChange={handleStatusChange}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
                 ) : (
                   <div className="content-grid">
                     {searchResults.reviews.map((review) => (
@@ -386,7 +462,14 @@ function Dashboard() {
                   )}
                 </h2>
                 {viewMode === "list" ? (
-                  <ArticleTable articles={searchResults.articles} />
+                  <ArticleTable
+                    articles={searchResults.articles}
+                    canManage={canManage}
+                    user={user}
+                    onStatusChange={handleStatusChange}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
                 ) : (
                   <div className="content-grid">
                     {searchResults.articles.map((article) => (
@@ -431,7 +514,14 @@ function Dashboard() {
         <>
           <h2 className="dashboard__section-title">Latest Reviews</h2>
           {viewMode === "list" ? (
-            <ReviewTable reviews={recentReviews} />
+            <ReviewTable
+              reviews={recentReviews}
+              canManage={canManage}
+              user={user}
+              onStatusChange={handleStatusChange}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ) : (
             <div className="content-grid">
               {recentReviews.map((review) => (
@@ -450,7 +540,14 @@ function Dashboard() {
         <>
           <h2 className="dashboard__section-title">Latest Articles</h2>
           {viewMode === "list" ? (
-            <ArticleTable articles={recentArticles} />
+            <ArticleTable
+              articles={recentArticles}
+              canManage={canManage}
+              user={user}
+              onStatusChange={handleStatusChange}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ) : (
             <div className="content-grid dashboard__content-grid">
               {recentArticles.map((article) => (

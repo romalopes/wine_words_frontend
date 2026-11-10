@@ -7,6 +7,7 @@ import ContentStatusActions from "./ContentStatusActions";
 import type { ContentStatus } from "./ContentStatusActions";
 import LikeButton from "./LikeButton";
 import CommentLink from "./comments/CommentLink";
+import FollowButton from "./FollowButton";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import type { Review } from "../types/review";
 
@@ -45,11 +46,11 @@ const BASE_COLUMNS = [
   "Image",
   "Score",
   "Title / wine",
-  "Grapes",
-  "Regions",
   "Content",
-  "Follow",
-  "Comment",
+  "Regions",
+  "Grapes",
+  "Engagement",
+  "Actions",
 ];
 
 // Shared table of reviews (one review per row): Score, Wine, Vintage,
@@ -72,14 +73,13 @@ function ReviewTable({
   const { user: currentUser } = useAuth();
   // Server truth for the Actions column: the explicit prop wins, otherwise the
   // signed-in viewer's role decides. Anonymous viewers get no Actions column
-  // at all, and management users get the full "Image Score Title / wine
-  // Grapes Regions Content Follow Comment Actions" header for consistency.
+  // at all, and management users get the full header for consistency.
   const canManageTable = canManage || canManageWinesRole(currentUser ?? user);
   const showActions = canManageTable;
 
   const columns = showActions
-    ? [...BASE_COLUMNS, "Actions"]
-    : BASE_COLUMNS;
+    ? BASE_COLUMNS
+    : BASE_COLUMNS.filter((c) => c !== "Actions");
   const navigate = useNavigate();
   const returnToLink = useReturnToLink();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -208,18 +208,9 @@ function ReviewTable({
                 </div>
               </td>
               <td>
-                {review.grapes?.map((grape, i) => (
-                  <span key={`${grape.slug}-${i}`}>
-                    {i > 0 && ", "}
-                    <Link
-                      to={`/grapes/${grape.slug}`}
-                      className="content-management__subtext"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {grape.name}
-                    </Link>
-                  </span>
-                )) || "—"}
+                {review.comment
+                  ? review.comment.slice(0, 70) + (review.comment.length > 70 ? "…" : "")
+                  : "—"}
               </td>
               <td>
                 {review.regions?.map((region, i) => (
@@ -236,27 +227,37 @@ function ReviewTable({
                 )) || "—"}
               </td>
               <td>
-                {review.comment
-                  ? review.comment.slice(0, 70) + (review.comment.length > 70 ? "…" : "")
-                  : "—"}
+                {review.grapes?.map((grape, i) => (
+                  <span key={`${grape.slug}-${i}`}>
+                    {i > 0 && ", "}
+                    <Link
+                      to={`/grapes/${grape.slug}`}
+                      className="content-management__subtext"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {grape.name}
+                    </Link>
+                  </span>
+                )) || "—"}
               </td>
               <td>
-                <LikeButton
-                  kind="review"
-                  identifier={review.slug}
-                  initialLiked={review.liked_by_current_user}
-                  initialCount={review.likes_count}
-                />
+                <div className="engagement-buttons" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <FollowButton kind="review" identifier={review.slug} />
+                  <LikeButton
+                    kind="review"
+                    identifier={review.slug}
+                    initialLiked={review.liked_by_current_user}
+                    initialCount={review.likes_count}
+                  />
+                  <CommentLink
+                    kind="review"
+                    identifier={review.slug}
+                  />
+                </div>
               </td>
-              <td>
-                <CommentLink
-                  kind="review"
-                  identifier={review.slug}
-                />
-              </td>
-              <td className="actions" onClick={(e) => e.stopPropagation()}>
-                {canManageTable && (
-                  <>
+              {showActions && (
+                <td className="actions" onClick={(e) => e.stopPropagation()}>
+                  <div className="actions-row actions-row--status">
                     {onStatusChange && (
                       <ContentStatusActions
                         status={review.status}
@@ -265,11 +266,16 @@ function ReviewTable({
                         onChange={(status) => onStatusChange(review, status)}
                       />
                     )}
+                  </div>
+                  <div className="actions-row actions-row--management">
                     {onEdit && (
                       <button
                         type="button"
                         className="btn-action"
-                        onClick={() => onEdit(review)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(review);
+                        }}
                       >
                         Edit
                       </button>
@@ -278,14 +284,17 @@ function ReviewTable({
                       <button
                         type="button"
                         className="btn-action btn-action--delete"
-                        onClick={() => onDelete(review.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(review.id);
+                        }}
                       >
                         Delete
                       </button>
                     )}
-                  </>
-                )}
-              </td>
+                  </div>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

@@ -372,42 +372,46 @@ function Reviews() {
       {/* The /wines-style advanced search: one toggle above the search area;
           the simple search bar hides while the panel is open. Filters apply
           live through `onChange`. */}
-      <div className="advanced-search-toggle-row">
-        <button
-          type="button"
-          className="advanced-search-toggle"
-          onClick={() => {
-            const next = !advancedOpen;
-            setAdvancedOpen(next);
-            setFormExpanded(next);
-            // Entering one search mode clears the other, exactly as the
-            // /wines search does between its simple and advanced modes.
-            if (next) setFilter("query", "");
-            else setAdvancedFilters({});
-          }}
-          aria-expanded={advancedOpen}
-        >
-          {advancedOpen ? "Hide advanced search" : "Advanced search →"}
-        </button>
+      <div className="search-toolbar">
+        <div className="advanced-search-toggle-row">
+          <button
+            type="button"
+            className="advanced-search-toggle"
+            onClick={() => {
+              const next = !advancedOpen;
+              setAdvancedOpen(next);
+              setFormExpanded(next);
+              // Entering one search mode clears the other, exactly as the
+              // /wines search does between its simple and advanced modes.
+              if (next) setFilter("query", "");
+              else setAdvancedFilters({});
+            }}
+            aria-expanded={advancedOpen}
+          >
+            {advancedOpen ? "Hide advanced search" : "Advanced search →"}
+          </button>
+        </div>
       </div>
 
       {!advancedOpen && (
-        <SearchBar
-          placeholder="Search reviews…"
-          onSearch={(value) => setFilter("query", effectiveSearchTerm(value))}
-          activeFilters={activeFilters}
-          onRemoveFilter={handleRemoveFilter}
-          sortOptions={[
-            { value: "relevance", label: "Relevance" },
-            { value: "recent", label: "Most recent" },
-            { value: "oldest", label: "Oldest" },
-            { value: "score_high", label: "Score high→low" },
-            { value: "score_low", label: "Score low→high" },
-          ]}
-          currentSort={(params.sort as string) ?? "relevance"}
-          onSortChange={setSort}
-          showSort={false}
-        />
+        <div className="search-bar-wrapper">
+          <SearchBar
+            placeholder="Search reviews…"
+            onSearch={(value) => setFilter("query", effectiveSearchTerm(value))}
+            activeFilters={activeFilters}
+            onRemoveFilter={handleRemoveFilter}
+            sortOptions={[
+              { value: "relevance", label: "Relevance" },
+              { value: "recent", label: "Most recent" },
+              { value: "oldest", label: "Oldest" },
+              { value: "score_high", label: "Score high→low" },
+              { value: "score_low", label: "Score low→high" },
+            ]}
+            currentSort={(params.sort as string) ?? "relevance"}
+            onSortChange={setSort}
+            showSort={false}
+          />
+        </div>
       )}
 
       {advancedOpen && (
@@ -460,17 +464,19 @@ function Reviews() {
           </div>
 
           {canManageContent && (
-            <div className="content-status-filter-row">
-              {["all", "draft", "published", "archived"].map((filter) => (
-                <button
-                  key={filter}
-                  type="button"
-                  className={`content-status-filter ${statusFilter === filter ? "content-status-filter--active" : ""}`}
-                  onClick={() => setStatusFilter(filter)}
-                >
-                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                </button>
-              ))}
+            <div className="content-filter-row">
+              <div className="content-status-filter-row">
+                {["all", "draft", "published", "archived"].map((filter) => (
+                  <button
+                    key={filter}
+                    type="button"
+                    className={`content-status-filter ${statusFilter === filter ? "content-status-filter--active" : ""}`}
+                    onClick={() => setStatusFilter(filter)}
+                  >
+                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

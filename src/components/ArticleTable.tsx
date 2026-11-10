@@ -5,6 +5,7 @@ import { canManageWinesRole } from "../constants/roles";
 import type { RoleUser } from "../constants/roles";
 import LikeButton from "./LikeButton";
 import CommentLink from "./comments/CommentLink";
+import FollowButton from "./FollowButton";
 import LinkArticleDialog from "./LinkArticleDialog";
 import ContentStatusActions from "./ContentStatusActions";
 import type { ContentStatus } from "./ContentStatusActions";
@@ -33,8 +34,6 @@ interface ArticleTableProps {
   /**
    * Management column. Opt-in, so the read-only detail-page call sites stay
    * unchanged and only a listing that asks for it grows an Actions column.
-   * Articles have no inline edit or delete on their cards, so neither appears
-   * here either.
    */
   canManage?: boolean;
   user?: RoleUser | null;
@@ -44,6 +43,10 @@ interface ArticleTableProps {
     | undefined;
   /** Disables the status buttons for the row whose transition is in flight. */
   statusBusy?: boolean;
+  /** Edit handler for the article. */
+  onEdit?: ((article: Article) => void) | undefined;
+  /** Delete handler for the article. */
+  onDelete?: ((id: number) => void) | undefined;
 }
 
 /**
@@ -55,9 +58,8 @@ const BASE_COLUMNS = [
   "Image",
   "Title",
   "Content",
-  "Author",
-  "Follow",
-  "Comment",
+  "Engagement",
+  "Actions",
 ];
 
 // Shared table of articles (one article per row): Title, Author, Status and
@@ -72,6 +74,8 @@ function ArticleTable({
   user,
   onStatusChange,
   statusBusy = false,
+  onEdit,
+  onDelete,
 }: ArticleTableProps) {
   const { user: currentUser } = useAuth();
   // The "+ Link an Article" affordance stays role-gated (unchanged behaviour);
@@ -87,8 +91,8 @@ function ArticleTable({
     : [];
 
   const columns = showActions
-    ? [ ...BASE_COLUMNS, "Actions" ]
-    : BASE_COLUMNS;
+    ? BASE_COLUMNS
+    : BASE_COLUMNS.filter((c) => c !== "Actions");
 
   const linkButton = canManageLink && linkContext && (
     <div style={{ margin: "0 0 1rem" }}>
@@ -173,31 +177,59 @@ function ArticleTable({
                 </Link>
               </td>
               <td>{excerpt(article.abstract || article.body)}</td>
-              <td>{article.author_name || "—"}</td>
               <td>
-                <LikeButton
-                  kind="article"
-                  identifier={article.slug || article.id}
-                  initialLiked={article.liked_by_current_user}
-                  initialCount={article.likes_count}
-                />
-              </td>
-              <td>
-                <CommentLink
-                  kind="article"
-                  identifier={article.slug || article.id}
-                />
+                <div className="engagement-buttons" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <FollowButton kind="article" identifier={article.slug || article.id} />
+                  <LikeButton
+                    kind="article"
+                    identifier={article.slug || article.id}
+                    initialLiked={article.liked_by_current_user}
+                    initialCount={article.likes_count}
+                  />
+                  <CommentLink
+                    kind="article"
+                    identifier={article.slug || article.id}
+                  />
+                </div>
               </td>
               {showActions && (
                 <td className="actions" onClick={(e) => e.stopPropagation()}>
-                  {onStatusChange && (
-                    <ContentStatusActions
-                      status={article.status}
-                      user={user ?? currentUser ?? null}
-                      busy={statusBusy}
-                      onChange={(status) => onStatusChange(article, status)}
-                    />
-                  )}
+                  <div className="actions-row actions-row--status">
+                    {onStatusChange && (
+                      <ContentStatusActions
+                        status={article.status}
+                        user={user ?? currentUser ?? null}
+                        busy={statusBusy}
+                        onChange={(status) => onStatusChange(article, status)}
+                      />
+                    )}
+                  </div>
+                  <div className="actions-row actions-row--management">
+                    {onEdit && (
+                      <button
+                        type="button"
+                        className="btn-action"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(article);
+                        }}
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        type="button"
+                        className="btn-action btn-action--delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(article.id);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </td>
               )}
             </tr>

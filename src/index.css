@@ -4371,6 +4371,72 @@ a.following-page__label:hover {
   flex: 1;
 }
 
+/* ----- Search toolbar: Advanced search toggle + Search bar + View toggle ----- */
+/* Horizontal layout for the three main controls on listing pages. */
+.search-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  margin: 1rem 0;
+}
+
+.search-toolbar > .advanced-search-toggle-row {
+  flex-shrink: 0;
+}
+
+.search-toolbar > .search-bar-wrapper {
+  flex: 1;
+  min-width: 280px;
+}
+
+.search-toolbar > .listing-toolbar {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* ----- Content filter row: Scope filter + Status filter ----- */
+/* Horizontal layout for the scope (All/My) and status (All/Draft/Published/Archived) filters. */
+.content-filter-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.content-filter-row .content-scope-filter-row,
+.content-filter-row .content-status-filter-row {
+  margin: 0;
+}
+
+/* Wrapper for the search bar in the search toolbar */
+.search-bar-wrapper {
+  flex: 1;
+  min-width: 280px;
+}
+
+/* ----- Actions column: two rows (status + management) ----- */
+.actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.actions-row:last-child {
+  margin-bottom: 0;
+}
+
+.actions-row--status {
+  /* Status buttons (draft/publish/archive) on first row */
+}
+
+.actions-row--management {
+  /* Edit/Delete buttons on second row */
+}
+
 /* Wrapper around the content-type picker and the shared advanced panel; the
    panel itself brings the /wines card styling, so only spacing lives here. */
 .dashboard__advanced-area {
@@ -8961,4 +9027,33 @@ a.admin-user-card:hover {
   .more-menu__sheet {
     scroll-behavior: auto;
   }
+}
+/* ----- Dashboard search toolbar: three controls in a horizontal row ----- */
+/* Shown when no advanced search term is active; each control shrinks to its
+   natural width and the row centers them with space between. */
+.dashboard-search-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+/* The search label + input group keeps together at a minimum width */
+.dashboard-search-toolbar .dashboard__search-label {
+  white-space: nowrap;
+  margin-right: 0.5rem;
+}
+
+/* The advanced search toggle shrinks to its content */
+.dashboard-search-toolbar .advanced-search-toggle-row {
+  flex-shrink: 0;
+}
+
+/* The view toolbar (Cards/List) keeps its right-aligned behavior */
+.dashboard-search-toolbar .listing-toolbar--end {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  margin: 0;
 }
