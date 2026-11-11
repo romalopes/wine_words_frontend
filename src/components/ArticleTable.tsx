@@ -179,7 +179,7 @@ function ArticleTable({
               <td>{excerpt(article.abstract || article.body)}</td>
               <td>
                 <div className="engagement-buttons" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <FollowButton kind="article" identifier={article.slug || article.id} />
+                  <FollowButton kind="Article" identifier={article.slug || article.id} />
                   <LikeButton
                     kind="article"
                     identifier={article.slug || article.id}
