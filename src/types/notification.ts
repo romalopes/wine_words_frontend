@@ -65,6 +65,7 @@ export interface Configuration {
   use_test_email?: boolean
   test_email?: string | null
   mail_transport?: string | null
+  show_taste_parameters?: boolean
   settings?: Setting[]
 }
 

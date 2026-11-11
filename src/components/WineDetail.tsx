@@ -21,6 +21,7 @@ import ScoreBadge from "./ScoreBadge";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import AdaptiveImage from "./AdaptiveImage";
 import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
+import { useShowTasteParameters } from "../hooks/useConfiguration";
 import type { Wine } from "../types/wine";
 import type { Review } from "../types/review";
 import { wineImageGallery } from "../utils/wineImages";
@@ -62,6 +63,7 @@ function WineDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const returnToLink = useReturnToLink();
+  const showTasteParameters = useShowTasteParameters();
   const [wine, setWine] = useState<Wine | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -303,7 +305,7 @@ function WineDetail() {
             </div>
           </section>
 
-          {wine.parameters && wine.parameters.length > 0 && (
+          {showTasteParameters && wine.parameters && wine.parameters.length > 0 && (
             <section className="wine-detail-page__card">
               <p className="wine-profile-detail__eyebrow">Taste profile</p>
               <h2>On the palate</h2>

@@ -10,6 +10,7 @@ import type { SelectedGrape } from "../GrapeSearch";
 // dashboard / reviews / articles filters share markup and stylesheet, so the
 // two can never drift apart.
 import styles from "../WineAdvancedSearch.module.css";
+import { useShowTasteParameters } from "../../hooks/useConfiguration";
 
 const COLORS = ["Red", "White", "Rosé", "Dessert"] as const;
 
@@ -98,6 +99,7 @@ export function AdvancedSearchFilters({
   onClear,
 }: AdvancedSearchFiltersProps) {
   const open = openProp ?? true;
+  const showTasteParameters = useShowTasteParameters();
   const [form, setForm] = useState<Record<string, any>>(initialFilters);
   const [selectedRegions, setSelectedRegions] = useState<SelectedRegion[]>([]);
   const [selectedGrapes, setSelectedGrapes] = useState<SelectedGrape[]>([]);
@@ -378,7 +380,9 @@ export function AdvancedSearchFilters({
               </div>
             </div>
 
+            {showTasteParameters && (
             <TasteParameterRanges taste={taste} labels={tasteLabels} onChange={handleTasteChange} />
+          )}
           </fieldset>
 
           {submitLabel && onSubmit && (
