@@ -13,6 +13,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole, canSeeSource } from "../constants/roles";
 import { useImageOrientation } from "../hooks/useImageOrientation";
 import SourceBadge from "./SourceBadge";
+import ScoreBadge from "./ScoreBadge";
 import DOMPurify from "dompurify";
 import BackToSource from "./BackToSource";
 import { useReturnToLink } from "../hooks/useReturnToLink";
@@ -269,7 +270,7 @@ function ReviewDetail() {
         >
           <div className="review-page__facts">
             {review.score != null && (
-              <span className="review-page__score">{review.score}</span>
+              <ScoreBadge score={review.score} size="lg" />
             )}
             {showVintage && (
               <span className="review-page__fact">

@@ -3,6 +3,7 @@ import type { ChangeEvent, MouseEvent } from "react";
 import { reviewsApi, categoriesApi } from "../services/api";
 import { errorMessage } from "../utils/errors";
 import type { Review } from "../types/review";
+import ScoreBadge from "./ScoreBadge";
 
 interface LinkReviewDialogProps {
   entityId: number
@@ -111,7 +112,7 @@ function LinkReviewDialog({
                         </span>
                       )}
                       {review.score != null && (
-                        <span className="dialog__result-meta">Score: {review.score}</span>
+                        <ScoreBadge score={review.score} className="dialog__score-badge" />
                       )}
                     </div>
                     {isLinked ? (

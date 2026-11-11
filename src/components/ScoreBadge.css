@@ -1,0 +1,237 @@
+/**
+ * ScoreBadge — round medal badges for review scores.
+ * Sizes: --sm (40px), --md (76px), --lg (100px).
+ * Medal variants: --gold, --silver, --bronze, --none.
+ */
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+.score-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: inherit;
+  line-height: 1;
+  box-sizing: border-box;
+  /* subtle inner glow for depth */
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* Dashed outline for draft reviews (only used in ReviewCard) */
+.score-badge--draft {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 0 0 2px dashed currentColor,
+    0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* ==========================================================================
+   Size variants
+   ========================================================================== */
+
+/* Small — Wine / score / Words, used in cards / tables / dialogs */
+.score-badge--sm {
+  width: 40px;
+  height: 40px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 2px 4px;
+}
+.score-badge--sm .score-badge__brand {
+  font-size: 0.45rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 1px;
+}
+.score-badge--sm .score-badge__value {
+  font-size: 0.85rem;
+  font-weight: 900;
+  line-height: 1;
+  display: block;
+}
+.score-badge--sm .score-badge__byline {
+  font-size: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-top: 1px;
+  opacity: 0.9;
+}
+
+/* Medium — branded badge with WINE WORDS / BY KASIA */
+.score-badge--md {
+  width: 76px;
+  height: 76px;
+  padding: 8px 6px 10px;
+  gap: 2px;
+}
+.score-badge--md .score-badge__ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.score-badge--md .score-badge__brand {
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.score-badge--md .score-badge__value {
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.score-badge--md .score-badge__byline {
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+/* Large — like medium plus caption line */
+.score-badge--lg {
+  width: 100px;
+  height: 100px;
+  padding: 10px 8px 14px;
+  gap: 4px;
+}
+.score-badge--lg .score-badge__ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 78px;
+}
+.score-badge--lg .score-badge__brand {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+.score-badge--lg .score-badge__value {
+  font-size: 2.25rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.score-badge--lg .score-badge__byline {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-top: 3px;
+  opacity: 0.9;
+}
+
+
+/* ==========================================================================
+   Medal colour variants
+   Each uses a radial gradient ring that simulates a metallic edge.
+   ========================================================================== */
+
+/* --- Gold --- */
+.score-badge--gold {
+  background: radial-gradient(
+    circle at 30% 30%,
+    #fff8e1 0%,
+    #d4af37 55%,
+    #9a7d1a 100%
+  );
+  color: #1a1405;
+}
+.score-badge--gold.score-badge--draft {
+  color: #5a4a0e;
+}
+
+/* --- Silver --- */
+.score-badge--silver {
+  background: radial-gradient(
+    circle at 30% 30%,
+    #ffffff 0%,
+    #c0c0c0 50%,
+    #8a8a8a 100%
+  );
+  color: #2d2d2d;
+}
+.score-badge--silver.score-badge--draft {
+  color: #4a4a4a;
+}
+
+/* --- Bronze --- */
+.score-badge--bronze {
+  background: radial-gradient(
+    circle at 30% 30%,
+    #ffe8d0 0%,
+    #cd7f32 55%,
+    #8b5a2b 100%
+  );
+  color: #1d1005;
+}
+.score-badge--bronze.score-badge--draft {
+  color: #4a2a10;
+}
+
+/* --- None (very subtle warm pink — barely visible) --- */
+.score-badge--none {
+  background: radial-gradient(
+    circle at 30% 30%,
+    #fefcfb 0%,
+    #fdf5f3 55%,
+    #fcebe7 100%
+  );
+  color: #5a4a45;
+}
+.score-badge--none.score-badge--draft {
+  color: #7a6a65;
+}
+
+/* Dialog inline score badge — align with meta text */
+.score-badge.dialog__score-badge {
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   Reduced motion / high contrast tweaks
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .score-badge {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .score-badge {
+    forced-color-adjust: none;
+    border: 2px solid CanvasText;
+    background: Canvas !important;
+    color: CanvasText !important;
+  }
+  .score-badge--draft {
+    border-style: dashed;
+  }
+}

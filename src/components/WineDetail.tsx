@@ -17,6 +17,7 @@ import BackToSource from "./BackToSource";
 import LikeButton from "./LikeButton";
 import FollowButton from "./FollowButton";
 import CommentSection from "./comments/CommentSection";
+import ScoreBadge from "./ScoreBadge";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import AdaptiveImage from "./AdaptiveImage";
 import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
@@ -496,9 +497,9 @@ function WineDetail() {
                           className={`review-card ${review.status === "draft" ? "review-card--draft" : ""}`}
                         >
                           <div className="review-card__top">
-                            <span className="review-card__score">
-                              {review.score}
-                            </span>
+                            {review.score != null && (
+                              <ScoreBadge score={review.score} />
+                            )}
                             <span className="review-card__status">
                               {review.status}
                             </span>

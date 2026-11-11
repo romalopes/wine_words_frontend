@@ -8,6 +8,7 @@ import type { ContentStatus } from "./ContentStatusActions";
 import LikeButton from "./LikeButton";
 import CommentLink from "./comments/CommentLink";
 import FollowButton from "./FollowButton";
+import ScoreBadge from "./ScoreBadge";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import type { Review } from "../types/review";
 
@@ -176,7 +177,11 @@ function ReviewTable({
                 )}
               </td>
               <td>
-                <strong>{review.score ?? "—"}</strong>
+                {review.score != null ? (
+                  <ScoreBadge score={review.score} />
+                ) : (
+                  "—"
+                )}
               </td>
               <td>
                 <div>

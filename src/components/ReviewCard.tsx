@@ -6,6 +6,7 @@ import ContentStatusActions, {
   type ContentStatus,
 } from "./ContentStatusActions";
 import DeadlineBadge from "./DeadlineBadge";
+import ScoreBadge from "./ScoreBadge";
 import type { RoleUser } from "../constants/roles";
 import type { Review } from "../types/review";
 import { SearchHighlight } from "./search";
@@ -86,11 +87,7 @@ export default function ReviewCard({
           />
         </h3>
         {review.score != null && (
-          <span
-            className={`wine-management__color-badge wine-management__color-badge--${review.status}`}
-          >
-            {review.score}
-          </span>
+          <ScoreBadge score={review.score} isDraft={review.status === "draft"} />
         )}
       </div>
       {(review.wine_name || review.vintage_year) && (
