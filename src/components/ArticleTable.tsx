@@ -21,9 +21,9 @@ import type { Article } from "../types/article";
  * ignored, since the dialog always posts to `/categories/:id/link_article`.
  */
 export interface ArticleLinkContext {
-  type: "category"
-  id: number
-  name: string
+  type: "category";
+  id: number;
+  name: string;
 }
 
 interface ArticleTableProps {
@@ -54,13 +54,7 @@ interface ArticleTableProps {
  * edit form, so no `colSpan` depends on this list — it exists to keep the
  * header and the body in step.
  */
-const BASE_COLUMNS = [
-  "Image",
-  "Title",
-  "Content",
-  "Engagement",
-  "Actions",
-];
+const BASE_COLUMNS = ["Image", "Title", "Content", "Engagement", "Actions"];
 
 // Shared table of articles (one article per row): Title, Author, Status and
 // Published date. Rows navigate to the article detail page.
@@ -87,7 +81,9 @@ function ArticleTable({
   const returnToLink = useReturnToLink();
   const [dialogOpen, setDialogOpen] = useState(false);
   const excludeIds = Array.isArray(articles)
-    ? articles.flatMap((a) => [a.id, a.slug].filter(Boolean) as (number | string)[])
+    ? articles.flatMap(
+        (a) => [a.id, a.slug].filter(Boolean) as (number | string)[],
+      )
     : [];
 
   const columns = showActions
@@ -149,8 +145,12 @@ function ArticleTable({
           {articles.map((article, index) => (
             <tr
               key={article.slug || article.id}
-              className={index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"}
-              onClick={() => navigate(returnToLink(`/articles/${article.slug}`))}
+              className={
+                index % 2 === 0 ? "grapes-row--even" : "grapes-row--odd"
+              }
+              onClick={() =>
+                navigate(returnToLink(`/articles/${article.slug}`))
+              }
               style={{ cursor: "pointer" }}
             >
               <td>
@@ -178,8 +178,14 @@ function ArticleTable({
               </td>
               <td>{excerpt(article.abstract || article.body)}</td>
               <td>
-                <div className="engagement-buttons" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <FollowButton kind="Article" identifier={article.slug || article.id} />
+                <div
+                  className="engagement-buttons"
+                  style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+                >
+                  <FollowButton
+                    kind="Article"
+                    identifier={article.slug || article.id}
+                  />
                   <LikeButton
                     kind="article"
                     identifier={article.slug || article.id}
