@@ -11,6 +11,7 @@ import type { RoleUser } from "../constants/roles";
 import type { Review } from "../types/review";
 import { SearchHighlight } from "./search";
 import { reviewImage } from "../utils/wineImages";
+import type { User } from "../types/authentication";
 
 /** Strips HTML tags and truncates, for the plain-text excerpt on a card. */
 function excerpt(html: string | null | undefined, max = 50) {
@@ -33,6 +34,10 @@ export interface ReviewCardProps {
   onStatusChange?: ((status: ContentStatus) => void) | undefined;
   /** Signed-in user — forwarded to ContentStatusActions (managers only). */
   user?: RoleUser | null;
+  /** Full authenticated user (with producer memberships) for score visibility. */
+  currentUser?: User | null;
+  /** Producer ID of the reviewed wine (for score visibility). */
+  producerId?: number | null;
   /** Disables the status buttons while a transition is in flight. */
   statusBusy?: boolean;
   onDelete?: (() => void) | undefined;
@@ -55,6 +60,8 @@ export default function ReviewCard({
   onEdit,
   onStatusChange,
   user,
+  currentUser,
+  producerId,
   statusBusy = false,
   onDelete,
   children,
@@ -87,7 +94,12 @@ export default function ReviewCard({
           />
         </h3>
         {review.score != null && (
-          <ScoreBadge score={review.score} isDraft={review.status === "draft"} />
+          <ScoreBadge
+            score={review.score}
+            isDraft={review.status === "draft"}
+            user={currentUser}
+            producerId={producerId}
+          />
         )}
       </div>
       {(review.wine_name || review.vintage_year) && (

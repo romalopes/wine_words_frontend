@@ -26,6 +26,7 @@ import { reviewImage } from "../utils/wineImages";
 import DeadlineBadge from "./DeadlineBadge";
 import OfflineBadge from "./OfflineBadge";
 import { isOfflineEnabled } from "../constants/featureFlags";
+import type { User } from "../types/authentication";
 import {
   cacheContent,
   getCachedContent,
@@ -270,7 +271,7 @@ function ReviewDetail() {
         >
           <div className="review-page__facts">
             {review.score != null && (
-              <ScoreBadge score={review.score} size="lg" />
+              <ScoreBadge score={review.score} size="lg" user={user} />
             )}
             {showVintage && (
               <span className="review-page__fact">

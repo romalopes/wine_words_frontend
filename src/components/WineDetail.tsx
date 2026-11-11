@@ -24,6 +24,7 @@ import { useAnalyticsBeacon } from "../hooks/useAnalyticsBeacon";
 import type { Wine } from "../types/wine";
 import type { Review } from "../types/review";
 import { wineImageGallery } from "../utils/wineImages";
+import type { User } from "../types/authentication";
 
 function RichComment({ html }: { html: string }) {
   return (
@@ -498,7 +499,11 @@ function WineDetail() {
                         >
                           <div className="review-card__top">
                             {review.score != null && (
-                              <ScoreBadge score={review.score} />
+                              <ScoreBadge
+                                score={review.score}
+                                user={user}
+                                producerId={wine?.producer?.id ?? null}
+                              />
                             )}
                             <span className="review-card__status">
                               {review.status}

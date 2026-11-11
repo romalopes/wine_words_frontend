@@ -581,6 +581,7 @@ function Reviews() {
                             onStatusChange(review, status)
                           }
                           user={user}
+                          currentUser={user}
                           statusBusy={statusBusyId === review.id}
                           onDelete={() => onDelete(review.id)}
                         >
@@ -680,6 +681,7 @@ function Reviews() {
                                 onStatusChange(review, status)
                               }
                               user={user}
+                              currentUser={user}
                               statusBusy={statusBusyId === review.id}
                               onDelete={() => onDelete(review.id)}
                             >

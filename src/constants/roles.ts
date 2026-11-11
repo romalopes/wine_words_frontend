@@ -1,4 +1,6 @@
 import type { ProducerMembershipType } from "../types/producer"
+import type { User } from "../types/authentication"
+import type { ProducerMembership } from "../types/user"
 
 export const ROLES = {
   ADMIN: "Admin",
@@ -117,5 +119,48 @@ export function canManageProducerMembership(
     return true;
   }
   // Owner or manager of the specific producer membership can manage it
+  return false;
+}
+
+/**
+ * Checks if a user is an Admin or Editor (global editorial roles).
+ */
+export function isAdminOrEditor(user: RoleUser | null | undefined): boolean {
+  return user?.roles?.some((role) => role === ROLES.ADMIN || role === ROLES.EDITOR) ?? false;
+}
+
+/**
+ * Checks if a user is related to a specific producer.
+ * Returns true if the user has any producer membership (owner, manager, contributor)
+ * for the given producer ID.
+ */
+export function isUserRelatedToProducer(
+  user: User | null | undefined,
+  producerId: number | null | undefined,
+): boolean {
+  if (!user || !producerId) return false;
+  // Check if user has producer_memberships (from detailed user object)
+  const memberships = (user as User & { producer_memberships?: ProducerMembership[] }).producer_memberships;
+  if (!memberships?.length) return false;
+  return memberships.some((m) => m.producer.id === producerId);
+}
+
+/**
+ * Determines if the score should be visible to the current user.
+ * Score is visible if:
+ * - Score is 90 or above (always visible)
+ * - User is Admin or Editor
+ * - User is related to the wine's producer
+ */
+export function shouldShowScore(
+  score: number | null | undefined,
+  user: User | null | undefined,
+  producerId: number | null | undefined,
+): boolean {
+  if (score == null) return false;
+  if (score >= 90) return true;
+  if (!user) return false; // Not logged in, score < 90
+  if (isAdminOrEditor(user)) return true;
+  if (isUserRelatedToProducer(user, producerId)) return true;
   return false;
 }

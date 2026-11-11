@@ -3,6 +3,7 @@ import type { ChangeEvent, MouseEvent } from "react";
 import { reviewsApi, categoriesApi } from "../services/api";
 import { errorMessage } from "../utils/errors";
 import type { Review } from "../types/review";
+import type { User } from "../types/authentication";
 import ScoreBadge from "./ScoreBadge";
 
 interface LinkReviewDialogProps {
@@ -12,6 +13,8 @@ interface LinkReviewDialogProps {
   excludeIds?: Array<number | string> | undefined
   onLinked?: ((review: Review) => void) | undefined
   onClose?: (() => void) | undefined
+  /** Current authenticated user (for score visibility logic). */
+  currentUser?: User | null | undefined
 }
 
 function LinkReviewDialog({
@@ -20,6 +23,7 @@ function LinkReviewDialog({
   excludeIds,
   onLinked,
   onClose,
+  currentUser,
 }: LinkReviewDialogProps) {
   const [query, setQuery] = useState<string>("");
   const [results, setResults] = useState<Review[] | null>(null);
@@ -112,7 +116,7 @@ function LinkReviewDialog({
                         </span>
                       )}
                       {review.score != null && (
-                        <ScoreBadge score={review.score} className="dialog__score-badge" />
+                        <ScoreBadge score={review.score} className="dialog__score-badge" user={currentUser} />
                       )}
                     </div>
                     {isLinked ? (

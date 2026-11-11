@@ -11,6 +11,7 @@ import FollowButton from "./FollowButton";
 import ScoreBadge from "./ScoreBadge";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import type { Review } from "../types/review";
+import type { User } from "../types/authentication";
 
 /**
  * The entity a review is linked to. Reviews can only be attached to a
@@ -32,6 +33,8 @@ interface ReviewTableProps {
   /** Management columns. Opt-in so read-only call sites stay unchanged. */
   canManage?: boolean;
   user?: any;
+  /** Full authenticated user (with producer memberships) for score visibility. */
+  currentUser?: User | null;
   onStatusChange?:
     | ((review: Review, status: ContentStatus) => void)
     | undefined;
@@ -66,16 +69,17 @@ function ReviewTable({
   onReviewLinked,
   canManage = false,
   user,
+  currentUser,
   onStatusChange,
   statusBusy = false,
   onEdit,
   onDelete,
 }: ReviewTableProps) {
-  const { user: currentUser } = useAuth();
+  const { user: authUser } = useAuth();
   // Server truth for the Actions column: the explicit prop wins, otherwise the
   // signed-in viewer's role decides. Anonymous viewers get no Actions column
   // at all, and management users get the full header for consistency.
-  const canManageTable = canManage || canManageWinesRole(currentUser ?? user);
+  const canManageTable = canManage || canManageWinesRole(authUser ?? user);
   const showActions = canManageTable;
 
   const columns = showActions
@@ -121,6 +125,7 @@ function ReviewTable({
               setDialogOpen(false);
               onReviewLinked?.();
             }}
+            currentUser={currentUser}
           />
         )}
       </>
@@ -178,7 +183,7 @@ function ReviewTable({
               </td>
               <td>
                 {review.score != null ? (
-                  <ScoreBadge score={review.score} />
+                  <ScoreBadge score={review.score} user={currentUser} />
                 ) : (
                   "—"
                 )}

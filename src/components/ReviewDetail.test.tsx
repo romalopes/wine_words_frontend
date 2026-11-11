@@ -93,7 +93,7 @@ function makeReview(overrides: Partial<ReviewStub> = {}): ReviewStub {
   };
 }
 
-function renderReview(review: ReviewStub) {
+function renderReview(review: ReviewStub, options: { user?: any } = {}) {
   mockShow.mockResolvedValue(review);
 
   return render(
@@ -128,7 +128,8 @@ describe("ReviewDetail", () => {
       screen.getByRole("link", { name: "Lowe Organic Zinfandel 2021" }),
     ).toBeInTheDocument();
 
-    expect(screen.getByText("61")).toBeInTheDocument();
+    // Score is hidden (shows "Wine Words") for non-logged-in users when score < 90
+    expect(screen.getByText("Wine Words")).toBeInTheDocument();
     // Label and value sit in separate nodes (<b>Label</b> value), so match
     // on the fact pill's full textContent.
     const factWith = (text: string) =>

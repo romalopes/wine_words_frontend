@@ -12,13 +12,46 @@ describe("ScoreBadge", () => {
     expect(c2.firstChild).toBeNull();
   });
 
-  it("renders small badge (default) with Wine / score / Words", () => {
+  it("renders small badge with Wine / score / Words when score >= 90 visible", () => {
     render(<ScoreBadge score={92} />);
     const badge = screen.getByRole("img", { name: /Score 92:/ });
     expect(badge).toHaveClass("score-badge--sm");
-    expect(badge).toHaveClass("score-badge--silver");
     expect(badge).toHaveTextContent("Wine");
     expect(badge).toHaveTextContent("92");
+    expect(badge).toHaveTextContent("Words");
+  });
+
+  it("renders small badge with Wine Words when score < 90 hidden", () => {
+    render(<ScoreBadge score={85} />);
+    const badge = screen.getByRole("img");
+    expect(badge).toHaveTextContent("Wine");
+    expect(badge).toHaveTextContent("Words");
+    expect(badge).toHaveAttribute(
+      "aria-label",
+      "Score 85: Bronze Medal — Very good commercial standard, fault-free"
+    );
+  });
+
+  it("renders the actual score when user is logged in (score always visible)", () => {
+    const editorUser = {
+      id: 1,
+      email: "editor@example.com",
+      display_name: "Editor User",
+      first_name: "Editor",
+      last_name: "User",
+      roles: ["Editor"],
+      analytics_opt_out: false,
+      subscription: null,
+      billing_provider: null,
+      can_manage_billing: false,
+      subscription_status: null,
+      can_access_wine_packages: false,
+      subscription_change: null,
+    };
+    render(<ScoreBadge score={85} user={editorUser} />);
+    const badge = screen.getByRole("img");
+    expect(badge).toHaveTextContent("Wine");
+    expect(badge).toHaveTextContent("85");
     expect(badge).toHaveTextContent("Words");
   });
 
@@ -42,27 +75,36 @@ describe("ScoreBadge", () => {
     expect(screen.getByRole("img")).toHaveClass("score-badge--gold");
   });
 
-  it("size='md' includes brand and byline", () => {
+  it("size='md' shows WINE WORDS / score / BY KASIA when score visible", () => {
     render(<ScoreBadge score={94} size="md" />);
     const badge = screen.getByRole("img");
     expect(badge).toHaveClass("score-badge--md");
     expect(badge).toHaveTextContent("WINE WORDS");
     expect(badge).toHaveTextContent("94");
     expect(badge).toHaveTextContent("BY KASIA");
-    // No caption in md
-    expect(badge).not.toHaveTextContent("Silver Medal");
   });
 
-  it("size='lg' includes brand and byline, no caption", () => {
+  it("size='md' shows Wine Words / by Kasia when score hidden", () => {
+    render(<ScoreBadge score={85} size="md" />);
+    const badge = screen.getByRole("img");
+    expect(badge).toHaveTextContent("Wine Words");
+    expect(badge).toHaveTextContent("by Kasia");
+  });
+
+  it("size='lg' shows WINE WORDS / score / BY KASIA when score visible", () => {
     render(<ScoreBadge score={96} size="lg" />);
     const badge = screen.getByRole("img");
     expect(badge).toHaveClass("score-badge--lg");
     expect(badge).toHaveTextContent("WINE WORDS");
     expect(badge).toHaveTextContent("96");
     expect(badge).toHaveTextContent("BY KASIA");
-    // Caption removed per design
-    expect(badge).not.toHaveTextContent("Gold Medal");
-    expect(badge).not.toHaveTextContent("Exceptional");
+  });
+
+  it("size='lg' shows Wine Words / by Kasia when score hidden", () => {
+    render(<ScoreBadge score={85} size="lg" />);
+    const badge = screen.getByRole("img");
+    expect(badge).toHaveTextContent("Wine Words");
+    expect(badge).toHaveTextContent("by Kasia");
   });
 
   it("accessibility: aria-label contains score, medal name, and description", () => {
