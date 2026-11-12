@@ -148,9 +148,9 @@ export function isUserRelatedToProducer(
 /**
  * Determines if the score should be visible to the current user.
  * Score is visible if:
- * - Score is 90 or above (always visible)
- * - User is Admin or Editor
- * - User is related to the wine's producer
+ * - Score is 85 or above (always visible)
+ * - User is a wine manager (Admin, Editor, Reviewer)
+ * - User is related to the wine's producer (owner, manager, contributor)
  */
 export function shouldShowScore(
   score: number | null | undefined,
@@ -158,9 +158,9 @@ export function shouldShowScore(
   producerId: number | null | undefined,
 ): boolean {
   if (score == null) return false;
-  if (score >= 90) return true;
-  if (!user) return false; // Not logged in, score < 90
-  if (isAdminOrEditor(user)) return true;
+  if (score >= 85) return true; // Score >= 85 always visible (no user needed)
+  if (!user) return false; // Not logged in, score < 85
+  if (canManageWinesRole(user)) return true; // Admin, Editor, Reviewer
   if (isUserRelatedToProducer(user, producerId)) return true;
   return false;
 }

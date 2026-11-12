@@ -271,7 +271,7 @@ function ReviewDetail() {
         >
           <div className="review-page__facts">
             {review.score != null && (
-              <ScoreBadge score={review.score} size="lg" user={user} />
+              <ScoreBadge score={review.score} size="lg" user={user} producerId={review.producer_id} />
             )}
             {showVintage && (
               <span className="review-page__fact">

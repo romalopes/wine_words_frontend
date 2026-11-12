@@ -582,6 +582,7 @@ function Reviews() {
                           }
                           user={user}
                           currentUser={user}
+                          producerId={review.producer_id}
                           statusBusy={statusBusyId === review.id}
                           onDelete={() => onDelete(review.id)}
                         >

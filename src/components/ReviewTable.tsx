@@ -183,7 +183,7 @@ function ReviewTable({
               </td>
               <td>
                 {review.score != null ? (
-                  <ScoreBadge score={review.score} user={currentUser} />
+                  <ScoreBadge score={review.score} user={currentUser} producerId={review.producer_id} />
                 ) : (
                   "—"
                 )}

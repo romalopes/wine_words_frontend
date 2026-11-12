@@ -19,6 +19,7 @@ export interface Review {
   vintage_no_vintage?: boolean | null
   wine_name?: string | null
   wine_slug?: string | null
+  producer_id?: number | null
   category?: string | null
   categories?: Array<{ id: number; name: string; slug: string }>
   grapes?: Array<{ id: number; name: string; slug: string }>

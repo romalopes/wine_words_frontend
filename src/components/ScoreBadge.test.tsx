@@ -85,7 +85,7 @@ describe("ScoreBadge", () => {
   });
 
   it("size='md' shows Wine Words / by Kasia when score hidden", () => {
-    render(<ScoreBadge score={85} size="md" />);
+    render(<ScoreBadge score={84} size="md" />);
     const badge = screen.getByRole("img");
     expect(badge).toHaveTextContent("Wine Words");
     expect(badge).toHaveTextContent("by Kasia");
@@ -101,7 +101,7 @@ describe("ScoreBadge", () => {
   });
 
   it("size='lg' shows Wine Words / by Kasia when score hidden", () => {
-    render(<ScoreBadge score={85} size="lg" />);
+    render(<ScoreBadge score={84} size="lg" />);
     const badge = screen.getByRole("img");
     expect(badge).toHaveTextContent("Wine Words");
     expect(badge).toHaveTextContent("by Kasia");

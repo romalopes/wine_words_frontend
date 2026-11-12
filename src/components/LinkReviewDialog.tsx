@@ -116,7 +116,7 @@ function LinkReviewDialog({
                         </span>
                       )}
                       {review.score != null && (
-                        <ScoreBadge score={review.score} className="dialog__score-badge" user={currentUser} />
+                        <ScoreBadge score={review.score} className="dialog__score-badge" user={currentUser} producerId={review.producer_id} />
                       )}
                     </div>
                     {isLinked ? (
