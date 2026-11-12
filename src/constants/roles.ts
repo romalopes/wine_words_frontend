@@ -1,6 +1,5 @@
 import type { ProducerMembershipType } from "../types/producer"
-import type { User } from "../types/authentication"
-import type { ProducerMembership } from "../types/user"
+import type { User, ProducerMembership } from "../types/authentication"
 
 export const ROLES = {
   ADMIN: "Admin",
@@ -147,10 +146,12 @@ export function isUserRelatedToProducer(
 
 /**
  * Determines if the score should be visible to the current user.
- * Score is visible if:
- * - Score is 85 or above (always visible)
- * - User is a wine manager (Admin, Editor, Reviewer)
- * - User is related to the wine's producer (owner, manager, contributor)
+ * Three-tier score visibility:
+ * - Score >= 90 (Silver/Gold): ALWAYS visible to everyone (including not logged in)
+ * - 85 <= Score < 90 (Bronze): Visible only to wine managers (Admin/Editor/Reviewer)
+ *   and producer members (owner/manager/contributor)
+ * - Score < 85: Visible only to wine managers (Admin/Editor/Reviewer)
+ *   and producer members (owner/manager/contributor)
  */
 export function shouldShowScore(
   score: number | null | undefined,
@@ -158,8 +159,12 @@ export function shouldShowScore(
   producerId: number | null | undefined,
 ): boolean {
   if (score == null) return false;
-  if (score >= 85) return true; // Score >= 85 always visible (no user needed)
-  if (!user) return false; // Not logged in, score < 85
+  
+  // Score >= 90: Always visible to everyone (including not logged in)
+  if (score >= 90) return true;
+  
+  // Score < 90: Requires authentication and authorization
+  if (!user) return false; // Not logged in — scores are hidden
   if (canManageWinesRole(user)) return true; // Admin, Editor, Reviewer
   if (isUserRelatedToProducer(user, producerId)) return true;
   return false;

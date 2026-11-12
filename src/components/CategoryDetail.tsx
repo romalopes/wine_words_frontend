@@ -9,6 +9,7 @@ import Pagination from "./Pagination";
 import usePagedList from "../hooks/usePagedList";
 import BackToSource from "./BackToSource";
 import { errorMessage } from "../utils/errors";
+import { useAuth } from "../contexts/AuthContext";
 import type { CategoryDetail as CategoryDetailData } from "../types/catalog";
 import type { WineListItem } from "../types/wine";
 import type { Review } from "../types/review";
@@ -16,6 +17,7 @@ import type { Article } from "../types/article";
 
 function CategoryDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const [category, setCategory] = useState<CategoryDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +117,8 @@ function CategoryDetail() {
               reviews={reviews.items}
               linkContext={{ type: "category", id: category.id, name: category.name }}
               onReviewLinked={() => reviews.reload()}
+              user={user}
+              currentUser={user}
             />
             {reviews.items.length > 0 && (
               <Pagination

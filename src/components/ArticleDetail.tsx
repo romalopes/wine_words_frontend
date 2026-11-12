@@ -391,6 +391,8 @@ function ArticleDetail() {
                 <ReviewCard
                   key={review.id}
                   review={review}
+                  currentUser={user}
+                  producerId={review.producer_id}
                   onOpen={() =>
                     navigate(returnToLink(`/reviews/${review.slug}`))
                   }

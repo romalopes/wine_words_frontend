@@ -562,6 +562,7 @@ function Reviews() {
                       reviews={deduped}
                       canManage={deduped.some(canManage)}
                       user={user}
+                      currentUser={user}
                       onStatusChange={onStatusChange}
                       statusBusy={statusBusyId !== null}
                       onEdit={setEditingReview}
@@ -582,7 +583,7 @@ function Reviews() {
                           }
                           user={user}
                           currentUser={user}
-                          producerId={review.producer_id}
+                          producerId={review.producer_id ?? null}
                           statusBusy={statusBusyId === review.id}
                           onDelete={() => onDelete(review.id)}
                         >
@@ -661,6 +662,7 @@ function Reviews() {
                         reviews={(grouped[category] ?? []).slice(0, 12)}
                         canManage={(grouped[category] ?? []).some(canManage)}
                         user={user}
+                        currentUser={user}
                         onStatusChange={onStatusChange}
                         statusBusy={statusBusyId !== null}
                         onEdit={setEditingReview}
@@ -683,6 +685,7 @@ function Reviews() {
                               }
                               user={user}
                               currentUser={user}
+                              producerId={review.producer_id ?? null}
                               statusBusy={statusBusyId === review.id}
                               onDelete={() => onDelete(review.id)}
                             >

@@ -19,11 +19,31 @@ vi.mock("../services/api", () => ({
     related: vi.fn().mockResolvedValue([]),
   },
   likesApi: { toggle: vi.fn().mockResolvedValue({ liked: true, likes_count: 1 }) },
+  followsApi: { status: vi.fn().mockResolvedValue({ following: false }) },
 }));
 
-// Anonymous: the like control renders read-only, so nothing hits the API.
+// Authenticated as Editor: scores are visible for wine managers
 vi.mock("../contexts/AuthContext", () => ({
-  useAuth: () => ({ user: null, isAuthenticated: false, loading: false }),
+  useAuth: () => ({
+    user: {
+      id: 1,
+      email: "editor@example.com",
+      display_name: "Editor User",
+      first_name: "Editor",
+      last_name: "User",
+      roles: ["Editor"],
+      analytics_opt_out: false,
+      subscription: null,
+      billing_provider: null,
+      can_manage_billing: false,
+      subscription_status: null,
+      can_access_wine_packages: false,
+      subscription_change: null,
+      producer_memberships: [],
+    },
+    isAuthenticated: true,
+    loading: false,
+  }),
 }));
 
 // Only mounted behind interaction / at the bottom of the page.

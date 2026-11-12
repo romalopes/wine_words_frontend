@@ -167,6 +167,8 @@ function SourceDetail() {
                     changeReviewStatus(review, status)
                   }
                   user={user}
+                  currentUser={user}
+                  producerId={review.producer_id ?? null}
                   statusBusy={busyReviewId === review.id}
                 />
               ))}

@@ -46,9 +46,32 @@ export interface User {
   can_access_wine_packages: boolean
   /** A downgrade/upgrade queued for a future date; absent when there is none. */
   subscription_change: SubscriptionChange | null
+  /** Producer memberships for the current user. */
+  producer_memberships: ProducerMembership[]
   /** `admin` is still accepted from older payloads and impersonation. */
   admin?: boolean
   [key: string]: unknown
+}
+
+/**
+ * Producer membership as returned by the API.
+ */
+export interface ProducerMembership {
+  id: number
+  membership_type: string
+  can_edit: boolean
+  producer: {
+    id: number
+    name: string
+    slug: string
+    country: string | null
+  }
+  created_by: {
+    id: number
+    display_name: string
+  } | null
+  created_at: string
+  updated_at: string
 }
 
 export interface SignInPayload {

@@ -12,20 +12,26 @@ describe("ScoreBadge", () => {
     expect(c2.firstChild).toBeNull();
   });
 
-  it("renders small badge with Wine / score / Words when score >= 90 visible", () => {
+  it("renders small badge with actual score when score >= 90 (no user logged in)", () => {
     render(<ScoreBadge score={92} />);
-    const badge = screen.getByRole("img", { name: /Score 92:/ });
+    const badge = screen.getByRole("img");
     expect(badge).toHaveClass("score-badge--sm");
     expect(badge).toHaveTextContent("Wine");
     expect(badge).toHaveTextContent("92");
     expect(badge).toHaveTextContent("Words");
+    expect(badge).toHaveAttribute(
+      "aria-label",
+      "Score 92: Silver Medal — Outstanding to high quality"
+    );
   });
 
-  it("renders small badge with Wine Words when score < 90 hidden", () => {
+  it("renders small badge with Wine Words when score < 90 hidden (no user logged in)", () => {
     render(<ScoreBadge score={85} />);
     const badge = screen.getByRole("img");
     expect(badge).toHaveTextContent("Wine");
     expect(badge).toHaveTextContent("Words");
+    // Score should be hidden (no score number)
+    expect(badge).not.toHaveTextContent("85");
     expect(badge).toHaveAttribute(
       "aria-label",
       "Score 85: Bronze Medal — Very good commercial standard, fault-free"
@@ -75,8 +81,25 @@ describe("ScoreBadge", () => {
     expect(screen.getByRole("img")).toHaveClass("score-badge--gold");
   });
 
+  const editorUser = {
+      id: 1,
+      email: "editor@example.com",
+      display_name: "Editor User",
+      first_name: "Editor",
+      last_name: "User",
+      roles: ["Editor"],
+      analytics_opt_out: false,
+      subscription: null,
+      billing_provider: null,
+      can_manage_billing: false,
+      subscription_status: null,
+      can_access_wine_packages: false,
+      subscription_change: null,
+      producer_memberships: [],
+    };
+
   it("size='md' shows WINE WORDS / score / BY KASIA when score visible", () => {
-    render(<ScoreBadge score={94} size="md" />);
+    render(<ScoreBadge score={94} size="md" user={editorUser} />);
     const badge = screen.getByRole("img");
     expect(badge).toHaveClass("score-badge--md");
     expect(badge).toHaveTextContent("WINE WORDS");
@@ -92,7 +115,7 @@ describe("ScoreBadge", () => {
   });
 
   it("size='lg' shows WINE WORDS / score / BY KASIA when score visible", () => {
-    render(<ScoreBadge score={96} size="lg" />);
+    render(<ScoreBadge score={96} size="lg" user={editorUser} />);
     const badge = screen.getByRole("img");
     expect(badge).toHaveClass("score-badge--lg");
     expect(badge).toHaveTextContent("WINE WORDS");
@@ -108,7 +131,7 @@ describe("ScoreBadge", () => {
   });
 
   it("accessibility: aria-label contains score, medal name, and description", () => {
-    render(<ScoreBadge score={89} />);
+    render(<ScoreBadge score={89} user={editorUser} />);
     const badge = screen.getByRole("img");
     expect(badge).toHaveAttribute(
       "aria-label",

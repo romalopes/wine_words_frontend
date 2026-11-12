@@ -425,6 +425,7 @@ function Dashboard() {
                     reviews={searchResults.reviews}
                     canManage={canManage}
                     user={user}
+                    currentUser={user}
                     onStatusChange={handleStatusChange}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
@@ -439,6 +440,8 @@ function Dashboard() {
                         onOpen={() =>
                           navigate(returnToLink(`/reviews/${review.slug || review.id}`))
                         }
+                        currentUser={user}
+                        producerId={review.producer_id ?? null}
                       />
                     ))}
                   </div>
@@ -518,6 +521,7 @@ function Dashboard() {
               reviews={recentReviews}
               canManage={canManage}
               user={user}
+              currentUser={user}
               onStatusChange={handleStatusChange}
               onEdit={handleEdit}
               onDelete={handleDelete}
@@ -529,6 +533,8 @@ function Dashboard() {
                   key={review.id}
                   review={review}
                   onOpen={() => navigate(returnToLink(`/reviews/${review.slug || review.id}`))}
+                  currentUser={user}
+                  producerId={review.producer_id ?? null}
                 />
               ))}
             </div>

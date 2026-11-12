@@ -183,7 +183,11 @@ function ReviewTable({
               </td>
               <td>
                 {review.score != null ? (
-                  <ScoreBadge score={review.score} user={currentUser} producerId={review.producer_id} />
+                  <ScoreBadge
+                    score={review.score}
+                    user={currentUser}
+                    producerId={review.producer_id}
+                  />
                 ) : (
                   "—"
                 )}
@@ -219,7 +223,8 @@ function ReviewTable({
               </td>
               <td>
                 {review.comment
-                  ? review.comment.slice(0, 70) + (review.comment.length > 70 ? "…" : "")
+                  ? review.comment.slice(0, 70) +
+                    (review.comment.length > 70 ? "…" : "")
                   : "—"}
               </td>
               <td>
@@ -251,18 +256,18 @@ function ReviewTable({
                 )) || "—"}
               </td>
               <td>
-                <div className="engagement-buttons" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <FollowButton kind="review" identifier={review.slug} />
+                <div
+                  className="engagement-buttons"
+                  style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+                >
+                  <FollowButton kind="Review" identifier={review.slug} />
                   <LikeButton
                     kind="review"
                     identifier={review.slug}
                     initialLiked={review.liked_by_current_user}
                     initialCount={review.likes_count}
                   />
-                  <CommentLink
-                    kind="review"
-                    identifier={review.slug}
-                  />
+                  <CommentLink kind="review" identifier={review.slug} />
                 </div>
               </td>
               {showActions && (
