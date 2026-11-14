@@ -51671,7 +51671,7 @@ function pZ() {
       r.jsx(nn, {
         kicker: d ? "Category" : "Editorial",
         title: "Reviews",
-        intro: "Browse and manage wine reviews, ratings, and notes.",
+        intro: "",
         actions: a
           ? r.jsx("button", {
               type: "button",
@@ -54058,8 +54058,7 @@ function DZ() {
       r.jsx(nn, {
         kicker: d ? "Category" : "Editorial",
         title: "Articles",
-        intro:
-          "Browse and manage editorial articles. Use the filters to narrow by category, status, or search.",
+        intro: "",
         actions: a
           ? r.jsx("button", {
               type: "button",
@@ -79973,10 +79972,9 @@ function toe() {
         children: "← Back to Dashboard",
       }),
       r.jsx(nn, {
-        kicker: "Cellar",
+        kicker: "Membership",
         title: "Membership",
-        intro:
-          "Choose the plan that fits how you explore and share wine words.",
+        intro: "",
       }),
       d &&
         r.jsx("p", {

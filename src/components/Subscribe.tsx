@@ -45,22 +45,22 @@ function newIdempotencyKey(): string {
 type CheckoutConfirmState = "confirming" | "confirmed" | "error" | null;
 
 interface PlanCardProps {
-  plan: Subscription
-  isCurrent: boolean
+  plan: Subscription;
+  isCurrent: boolean;
   /**
    * Whether the signed-in user is on a paid tier. The FREE row has no
    * checkout and no downgrade path from this page (the backend 422s on
    * free-plan checkout and rejects free change targets), so a paid user gets
    * a portal button there instead of a plan CTA.
    */
-  onPaidPlan: boolean
+  onPaidPlan: boolean;
   // Free plans have no checkout and managed plans no "choose" CTA, so the
   // matching handler is genuinely absent on some rows. Logged-out visitors
   // get an `onLoginRequest` instead, which routes them through sign-in first.
-  onChoose?: ((planId: number) => void) | undefined
-  onManage?: (() => void) | undefined
-  onLoginRequest?: (() => void) | undefined
-  loadingPlanId: number | null
+  onChoose?: ((planId: number) => void) | undefined;
+  onManage?: (() => void) | undefined;
+  onLoginRequest?: (() => void) | undefined;
+  loadingPlanId: number | null;
 }
 
 // One card renders every kind of plan — free and paid are just different rows
@@ -88,7 +88,9 @@ function PlanCard({
   const freeChoosePlan = Boolean(isFree && onPaidPlan && onManage);
   // Logged-in free-tier user whose session hasn't resolved a handler yet —
   // nothing to do, never an enabled dead button.
-  const freeNoop = Boolean(isFree && !isCurrent && !onPaidPlan && !onLoginRequest);
+  const freeNoop = Boolean(
+    isFree && !isCurrent && !onPaidPlan && !onLoginRequest,
+  );
   const buttonDisabled =
     busy ||
     freeIsCurrent ||
@@ -187,12 +189,15 @@ function Subscribe() {
   const [loading, setLoading] = useState(true);
   const [loadingPlanId, setLoadingPlanId] = useState<number | null>(null);
   // Set when the user returns from Stripe Checkout (?checkout=success|cancelled).
-  const [checkoutNotice, setCheckoutNotice] = useState<"success" | "cancelled" | null>(null);
+  const [checkoutNotice, setCheckoutNotice] = useState<
+    "success" | "cancelled" | null
+  >(null);
   // Reconciliation with Stripe after returning from Checkout (no webhook needed).
   const [confirmState, setConfirmState] = useState<CheckoutConfirmState>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   // Plan-change (upgrade/downgrade) pre-approval state.
-  const [changePreview, setChangePreview] = useState<ChangePreviewResponse | null>(null);
+  const [changePreview, setChangePreview] =
+    useState<ChangePreviewResponse | null>(null);
   const [changeError, setChangeError] = useState<string | null>(null);
   const [changeBusy, setChangeBusy] = useState(false);
   const [changeNotice, setChangeNotice] = useState<string | null>(null);
@@ -371,8 +376,7 @@ function Subscribe() {
     ...paid
       .slice()
       .sort(
-        (a, b) =>
-          (a.yearly_price_cents ?? 0) - (b.yearly_price_cents ?? 0),
+        (a, b) => (a.yearly_price_cents ?? 0) - (b.yearly_price_cents ?? 0),
       ),
   ];
 
@@ -381,11 +385,7 @@ function Subscribe() {
       <Link to="/" className="wine-detail__back">
         &larr; Back to Dashboard
       </Link>
-      <DetailHero
-        kicker="Cellar"
-        title="Membership"
-        intro="Choose the plan that fits how you explore and share wine words."
-      />
+      <DetailHero kicker="Membership" title="Membership" intro="" />
 
       {loading && <p className="wine-management__loading">Loading plans…</p>}
       {error && <p className="review-form__error">{error}</p>}

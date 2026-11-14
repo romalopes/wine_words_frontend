@@ -358,7 +358,7 @@ function Reviews() {
       <DetailHero
         kicker={selectedCategory ? "Category" : ""}
         title="Reviews"
-        intro="Browse and manage wine reviews, ratings, and notes."
+        intro=""
         actions={
           canManageContent ? (
             <button
