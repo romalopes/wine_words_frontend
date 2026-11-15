@@ -47,6 +47,7 @@ import {
   createSettingsApi,
   createTestAccessApi,
 } from "./adminApi";
+import { createTradeApi } from "./tradeApi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; //|| "http://localhost:3000/api/v1").replace(/\/+$/, "");
 
@@ -218,5 +219,6 @@ export const shipmentTrackingsApi = createShipmentTrackingsApi(request);
 
 // The signed-in user's own notifications (review-deadline reminders).
 export const notificationsApi = createNotificationsApi(request);
+export const tradeApi = createTradeApi(request);
 
 export { API_BASE_URL };

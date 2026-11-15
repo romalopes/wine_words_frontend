@@ -1,0 +1,29 @@
+.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem; text-align: left; }
+.hero { background: linear-gradient(135deg, #4a1020, #27615e); color: white; border-radius: 16px; padding: 2rem; margin-bottom: 1.25rem; }
+.hero h1 { margin: 0 0 .5rem; }
+.card { background: #fffaf4; border: 1px solid #e4d9cd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
+.field { display: grid; gap: .3rem; }
+.fieldWide { grid-column: 1 / -1; }
+.field label { font-weight: 600; font-size: .9rem; }
+.field input, .field select, .field textarea { width: 100%; box-sizing: border-box; padding: .65rem .7rem; border: 1px solid #d7c8bb; border-radius: 7px; background: white; color: #241b19; }
+.field textarea { min-height: 90px; resize: vertical; }
+.steps { display: flex; gap: .4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.step { padding: .45rem .7rem; border-radius: 999px; background: #efe5dc; color: #766963; font-size: .85rem; }
+.stepActive { background: #27615e; color: white; }
+.actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1rem; }
+.error { background: #fff0f0; color: #8a2238; border: 1px solid #e1aab5; padding: .75rem; border-radius: 8px; margin-bottom: 1rem; }
+.success { background: #effaf5; color: #1f654a; border: 1px solid #a9d9c2; padding: .75rem; border-radius: 8px; }
+.wineRow { border: 1px solid #e4d9cd; border-radius: 10px; padding: 1rem; margin-bottom: .85rem; }
+.wineHeader { display: flex; justify-content: space-between; gap: .75rem; align-items: center; margin-bottom: .7rem; }
+.wineHeader h3 { margin: 0; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: .65rem; border-bottom: 1px solid #eee4db; text-align: left; vertical-align: top; }
+.muted { color: #766963; }
+.status { display: inline-block; padding: .25rem .55rem; border-radius: 999px; background: #efe5dc; font-size: .8rem; font-weight: 600; }
+.timeline { display: grid; gap: .65rem; padding-left: 1rem; }
+.message { border: 1px solid #e4d9cd; border-radius: 9px; padding: .75rem; }
+.messageMeta { color: #766963; font-size: .8rem; margin-bottom: .35rem; }
+.linkBox { word-break: break-all; background: white; border: 1px dashed #27615e; padding: .75rem; border-radius: 8px; }
+.notice { margin-bottom: 1rem; }
+@media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .fieldWide { grid-column: auto; } .table { display: block; overflow-x: auto; white-space: nowrap; } .hero { padding: 1.35rem; } }

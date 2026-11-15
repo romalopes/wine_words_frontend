@@ -136,6 +136,16 @@ function WinePackageForm() {
         if (cancelled) return;
         // reviewer_id is a number in the payload but the input is text-backed.
         setReviewerId(pkg.reviewer_id ? String(pkg.reviewer_id) : "");
+        if (canPickReviewer) {
+          // Load reviewer list so the dropdown is populated on mount.
+          try {
+            const data = await usersApi.search("", 1, "Reviewer");
+            const candidates = Array.isArray(data) ? data : data.items || [];
+            setReviewerResults(candidates);
+          } catch {
+            // Ignore reviewer search errors; the dropdown will just be empty.
+          }
+        }
         setExistingImages(Array.isArray(pkg.images) ? pkg.images : []);
         setExistingImageIds(Array.isArray(pkg.image_ids) ? pkg.image_ids : []);
         setForm({
@@ -183,18 +193,6 @@ function WinePackageForm() {
       producer_id: id ? String(id) : "",
       producer_name: name || "",
     }));
-  }
-
-  async function searchReviewers() {
-    try {
-      // A `page` is sent, so the API answers with the pagination envelope.
-      // `responseItems` unwraps that (and a bare array) so the picker shows rows
-      // either way — `Array.isArray(data) ? data : []` would always be empty.
-      const data = await usersApi.search("");
-      setReviewerResults(responseItems(data));
-    } catch (err) {
-      setError(errorMessage(err, "Could not search users"));
-    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -369,35 +367,20 @@ function WinePackageForm() {
         {editing && canPickReviewer && (
           <div className={styles.filters}>
             <div className={styles.filterField}>
-              <label htmlFor="package-reviewer">Reviewer (user id)</label>
-              <input
-                id="package-reviewer"
-                type="number"
-                min="1"
+              <label htmlFor="package-reviewer-pick">Reviewer</label>
+              <select
+                id="package-reviewer-pick"
                 value={reviewerId}
                 onChange={(event) => setReviewerId(event.target.value)}
-              />
+              >
+                <option value="">Select reviewer…</option>
+                {reviewerResults.map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {candidate.display_name || candidate.email}
+                  </option>
+                ))}
+              </select>
             </div>
-            <button type="button" className="wine-btn wine-btn--secondary" onClick={searchReviewers}>
-              Look up users
-            </button>
-            {reviewerResults.length > 0 && (
-              <div className={styles.filterField}>
-                <label htmlFor="package-reviewer-pick">Pick a reviewer</label>
-                <select
-                  id="package-reviewer-pick"
-                  value=""
-                  onChange={(event) => setReviewerId(event.target.value)}
-                >
-                  <option value="">Select…</option>
-                  {reviewerResults.map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {candidate.display_name || candidate.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
         )}
 

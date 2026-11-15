@@ -400,7 +400,7 @@ export interface UsersApi {
    * `AdminUser[]` (legacy shape kept for compatibility). `UserRoles` normalises
    * both — see `AdminUserResults`.
    */
-  search(query: string, page?: number): Promise<ResourceResponse<AdminUser>>
+  search(query: string, page?: number, role?: string): Promise<ResourceResponse<AdminUser>>
   assignRoles(userId: number, roleIds: number[]): Promise<AdminUser>
   assignSubscription(userId: number, subscriptionId: number | null): Promise<AdminUser>
   show(userId: number): Promise<UserDetail>

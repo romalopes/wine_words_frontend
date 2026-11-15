@@ -34,7 +34,11 @@ export function createUserApi(request: ApiRequester): UserApi {
 export function createUsersApi(request: ApiRequester): UsersApi {
   return {
     roles: () => request("/roles", { auth: true }),
-    search: (q, page = 1) => request(`/users/search?q=${encodeURIComponent(q)}&page=${page}`, { auth: true }),
+    search: (q, page = 1, role) => {
+      let url = `/users/search?q=${encodeURIComponent(q)}&page=${page}`;
+      if (role) url += `&role=${encodeURIComponent(role)}`;
+      return request(url, { auth: true });
+    },
     assignRoles: (userId, roleIds) => request(`/users/${userId}/assign_roles`, { method: "PATCH", auth: true, body: { role_ids: roleIds } }),
     assignSubscription: (userId, subscriptionId) => request(`/users/${userId}/assign_subscription`, { method: "PATCH", auth: true, body: { subscription_id: subscriptionId } }),
     show: (userId) => request<UserDetail>(`/users/${userId}`, { auth: true }),

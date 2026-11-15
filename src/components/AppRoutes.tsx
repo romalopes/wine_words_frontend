@@ -58,6 +58,9 @@ import ContentAnalyticsDetail from "./analytics/ContentAnalyticsDetail";
 import { WineInsights } from "./analytics/WineInsights";
 import { ArticlesManagement, ReviewsManagement } from "./ContentManagementList";
 import WinesManagement from "./WinesManagement";
+import TradeSubmit from "./TradeSubmit";
+import TradeMyPackages from "./TradeMyPackages";
+import TradePackageDetail, { TradeGuestPackageRoute } from "./TradePackageDetail";
 
 function AppRoutes() {
   return (
@@ -129,6 +132,10 @@ function AppRoutes() {
         <Route element={<WinePackageForm />} path="/wine-packages/:id/edit" />
         <Route element={<Notifications />} path="/notifications" />
         <Route element={<Following />} path="/following" />
+        <Route element={<TradeSubmit />} path="/trade/submit" />
+        <Route element={<TradeMyPackages />} path="/trade/my-packages" />
+        <Route element={<TradePackageDetail />} path="/trade/my-packages/:id" />
+        <Route element={<TradeGuestPackageRoute />} path="/trade/packages/:token" />
         <Route element={<ArticleProjects />} path="/article-projects" />
         <Route element={<ArticleProjectForm />} path="/article-projects/new" />
         <Route
