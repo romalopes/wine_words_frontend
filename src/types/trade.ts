@@ -1,6 +1,7 @@
 export interface TradeWineInput {
   wine_name: string
   vintage: string
+  quantity?: string
   region: string
   appellation: string
   grape_varieties: string
@@ -47,6 +48,7 @@ export interface TradeMessage {
 export interface TradePackageItem {
   id: number
   wine_name: string
+  quantity?: number
   vintage?: string | number | null
   region?: string | null
   appellation?: string | null

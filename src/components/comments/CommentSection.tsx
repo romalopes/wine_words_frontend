@@ -49,8 +49,8 @@ export default function CommentSection({
   // screen reader announces it once.
   const [inlineFormOwner, setInlineFormOwner] = useState<number | null>(null)
 
-  // Mirrors Comments::Permission: every signed-in account may comment except a
-  // pure Guest. The API re-checks this — this only decides what to render.
+  // Mirrors Comments::Permission: any authenticated user may comment.
+  // The API re-checks this — this only decides what to render.
   const canComment = isAuthenticated && canCommentAs(user?.roles)
 
   // Deep link from a card: when the URL carries #comments, move real keyboard
@@ -129,11 +129,9 @@ export default function CommentSection({
 }
 
 /**
- * True for any role other than Guest — the same rule as User#commenter? on the
- * server. Written as a denial of Guest rather than an allow-list so a role added
- * later keeps working on the client too.
+ * Any authenticated user may comment. Mirrors User#commenter? on the server.
+ * The roles array is kept for future gating if needed (e.g. email verification).
  */
 export function canCommentAs(roles: string[] | undefined | null): boolean {
-  if (!roles || roles.length === 0) return false
-  return roles.some((role) => role !== "Guest")
+  return true
 }

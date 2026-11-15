@@ -119,14 +119,21 @@ describe("CommentSection", () => {
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
   })
 
-  it("blocks a Guest account but still shows the thread", async () => {
+  it("lets a Guest account comment and shows the thread", async () => {
     signedInAs(["Guest"])
     vi.mocked(commentsApi.list).mockResolvedValue({ comments: [comment()], comments_count: 1 })
+    vi.mocked(commentsApi.create).mockResolvedValue(comment({ body: "Hello from Guest" }))
+    const user = userEvent.setup()
     renderSection({ kind: "wine", identifier: "some-wine" })
 
     await waitFor(() => expect(screen.getByText(/Interesting difference/)).toBeInTheDocument())
-    expect(screen.getByText(/does not include commenting/)).toBeInTheDocument()
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
+    // Guest can now comment, so the form should be visible
+    await waitFor(() => expect(screen.getByRole("textbox")).toBeInTheDocument())
+    await user.type(screen.getByRole("textbox"), "Hello from Guest")
+    await user.click(screen.getByRole("button", { name: "Comment" }))
+
+    await waitFor(() => expect(screen.getByText("Hello from Guest")).toBeInTheDocument())
+    expect(commentsApi.create).toHaveBeenCalledWith("wine", "some-wine", "Hello from Guest", expect.any(String))
   })
 
   it.each([["Reviewer"], ["Editor"], ["Admin"]])("lets a %s comment", async (role) => {

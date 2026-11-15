@@ -23,6 +23,11 @@
   color: #4d1320;
   text-decoration: none;
 }
+.packageStatus { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; margin-top: 1rem; }
+.packageStatusLabel { font-size: .95rem; font-weight: 600; opacity: .9; }
+.packageStatus .status { padding: .5rem .9rem; font-size: 1rem; letter-spacing: .02em; }
+.statusEditorialPending { background: #fff8f2; border: 2px solid #f4c48d; color: #681a2a; box-shadow: 0 3px 12px rgba(0, 0, 0, .25); }
+.packageStatusHint { flex-basis: 100%; font-size: .9rem; opacity: .9; }
 .card { background: #fffaf4; border: 1px solid #e4d9cd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
 .field { display: grid; gap: .3rem; }
@@ -39,6 +44,9 @@
 .wineRow { border: 1px solid #e4d9cd; border-radius: 10px; padding: 1rem; margin-bottom: .85rem; }
 .wineHeader { display: flex; justify-content: space-between; gap: .75rem; align-items: center; margin-bottom: .7rem; }
 .wineHeader h3 { margin: 0; }
+.wineModeToggle { display: flex; gap: .6rem; flex-wrap: wrap; margin: .25rem 0 1rem; }
+.quantityChoice { max-width: 32rem; padding: 1rem; border: 1px solid #e4d9cd; border-radius: 10px; margin-bottom: .85rem; }
+.quantityChoice .field select { max-width: 10rem; }
 .table { width: 100%; border-collapse: collapse; }
 .table th, .table td { padding: .65rem; border-bottom: 1px solid #eee4db; text-align: left; vertical-align: top; }
 .muted { color: #766963; }
@@ -48,4 +56,4 @@
 .messageMeta { color: #766963; font-size: .8rem; margin-bottom: .35rem; }
 .linkBox { word-break: break-all; background: white; border: 1px dashed #27615e; padding: .75rem; border-radius: 8px; }
 .notice { margin-bottom: 1rem; }
-@media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .fieldWide { grid-column: auto; } .table { display: block; overflow-x: auto; white-space: nowrap; } .hero { padding: 1.35rem; } }
+@media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .fieldWide { grid-column: auto; } .table { display: block; overflow-x: auto; white-space: nowrap; } .hero { padding: 1.35rem; } .wineModeToggle { display: grid; grid-template-columns: 1fr; } .wineModeToggle .wine-btn { width: 100%; } }
