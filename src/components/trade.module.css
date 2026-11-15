@@ -1,6 +1,28 @@
 .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem; text-align: left; }
 .hero { background: linear-gradient(135deg, #4a1020, #27615e); color: white; border-radius: 16px; padding: 2rem; margin-bottom: 1.25rem; }
 .hero h1 { margin: 0 0 .5rem; }
+/* High-contrast CTA for dark hero panels: the default primary (#681a2a on a
+   #4a1020 gradient) nearly vanishes, so hero CTAs invert to a cream surface
+   with the deep maroon text and a soft shadow to lift them off the panel. */
+.heroCta {
+  display: inline-block;
+  background: #fff8f2;
+  border: 2px solid #fff8f2;
+  color: #681a2a;
+  font-size: 1rem;
+  font-weight: 700;
+  min-height: 48px;
+  padding: .7rem 1.6rem;
+  margin-top: 1rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+}
+.heroCta:hover:not(:disabled) {
+  background: #f3e6da;
+  border-color: #f3e6da;
+  color: #4d1320;
+  text-decoration: none;
+}
 .card { background: #fffaf4; border: 1px solid #e4d9cd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
 .field { display: grid; gap: .3rem; }
