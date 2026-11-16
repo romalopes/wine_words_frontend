@@ -25,8 +25,23 @@
 }
 .packageStatus { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; margin-top: 1rem; }
 .packageStatusLabel { font-size: .95rem; font-weight: 600; opacity: .9; }
-.packageStatus .status { padding: .5rem .9rem; font-size: 1rem; letter-spacing: .02em; }
-.statusEditorialPending { background: #fff8f2; border: 2px solid #f4c48d; color: #681a2a; box-shadow: 0 3px 12px rgba(0, 0, 0, .25); }
+/* Package status badge — looks like a tag, not a button */
+.packageStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .6rem;
+  font-size: .85rem;
+  font-weight: 600;
+  border-radius: 4px;
+  letter-spacing: .01em;
+  background: #efe5dc;
+  color: #4f4440;
+}
+.packageStatusBadge--editorialPending {
+  background: #fff3e0;
+  border: 1px solid #f4c48d;
+  color: #7a4a0a;
+}
 .packageStatusHint { flex-basis: 100%; font-size: .9rem; opacity: .9; }
 .card { background: #fffaf4; border: 1px solid #e4d9cd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }

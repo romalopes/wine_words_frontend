@@ -208,13 +208,11 @@ export default function TradeSubmit() {
     try {
       const submissionWines =
         wineEntryMode === "quantity"
-          ? [
-              {
-                ...blankWine(),
-                wine_name: "Unspecified wines",
-                quantity: wineQuantity,
-              },
-            ]
+          ? Array.from({ length: Number(wineQuantity) }, (_, i) => ({
+              ...blankWine(),
+              wine_name: `Wine ${i + 1}`,
+              vintage: currentYear,
+            }))
           : wines;
       const response = await tradeApi.submit(
         {
@@ -247,7 +245,17 @@ export default function TradeSubmit() {
     }
   }
 
-  if (result)
+  // Redirect authenticated users after successful submission
+  useEffect(() => {
+    if (result && isAuthenticated) {
+      navigate(`/trade/my-packages/${result.package_reference}`);
+    }
+  }, [result, isAuthenticated]);
+
+  if (result) {
+    if (isAuthenticated) {
+      return <div className={styles.page}><p>Redirecting to your package…</p></div>;
+    }
     return (
       <div className={styles.page}>
         <div className={styles.hero}>
@@ -287,6 +295,7 @@ export default function TradeSubmit() {
         </div>
       </div>
     );
+  }
 
   if (authLoading)
     return (
@@ -735,10 +744,13 @@ export default function TradeSubmit() {
           {wineEntryMode === "quantity" ? (
             <>
               <h3>Wines ({wineQuantity})</h3>
-              <p>
-                {wineQuantity} wine{wineQuantity === "1" ? "" : "s"} to be
-                submitted. Names and vintages can be provided later.
-              </p>
+              <ul>
+                {Array.from({ length: Number(wineQuantity) }, (_, i) => (
+                  <li key={`wine-${i + 1}`}>
+                    Wine {i + 1} ({currentYear})
+                  </li>
+                ))}
+              </ul>
             </>
           ) : (
             <>

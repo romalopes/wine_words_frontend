@@ -3,7 +3,7 @@ import { tradeApi } from "../services/api"
 import type { TradeMessage } from "../types/trade"
 import styles from "./trade.module.css"
 
-export default function TradeMessages({ packageId, guestToken }: { packageId: number; guestToken?: string }) {
+export default function TradeMessages({ packageId, guestToken }: { packageId: number; guestToken: string | undefined }) {
   const [messages, setMessages] = useState<TradeMessage[]>([])
   const [body, setBody] = useState("")
   const [error, setError] = useState<string | null>(null)
