@@ -196,7 +196,7 @@ function WinePackageDetail() {
 
   if (loading) {
     return (
-      <div className="wine-app">
+      <div className={tradeStyles.page}>
         <p className="wine-management__loading">Loading wine package…</p>
       </div>
     );
@@ -204,7 +204,7 @@ function WinePackageDetail() {
 
   if (error && !pkg) {
     return (
-      <div className="wine-app">
+      <div className={tradeStyles.page}>
         <p className="wine-management__error">{error}</p>
         <Link to="/wine-packages" className="wine-btn wine-btn--primary">
           Back to Wine Packages
@@ -230,7 +230,7 @@ function WinePackageDetail() {
   };
 
   return (
-    <div className="wine-app">
+    <div className={tradeStyles.page}>
       <Link to="/wine-packages" className="wine-detail__back">
         &larr; Back to Wine Packages
       </Link>
@@ -238,55 +238,80 @@ function WinePackageDetail() {
       {error && <p className="wine-management__error">{error}</p>}
       {offlineCopy && <OfflineBadge cachedAt={cachedAt} offlineCopy />}
 
-      <div className={styles.detailHeader}>
+      <div className={tradeStyles.hero}>
         <h1>{pkg.producer_name || `Package #${pkg.id}`}</h1>
-        <PackageStatusBadge status={pkg.status} />
-        {canEdit && (
-          <Link
-            to={`/wine-packages/${pkg.id}/edit`}
-            className="wine-btn wine-btn--secondary wine-btn--sm"
-          >
-            Edit package
-          </Link>
-        )}
+        <div className={tradeStyles.packageStatus}>
+          <span className={tradeStyles.packageStatusLabel}>Status</span>
+          <PackageStatusBadge status={pkg.status} />
+          {canEdit && (
+            <Link
+              to={`/wine-packages/${pkg.id}/edit`}
+              className="wine-btn wine-btn--secondary wine-btn--sm"
+            >
+              Edit package
+            </Link>
+          )}
+        </div>
+        <p className={tradeStyles.packageStatusHint}>
+          Source: {sourceLabel(pkg.source)} · Reviewer:{" "}
+          {pkg.reviewer_name || "unassigned"}
+          {pkg.expected_at ? ` · Expected ${formatDate(pkg.expected_at)}` : ""}
+          {pkg.arrived_at ? ` · Arrived ${formatDateTime(pkg.arrived_at)}` : ""}
+          {pkg.review_deadline
+            ? ` · Deadline ${formatDate(pkg.review_deadline)} · ${deadlineLabel(pkg.review_deadline)}`
+            : ""}
+          {pkg.reviewed_at ? ` · Reviewed ${formatDate(pkg.reviewed_at)}` : ""}
+          {pkg.auto_completed ? " · Completed automatically" : ""}
+          {pkg.status === "completed" && !pkg.auto_completed
+            ? " · Completed deliberately"
+            : ""}
+        </p>
       </div>
 
-      <p className={styles.meta}>
-        <span>Source: {sourceLabel(pkg.source)}</span>
-        <span>Reviewer: {pkg.reviewer_name || "unassigned"}</span>
-        {pkg.expected_at && <span>Expected {formatDate(pkg.expected_at)}</span>}
-        {pkg.arrived_at && (
-          <span>Arrived {formatDateTime(pkg.arrived_at)}</span>
-        )}
-        {pkg.review_deadline && (
-          <span className={pkg.overdue ? styles.overdue : undefined}>
-            Deadline {formatDate(pkg.review_deadline)} ·{" "}
-            {deadlineLabel(pkg.review_deadline)}
-          </span>
-        )}
-        {pkg.reviewed_at && <span>Reviewed {formatDate(pkg.reviewed_at)}</span>}
-        {pkg.auto_completed && <span>Completed automatically</span>}
-        {pkg.status === "completed" && !pkg.auto_completed && (
-          <span>Completed deliberately</span>
-        )}
-      </p>
-
-      {pkg.status === "rejected" && pkg.rejection_reason && (
-        <p className={styles.cellMuted}>Rejected: {pkg.rejection_reason}</p>
-      )}
-
-      {(pkg.producer_reference || pkg.producer_notes || pkg.shipping_notes) && (
-        <div className={styles.cardGrid}>
-          {pkg.producer_reference && <div><strong>Producer reference</strong><p>{pkg.producer_reference}</p></div>}
-          {pkg.producer_notes && <div><strong>Request notes</strong><p>{pkg.producer_notes}</p></div>}
-          {pkg.shipping_notes && <div><strong>Shipping notes</strong><p>{pkg.shipping_notes}</p></div>}
+      {(pkg.status === "rejected" && pkg.rejection_reason) ||
+      pkg.producer_reference ||
+      pkg.producer_notes ||
+      pkg.shipping_notes ||
+      pkg.notes ? (
+        <div className={tradeStyles.card}>
+          <h2>Notes &amp; references</h2>
+          <div className={tradeStyles.grid}>
+            {pkg.status === "rejected" && pkg.rejection_reason && (
+              <div className={tradeStyles.field}>
+                <span className={tradeStyles.muted}>Rejection reason</span>
+                <strong>{pkg.rejection_reason}</strong>
+              </div>
+            )}
+            {pkg.producer_reference && (
+              <div className={tradeStyles.field}>
+                <span className={tradeStyles.muted}>Producer reference</span>
+                <strong>{pkg.producer_reference}</strong>
+              </div>
+            )}
+            {pkg.producer_notes && (
+              <div className={tradeStyles.field}>
+                <span className={tradeStyles.muted}>Request notes</span>
+                <strong>{pkg.producer_notes}</strong>
+              </div>
+            )}
+            {pkg.shipping_notes && (
+              <div className={tradeStyles.field}>
+                <span className={tradeStyles.muted}>Shipping notes</span>
+                <strong>{pkg.shipping_notes}</strong>
+              </div>
+            )}
+            {pkg.notes && (
+              <div className={`${tradeStyles.field} ${tradeStyles.fieldWide}`}>
+                <span className={tradeStyles.muted}>Notes</span>
+                <strong>{pkg.notes}</strong>
+              </div>
+            )}
+          </div>
         </div>
-      )}
-
-      {pkg.notes && <p className={styles.cellMuted}>{pkg.notes}</p>}
+      ) : null}
 
       {(canManageImages || (Array.isArray(pkg.images) && pkg.images.length > 0)) && (
-        <div className={styles.section}>
+        <div className={tradeStyles.card}>
           <h2>Package images</h2>
           {canManageImages ? (
             <ImageManager
@@ -314,7 +339,7 @@ function WinePackageDetail() {
         </div>
       )}
 
-      <div className={styles.section}>
+      <div className={tradeStyles.card}>
         <h2>Review progress</h2>
         <div className={styles.progressRow}>
           <div
@@ -341,7 +366,7 @@ function WinePackageDetail() {
       </div>
 
       {(can.submit || can.withdraw || can.restore_draft || can.accept || can.reject || can.mark_in_transit || can.mark_arrived || can.start_reviewing || can.mark_completed || can.reopen || can.cancel) && (
-        <div className={styles.actions}>
+        <div className={tradeStyles.actions}>
           {can.submit && (
             <button type="button" className="wine-btn wine-btn--primary" disabled={busy} onClick={() => runAction(() => winePackagesApi.submit(pkg.id))}>
               Submit Request
@@ -490,12 +515,12 @@ function WinePackageDetail() {
         </form>
       )}
 
-      <div className={styles.section}>
+      <div className={tradeStyles.card}>
         <h2>Wines in this package</h2>
 
         {(pkg.items?.length ?? 0) > 0 ? (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
+          <div className={tradeStyles.table}>
+            <table className={tradeStyles.table}>
               <thead>
                 <tr>
                   <th scope="col">Wine</th>
@@ -519,11 +544,11 @@ function WinePackageDetail() {
                         <span>{item.label}</span>
                       )}
                       {item.notes && (
-                        <div className={styles.cellMuted}>{item.notes}</div>
+                        <div className={tradeStyles.muted}>{item.notes}</div>
                       )}
                     </td>
                     <td>{item.quantity}</td>
-                    <td className={styles.cellMuted}>
+                    <td className={tradeStyles.muted}>
                       {item.condition || "—"}
                     </td>
                     <td>
@@ -585,7 +610,7 @@ function WinePackageDetail() {
             </table>
           </div>
         ) : (
-          <p className={styles.cellMuted}>
+          <p className={tradeStyles.muted}>
             No wines recorded yet. Add the bottles that came in this package.
           </p>
         )}
@@ -679,12 +704,12 @@ function WinePackageDetail() {
         onChanged={load}
       />
 
-      <div className={styles.section}>
+      <div className={tradeStyles.card}>
         <h2>Activity</h2>
         {timeline.length === 0 ? (
-          <p className={styles.cellMuted}>No activity recorded yet.</p>
+          <p className={tradeStyles.muted}>No activity recorded yet.</p>
         ) : (
-          <ul className={styles.cellMuted}>
+          <ul className={tradeStyles.muted}>
             {timeline.map((event) => (
               <li key={`${event.source}-${event.id}`}>
                 {formatDateTime(event.occurred_at) || "—"} · {event.description || event.message || event.status || event.event_type.replaceAll("_", " ")}
@@ -749,7 +774,7 @@ function WinePackageDetail() {
       )}
 
       {can.destroy && (
-        <div className={styles.actions}>
+        <div className={tradeStyles.actions}>
           <button
             type="button"
             className="wine-btn wine-btn--danger"

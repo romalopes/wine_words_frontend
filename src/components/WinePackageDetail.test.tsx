@@ -196,8 +196,8 @@ describe("WinePackageDetail", () => {
       await screen.findByRole("heading", { name: "Penfolds" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Arrived")).toBeInTheDocument();
-    expect(screen.getByText("Source: Unexpected delivery")).toBeInTheDocument();
-    expect(screen.getByText("Reviewer: Reviewer")).toBeInTheDocument();
+    expect(screen.getByText(/Source: Unexpected delivery/)).toBeInTheDocument();
+    expect(screen.getByText(/Reviewer: Reviewer/)).toBeInTheDocument();
     expect(screen.getByText(/Due in 5 days/)).toBeInTheDocument();
     expect(screen.getByText("Left at reception")).toBeInTheDocument();
   });
