@@ -61,6 +61,7 @@ import WinesManagement from "./WinesManagement";
 import TradeSubmit from "./TradeSubmit";
 import TradeMyPackages from "./TradeMyPackages";
 import TradePackageDetail, { TradeGuestPackageRoute } from "./TradePackageDetail";
+import TradeAdminPackageDetail from "./TradeAdminPackageDetail";
 
 function AppRoutes() {
   return (
@@ -136,6 +137,10 @@ function AppRoutes() {
         <Route element={<TradeMyPackages />} path="/trade/my-packages" />
         <Route element={<TradePackageDetail />} path="/trade/my-packages/:id" />
         <Route element={<TradeGuestPackageRoute />} path="/trade/packages/:token" />
+        <Route
+          element={<TradeAdminPackageDetail />}
+          path="/admin/trade/packages/:id"
+        />
         <Route element={<ArticleProjects />} path="/article-projects" />
         <Route element={<ArticleProjectForm />} path="/article-projects/new" />
         <Route

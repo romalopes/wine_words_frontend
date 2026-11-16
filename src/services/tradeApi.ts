@@ -23,6 +23,11 @@ export function createTradeApi(request: ApiRequester) {
         headers: { "X-Idempotency-Key": idempotencyKey },
       })
     },
+    // Staff (Editor/Admin) view of one trade submission — the page the staff
+    // notification links to. The endpoint itself is role-guarded server-side.
+    getStaffPackage(id: string | number) {
+      return request<TradePackage>(`/admin/trade/packages/${id}`, { auth: true })
+    },
     listPackages() {
       return request<TradePackage[]>("/trade/my-packages", { auth: true })
     },

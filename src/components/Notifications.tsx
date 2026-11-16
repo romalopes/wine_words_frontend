@@ -27,6 +27,7 @@ const TYPE_LABELS: Record<string, string> = {
   wine_package_arrived: "Package arrived",
   wine_package_completed: "Package completed",
   wine_package_rejected: "Package rejected",
+  trade_submission_received: "Trade submission",
   review_published: "Review published",
   review_updated: "Review updated",
   review_comment: "Review comment",
@@ -55,23 +56,24 @@ function monogramChar(notification: Notification): string {
   return (text ?? "N").trim().charAt(0).toUpperCase() || "N";
 }
 
-// Where a row links: package reminders point at their package (labelled with
-// the producer name), follow-based deliveries at the changed content.
+// Where a row links: an explicit target wins (follow-based deliveries and the
+// staff trade-submission alert carry one), then package reminders fall back to
+// their package page.
 function targetOf(
   notification: Notification,
 ): { href: string; label: string } | null {
+  if (notification.target_path) {
+    return {
+      href: notification.target_path,
+      label: notification.target_label || notification.target_path,
+    };
+  }
   if (notification.wine_package_id) {
     return {
       href: `/wine-packages/${notification.wine_package_id}`,
       label:
         notification.producer_name ||
         `Package #${notification.wine_package_id}`,
-    };
-  }
-  if (notification.target_path) {
-    return {
-      href: notification.target_path,
-      label: notification.target_label || notification.target_path,
     };
   }
   return null;
