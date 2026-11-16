@@ -75,7 +75,9 @@ export default function TradeSubmit() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TradeSubmissionResponse | null>(null);
   // Auth flow for unauthenticated submitters
-  const [authDialog, setAuthDialog] = useState<"none" | "login" | "signup">("none");
+  const [authDialog, setAuthDialog] = useState<"none" | "login" | "signup">(
+    "none",
+  );
   const [authEmail, setAuthEmail] = useState("");
   // Busy flag shared by the login/signup dialogs and the pre-submit email lookup.
   const [authBusy, setAuthBusy] = useState(false);
@@ -394,7 +396,11 @@ export default function TradeSubmit() {
 
   if (result) {
     if (isAuthenticated) {
-      return <div className={styles.page}><p>Redirecting to your package…</p></div>;
+      return (
+        <div className={styles.page}>
+          <p>Redirecting to your package…</p>
+        </div>
+      );
     }
     return (
       <div className={styles.page}>
@@ -993,7 +999,7 @@ export default function TradeSubmit() {
       {authDialog === "signup" && (
         <dialog
           ref={authDialogRef}
-          className={styles.authDialog}
+          className={`${styles.authDialog} ${styles.authDialogWide}`}
           aria-modal="true"
           onCancel={() => setAuthDialog("none")}
           onClose={() => setAuthDialog("none")}
@@ -1004,85 +1010,90 @@ export default function TradeSubmit() {
               No account found for <strong>{authEmail}</strong>. Create one to
               save your submission and track its progress.
             </p>
-            <div className={styles.authBenefits}>
-              <h3>Why create an account?</h3>
-              <ul>
-                <li>
-                  Save time – Store your contact and winery details for quicker
-                  future submissions.
-                </li>
-                <li>
-                  Manage submissions – Keep a record of all wines and samples
-                  submitted.
-                </li>
-                <li>
-                  Track progress – Follow your wines from submission through to
-                  review.
-                </li>
-                <li>
-                  Get notified – Receive updates on review progress and
-                  publication.
-                </li>
-                <li>
-                  Access your reviews – View tasting notes, scores and published
-                  reviews in one place.
-                </li>
-                <li>
-                  Stay organised – Keep a complete history of your submissions
-                  and reviews.
-                </li>
-                <li>
-                  Get notified of special features and mentions in articles and
-                  tastings.
-                </li>
-              </ul>
-            </div>
-            {error && (
-              <div className={styles.error} role="alert">
-                {error}
+            {/* Benefits and account fields share a row on wide screens. */}
+            <div className={styles.authColumns}>
+              <div className={styles.authFields}>
+                {error && (
+                  <div className={styles.error} role="alert">
+                    {error}
+                  </div>
+                )}
+                <div className={styles.field}>
+                  <label htmlFor="signup-firstName">First name</label>
+                  <input
+                    id="signup-firstName"
+                    name="firstName"
+                    type="text"
+                    required
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="signup-lastName">Last name</label>
+                  <input
+                    id="signup-lastName"
+                    name="lastName"
+                    type="text"
+                    required
+                    autoComplete="family-name"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="signup-password">Password</label>
+                  <input
+                    id="signup-password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="signup-confirm">Confirm password</label>
+                  <input
+                    id="signup-confirm"
+                    name="confirm"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    minLength={8}
+                  />
+                </div>
               </div>
-            )}
-            <div className={styles.field}>
-              <label htmlFor="signup-firstName">First name</label>
-              <input
-                id="signup-firstName"
-                name="firstName"
-                type="text"
-                required
-                autoComplete="given-name"
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="signup-lastName">Last name</label>
-              <input
-                id="signup-lastName"
-                name="lastName"
-                type="text"
-                required
-                autoComplete="family-name"
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="signup-password">Password</label>
-              <input
-                id="signup-password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="signup-confirm">Confirm password</label>
-              <input
-                id="signup-confirm"
-                name="confirm"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-              />
+              <div className={styles.authBenefits}>
+                <h3>Why create an account?</h3>
+                <ul>
+                  <li>
+                    Save time – Store your contact and winery details for
+                    quicker future submissions.
+                  </li>
+                  <li>
+                    Manage submissions – Keep a record of all wines and samples
+                    submitted.
+                  </li>
+                  <li>
+                    Track progress – Follow your wines from submission through
+                    to review.
+                  </li>
+                  <li>
+                    Get notified – Receive updates on review progress and
+                    publication.
+                  </li>
+                  <li>
+                    Access your reviews – View tasting notes, scores and
+                    published reviews in one place.
+                  </li>
+                  <li>
+                    Stay organised – Keep a complete history of your submissions
+                    and reviews.
+                  </li>
+                  <li>
+                    Get notified of special features and mentions in articles
+                    and tastings.
+                  </li>
+                </ul>
+              </div>
             </div>
             <div className={styles.actions}>
               <button

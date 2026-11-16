@@ -135,12 +135,40 @@
 .authDialog .actions button {
   flex: 1;
 }
+/* Sign-up dialog: the only one that needs two columns. It is widened here
+   instead of on .authDialog so the single-column login form keeps its size.
+   The benefits block sits to the left of the fields; on narrow screens the
+   grid collapses and `order` brings the fields above the (long) benefits list. */
+.authDialogWide {
+  max-width: 30rem;
+}
+.authColumns {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+}
+.authFields {
+  display: grid;
+  gap: 0.75rem;
+  order: -1;
+}
+@media (min-width: 760px) {
+  .authDialogWide {
+    max-width: 46rem;
+  }
+  .authColumns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .authFields {
+    order: 0;
+  }
+}
 .authBenefits {
   background: #f5f0ea;
   border: 1px solid #e4d9cd;
   border-radius: 8px;
   padding: 1rem;
-  margin: 1rem 0;
+  margin: 0;
 }
 .authBenefits h3 {
   margin: 0 0 0.75rem;
