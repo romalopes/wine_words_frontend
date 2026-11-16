@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { articlesApi, reviewsApi, statsApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageWinesRole } from "../constants/roles";
+import DetailHero from "./DetailHero";
 import ArticleCard from "./ArticleCard";
 import ReviewCard from "./ReviewCard";
 import ArticleTable from "./ArticleTable";
@@ -218,10 +219,7 @@ function Dashboard() {
   }, [searchTerm, advancedFilters, advancedSearchRevision]);
 
   // Handlers for inline actions on reviews/articles (dashboard preview).
-  const handleStatusChange = async (
-    item: Article | Review,
-    next: string,
-  ) => {
+  const handleStatusChange = async (item: Article | Review, next: string) => {
     if (next === (item as Article).status || next === (item as Review).status)
       return;
     try {
@@ -286,6 +284,12 @@ function Dashboard() {
       <p className="lede dashboard__lede">
         Welcome{user ? `, ${user.email.split("@")[0]}` : ""} to Wine Words.
       </p>
+      <DetailHero
+        kicker=""
+        title="Welcome to Wine Words"
+        intro=""
+        actions={null}
+      />
       {!user && (
         <p className="dashboard__sign-in-prompt">
           <Link className="text-link" to="/login">
@@ -412,13 +416,13 @@ function Dashboard() {
                   {searchTerm &&
                     searchResults.reviewTotal >
                       searchResults.reviews.length && (
-                    <Link
-                      className="dashboard__search-all"
-                      to={`/reviews?query=${encodeURIComponent(searchTerm)}`}
-                    >
-                      See all reviews →
-                    </Link>
-                  )}
+                      <Link
+                        className="dashboard__search-all"
+                        to={`/reviews?query=${encodeURIComponent(searchTerm)}`}
+                      >
+                        See all reviews →
+                      </Link>
+                    )}
                 </h2>
                 {viewMode === "list" ? (
                   <ReviewTable
@@ -438,7 +442,11 @@ function Dashboard() {
                         review={review}
                         query={searchTerm}
                         onOpen={() =>
-                          navigate(returnToLink(`/reviews/${review.slug || review.id}`))
+                          navigate(
+                            returnToLink(
+                              `/reviews/${review.slug || review.id}`,
+                            ),
+                          )
                         }
                         currentUser={user}
                         producerId={review.producer_id ?? null}
@@ -456,13 +464,13 @@ function Dashboard() {
                   {searchTerm &&
                     searchResults.articleTotal >
                       searchResults.articles.length && (
-                    <Link
-                      className="dashboard__search-all"
-                      to={`/articles?query=${encodeURIComponent(searchTerm)}`}
-                    >
-                      See all articles →
-                    </Link>
-                  )}
+                      <Link
+                        className="dashboard__search-all"
+                        to={`/articles?query=${encodeURIComponent(searchTerm)}`}
+                      >
+                        See all articles →
+                      </Link>
+                    )}
                 </h2>
                 {viewMode === "list" ? (
                   <ArticleTable
@@ -481,7 +489,11 @@ function Dashboard() {
                         article={article}
                         query={searchTerm}
                         onOpen={() =>
-                          navigate(returnToLink(`/articles/${article.slug || article.id}`))
+                          navigate(
+                            returnToLink(
+                              `/articles/${article.slug || article.id}`,
+                            ),
+                          )
                         }
                       />
                     ))}
@@ -532,7 +544,11 @@ function Dashboard() {
                 <ReviewCard
                   key={review.id}
                   review={review}
-                  onOpen={() => navigate(returnToLink(`/reviews/${review.slug || review.id}`))}
+                  onOpen={() =>
+                    navigate(
+                      returnToLink(`/reviews/${review.slug || review.id}`),
+                    )
+                  }
                   currentUser={user}
                   producerId={review.producer_id ?? null}
                 />
@@ -561,7 +577,9 @@ function Dashboard() {
                   key={article.id}
                   article={article}
                   onOpen={() =>
-                    navigate(returnToLink(`/articles/${article.slug || article.id}`))
+                    navigate(
+                      returnToLink(`/articles/${article.slug || article.id}`),
+                    )
                   }
                 />
               ))}

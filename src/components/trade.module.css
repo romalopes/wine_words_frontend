@@ -69,6 +69,9 @@
 .timeline { display: grid; gap: .65rem; padding-left: 1rem; }
 .message { border: 1px solid #e4d9cd; border-radius: 9px; padding: .75rem; }
 .messageMeta { color: #766963; font-size: .8rem; margin-bottom: .35rem; }
+.messageSender { font-weight: 600; font-size: .85rem; color: #4a1020; }
+.messageSenderType { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; background: #efe5dc; color: #766963; border-radius: 999px; padding: .15rem .5rem; margin-left: .5rem; vertical-align: middle; }
+.messageBody { margin: .4rem 0 0; white-space: pre-wrap; }
 .linkBox { word-break: break-all; background: white; border: 1px dashed #27615e; padding: .75rem; border-radius: 8px; }
 .notice { margin-bottom: 1rem; }
 @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .fieldWide { grid-column: auto; } .table { display: block; overflow-x: auto; white-space: nowrap; } .hero { padding: 1.35rem; } .wineModeToggle { display: grid; grid-template-columns: 1fr; } .wineModeToggle .wine-btn { width: 100%; } }

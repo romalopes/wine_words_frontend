@@ -28,6 +28,21 @@ export function createTradeApi(request: ApiRequester) {
     getStaffPackage(id: string | number) {
       return request<TradePackage>(`/admin/trade/packages/${id}`, { auth: true })
     },
+    // Staff conversation with the submitter: reading the thread and replying.
+    // Every reply notifies the submitter (email + in-app when they have an
+    // account), handled by Trade::Messages::Send server-side.
+    getStaffMessages(packageId: string | number) {
+      return request<TradeMessage[]>(
+        `/admin/trade/packages/${packageId}/messages`,
+        { auth: true },
+      )
+    },
+    sendStaffMessage(packageId: string | number, body: string) {
+      return request<TradeMessage>(
+        `/admin/trade/packages/${packageId}/messages`,
+        { method: "POST", auth: true, body: { body } },
+      )
+    },
     listPackages() {
       return request<TradePackage[]>("/trade/my-packages", { auth: true })
     },

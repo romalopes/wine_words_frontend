@@ -8,6 +8,7 @@ export type NotificationType =
   | "wine_package_completed"
   | "wine_package_rejected"
   // Trade portal: a public submission arrived and needs editorial triage.
+  | "trade_message_received"
   | "trade_submission_received"
   // Follow-based notifications (issue #192)
   | "review_published"

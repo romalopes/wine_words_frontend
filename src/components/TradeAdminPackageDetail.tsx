@@ -5,22 +5,27 @@ import { useAuth } from "../contexts/AuthContext";
 import { canManageAllPackages } from "../constants/roles";
 import PackageStatusBadge from "./PackageStatusBadge";
 import { formatDateTime } from "../utils/dates";
-import type { TradePackage } from "../types/trade";
+import type { TradeMessage, TradePackage } from "../types/trade";
 import styles from "./trade.module.css";
 
 // Staff view of one trade submission (IDENTITY_206 Phase 7).
 //
 // Editors and Admins land here from the in-app notification / email created by
 // Trade::Submissions::NotifyStaff: the public submitter's contact details, the
-// wines they proposed and the full timeline (shared + internal events). The
-// endpoint behind it (/api/v1/admin/trade/packages/:id) is role-guarded
-// server-side; this page only mirrors that check so the SPA can explain itself.
+// wines they proposed, the full timeline (shared + internal events) and the
+// conversation with the submitter. The endpoint behind it
+// (/api/v1/admin/trade/packages/:id) is role-guarded server-side; this page
+// only mirrors that check so the SPA can explain itself.
 export default function TradeAdminPackageDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const allowed = canManageAllPackages(user);
   const [pkg, setPkg] = useState<TradePackage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<TradeMessage[]>([]);
+  const [messageBody, setMessageBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!allowed || !id) return;
@@ -41,6 +46,49 @@ export default function TradeAdminPackageDetail() {
       cancelled = true;
     };
   }, [allowed, id]);
+
+  // Conversation thread: shared messages only (internal notes stay in the
+  // timeline as "note added" events and never reach the submitter).
+  useEffect(() => {
+    if (!allowed || !id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const thread = await tradeApi.getStaffMessages(id);
+        if (!cancelled) setMessages(thread);
+      } catch (err) {
+        if (!cancelled) {
+          setMessageError(
+            err instanceof Error ? err.message : "Unable to load messages",
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [allowed, id]);
+
+  async function handleSendMessage() {
+    const body = messageBody.trim();
+    if (!body || !id) return;
+
+    setSending(true);
+    setMessageError(null);
+    try {
+      const message = await tradeApi.sendStaffMessage(id, body);
+      setMessages((current) => [...current, message]);
+      setMessageBody("");
+      // The reply also lands on the package timeline.
+      setPkg(await tradeApi.getStaffPackage(id));
+    } catch (err) {
+      setMessageError(
+        err instanceof Error ? err.message : "Unable to send message",
+      );
+    } finally {
+      setSending(false);
+    }
+  }
 
   if (!allowed) {
     return (
@@ -216,6 +264,58 @@ export default function TradeAdminPackageDetail() {
           ))}
         </section>
       )}
+
+      <section className={styles.card}>
+        <h2>Conversation</h2>
+        {messageError && (
+          <div className={styles.error} role="alert">
+            {messageError}
+          </div>
+        )}
+        <div className={styles.timeline}>
+          {messages.length === 0 ? (
+            <p className={styles.muted}>No messages yet.</p>
+          ) : (
+            messages.map((message) => (
+              <article key={message.id} className={styles.message}>
+                <div className={styles.messageMeta}>
+                  <span className={styles.messageSender}>
+                    {message.sender_name}
+                  </span>
+                  <span className={styles.messageSenderType}>
+                    {message.sender_type}
+                  </span>
+                  {formatDateTime(message.created_at)}
+                </div>
+                <p className={styles.messageBody}>{message.body}</p>
+              </article>
+            ))
+          )}
+        </div>
+        <div className={styles.field}>
+          <label htmlFor="admin-message">Reply to the submitter</label>
+          <textarea
+            id="admin-message"
+            value={messageBody}
+            onChange={(event) => setMessageBody(event.target.value)}
+            placeholder="Write your message…"
+            disabled={sending}
+          />
+        </div>
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className="wine-btn wine-btn--primary"
+            disabled={sending || !messageBody.trim()}
+            onClick={handleSendMessage}
+          >
+            {sending ? "Sending…" : "Send message"}
+          </button>
+        </div>
+        <p className={styles.muted}>
+          The submitter is notified by email and in their in-app notifications.
+        </p>
+      </section>
 
       <div className={styles.actions}>
         <Link to="/notifications" className="wine-btn wine-btn--secondary">

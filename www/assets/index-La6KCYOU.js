@@ -58159,10 +58159,9 @@ function pee() {
                     children: "← Back to Dashboard",
                   }),
                   r.jsx(nn, {
-                    kicker: "Cellar",
-                    title: "Wine List",
-                    intro:
-                      "Browse every wine in the cellar, grouped by category.",
+                    kicker: "",
+                    title: "List of Wines",
+                    intro: "",
                     actions: t
                       ? r.jsx(Ne, {
                           to: "/wines/new",

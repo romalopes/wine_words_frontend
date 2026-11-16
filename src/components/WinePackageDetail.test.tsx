@@ -12,6 +12,8 @@ const mockDestroy = vi.fn();
 const mockItemDestroy = vi.fn();
 const mockCreateReview = vi.fn();
 const mockTrackingShow = vi.fn();
+const mockGetStaffMessages = vi.fn();
+const mockSendStaffMessage = vi.fn();
 const mockCategoriesList = vi.fn().mockResolvedValue([]);
 const mockImagesUpload = vi.fn().mockResolvedValue({});
 const mockCachePackageDetail = vi.fn().mockResolvedValue(null);
@@ -39,6 +41,10 @@ vi.mock("../services/api", () => ({
   categoriesApi: { list: (...args: unknown[]) => mockCategoriesList(...args) },
   imagesApi: { upload: (...args: unknown[]) => mockImagesUpload(...args) },
   reviewsApi: { update: vi.fn(), show: vi.fn() },
+  tradeApi: {
+    getStaffMessages: (...args: unknown[]) => mockGetStaffMessages(...args),
+    sendStaffMessage: (...args: unknown[]) => mockSendStaffMessage(...args),
+  },
 }));
 
 let currentUser = { id: 1, display_name: "Reviewer", roles: ["Editor"] };
@@ -169,6 +175,7 @@ describe("WinePackageDetail", () => {
     currentUser = { id: 1, display_name: "Reviewer", roles: ["Editor"] };
     mockShow.mockResolvedValue(packageDetail);
     mockTimeline.mockResolvedValue({ events: [] });
+    mockGetStaffMessages.mockResolvedValue([]);
     mockTrackingShow.mockRejectedValue(
       Object.assign(new Error("No tracking recorded for this package"), {
         status: 404,
@@ -482,5 +489,58 @@ describe("WinePackageDetail", () => {
     expect(
       screen.queryByRole("button", { name: "Cancel package" }),
     ).not.toBeInTheDocument();
+  });
+
+  // Trade submissions keep the conversation with the submitter here as well as
+  // on /admin/trade/packages/:id — same staff endpoint, same reply behaviour.
+  it("shows the trade conversation and lets staff reply", async () => {
+    mockShow.mockResolvedValue({ ...packageDetail, source: "trade_submission" });
+    mockGetStaffMessages.mockResolvedValue([
+      {
+        id: 1,
+        sender_type: "submitter",
+        sender_name: "Maria Ruiz",
+        body: "Any update on my Rioja?",
+        internal_note: false,
+        created_at: "2026-11-16T10:00:00Z",
+      },
+    ]);
+    mockSendStaffMessage.mockResolvedValue({
+      id: 2,
+      sender_type: "editor",
+      sender_name: "Reviewer",
+      body: "Reviewing this week.",
+      internal_note: false,
+      created_at: "2026-11-16T11:00:00Z",
+    });
+
+    renderDetail();
+
+    expect(
+      await screen.findByRole("heading", { name: "Conversation" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Any update on my Rioja?")).toBeInTheDocument();
+    expect(mockGetStaffMessages).toHaveBeenCalledWith(7);
+
+    await userEvent.type(
+      screen.getByLabelText("Reply to the submitter"),
+      "Reviewing this week.",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() =>
+      expect(mockSendStaffMessage).toHaveBeenCalledWith(7, "Reviewing this week."),
+    );
+    expect(await screen.findByText("Reviewing this week.")).toBeInTheDocument();
+  });
+
+  it("hides the conversation for non-trade packages", async () => {
+    renderDetail();
+
+    await screen.findByRole("heading", { name: "Penfolds" });
+    expect(
+      screen.queryByRole("heading", { name: "Conversation" }),
+    ).not.toBeInTheDocument();
+    expect(mockGetStaffMessages).not.toHaveBeenCalled();
   });
 });

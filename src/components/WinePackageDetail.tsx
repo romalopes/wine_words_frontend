@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { winePackageItemsApi, winePackagesApi } from "../services/api";
+import { winePackageItemsApi, winePackagesApi, tradeApi } from "../services/api";
+import { canManageAllPackages } from "../constants/roles";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import {
   badgeClass,
@@ -20,6 +21,8 @@ import type {
   WinePackageItem,
 } from "../types/winePackage";
 import type { WinePackageTimelineEvent } from "../types/api";
+import type { TradeMessage } from "../types/trade";
+import tradeStyles from "./trade.module.css";
 import { useAuth } from "../contexts/AuthContext";
 import { isOfflineEnabled } from "../constants/featureFlags";
 import { cachePackageDetail, getCachedPackageDetail } from "../offline";
@@ -83,6 +86,56 @@ function WinePackageDetail() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Trade submissions carry a conversation with the submitter. Editors/Admins
+  // read and answer it here too (the payload is the same staff endpoint the
+  // /admin/trade page uses); producer packages have no conversation.
+  const canChat = canManageAllPackages(user) && pkg?.source === "trade_submission";
+  const conversationPackageId = pkg?.id;
+  const [messages, setMessages] = useState<TradeMessage[]>([]);
+  const [messageBody, setMessageBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!canChat || !conversationPackageId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const thread = await tradeApi.getStaffMessages(conversationPackageId);
+        if (!cancelled) setMessages(thread);
+      } catch (err) {
+        if (!cancelled) {
+          setMessageError(
+            err instanceof Error ? err.message : "Unable to load messages",
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canChat, conversationPackageId]);
+
+  async function handleSendMessage() {
+    const body = messageBody.trim();
+    if (!body || !pkg) return;
+
+    setSending(true);
+    setMessageError(null);
+    try {
+      const message = await tradeApi.sendStaffMessage(pkg.id, body);
+      setMessages((current) => [...current, message]);
+      setMessageBody("");
+      await load();
+    } catch (err) {
+      setMessageError(
+        err instanceof Error ? err.message : "Unable to send message",
+      );
+    } finally {
+      setSending(false);
+    }
+  }
 
   async function runAction(
     action: () => Promise<unknown>,
@@ -640,6 +693,60 @@ function WinePackageDetail() {
           </ul>
         )}
       </div>
+
+      {canChat && (
+        <div className={tradeStyles.card}>
+          <h2>Conversation</h2>
+          {messageError && (
+            <div className={tradeStyles.error} role="alert">
+              {messageError}
+            </div>
+          )}
+          <div className={tradeStyles.timeline}>
+            {messages.length === 0 ? (
+              <p className={tradeStyles.muted}>No messages yet.</p>
+            ) : (
+              messages.map((message) => (
+                <article key={message.id} className={tradeStyles.message}>
+                  <div className={tradeStyles.messageMeta}>
+                    <span className={tradeStyles.messageSender}>
+                      {message.sender_name}
+                    </span>
+                    <span className={tradeStyles.messageSenderType}>
+                      {message.sender_type}
+                    </span>
+                    {formatDateTime(message.created_at)}
+                  </div>
+                  <p className={tradeStyles.messageBody}>{message.body}</p>
+                </article>
+              ))
+            )}
+          </div>
+          <div className={tradeStyles.field}>
+            <label htmlFor="package-message">Reply to the submitter</label>
+            <textarea
+              id="package-message"
+              value={messageBody}
+              onChange={(event) => setMessageBody(event.target.value)}
+              placeholder="Write your message…"
+              disabled={sending}
+            />
+          </div>
+          <div className={tradeStyles.actions}>
+            <button
+              type="button"
+              className="wine-btn wine-btn--primary"
+              disabled={sending || !messageBody.trim()}
+              onClick={handleSendMessage}
+            >
+              {sending ? "Sending…" : "Send message"}
+            </button>
+          </div>
+          <p className={tradeStyles.muted}>
+            The submitter is notified by email and in their in-app notifications.
+          </p>
+        </div>
+      )}
 
       {can.destroy && (
         <div className={styles.actions}>

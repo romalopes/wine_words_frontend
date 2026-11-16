@@ -207,15 +207,18 @@ function SearchModeToggle({
   return (
     <div className="search-toolbar">
       {/* 1. Search text box on the left */}
-      {showSimpleInput && !advanced && simpleValue !== undefined && onSimpleChange && (
-        <div className="search-bar-wrapper">
-          <SearchInput
-            value={simpleValue}
-            onChange={onSimpleChange}
-            placeholder="Search wines by name, producer, region, or grape…"
-          />
-        </div>
-      )}
+      {showSimpleInput &&
+        !advanced &&
+        simpleValue !== undefined &&
+        onSimpleChange && (
+          <div className="search-bar-wrapper">
+            <SearchInput
+              value={simpleValue}
+              onChange={onSimpleChange}
+              placeholder="Search wines by name, producer, region, or grape…"
+            />
+          </div>
+        )}
 
       {/* 2. Advanced search button in the middle */}
       <div className="advanced-search-toggle-row">
@@ -267,7 +270,10 @@ function WineList() {
   // Cards / List preference, persisted per page. Applies to every render path
   // below — advanced results, simple results, a selected category, and the
   // grouped-by-category view.
-  const [viewMode, setViewMode] = useViewMode("wine-words:view-mode:wines", "cards");
+  const [viewMode, setViewMode] = useViewMode(
+    "wine-words:view-mode:wines",
+    "cards",
+  );
 
   // --- Advanced search state ---------------------------------------------
   // null => normal browsing; an object => show the advanced-search results.
@@ -653,9 +659,9 @@ function WineList() {
         &larr; Back to Dashboard
       </Link>
       <DetailHero
-        kicker="Cellar"
-        title="Wine List"
-        intro="Browse every wine in the cellar, grouped by category."
+        kicker=""
+        title="List of Wines"
+        intro=""
         actions={
           canManageWines ? (
             <Link to="/wines/new" className="auth-form__submit">
@@ -676,7 +682,7 @@ function WineList() {
               onClick={() => {
                 const next = !advancedOpen;
                 setAdvancedOpen(next);
-                
+
                 if (next) setSimpleValue("");
                 else setSearchFilters(null);
               }}
@@ -702,7 +708,7 @@ function WineList() {
             onClick={() => {
               const next = !advancedOpen;
               setAdvancedOpen(next);
-              
+
               if (next) setSimpleValue("");
               else setSearchFilters(null);
             }}
