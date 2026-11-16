@@ -8,6 +8,7 @@ import type {
 } from "../types/trade";
 import type { CountryListItem } from "../types/reference";
 import { useAuth } from "../contexts/AuthContext";
+import type { SignInPayload, SignUpPayload } from "../types/authentication";
 import styles from "./trade.module.css";
 
 const draftKey = "wine_words_trade_submission_draft";
@@ -56,7 +57,13 @@ function idempotencyKey() {
 
 export default function TradeSubmit() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    loading: authInitializing,
+    signIn,
+    signUp,
+  } = useAuth();
   const [step, setStep] = useState(0);
   const [contact, setContact] = useState<TradeContactInput>(blankContact);
   const [wines, setWines] = useState<TradeWineInput[]>([blankWine()]);
@@ -67,6 +74,14 @@ export default function TradeSubmit() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TradeSubmissionResponse | null>(null);
+  // Auth flow for unauthenticated submitters
+  const [authDialog, setAuthDialog] = useState<"none" | "login" | "signup">("none");
+  const [authEmail, setAuthEmail] = useState("");
+  // Busy flag shared by the login/signup dialogs and the pre-submit email lookup.
+  const [authBusy, setAuthBusy] = useState(false);
+  // The dialogs are rendered at the end of the page, so they are opened with
+  // showModal() (below) to land in the top layer instead of below the fold.
+  const authDialogRef = useRef<HTMLDialogElement>(null);
   // Anonymous submitters see only name + email; everything else sits behind
   // this toggle until they choose to share more.
   const [showExtra, setShowExtra] = useState(false);
@@ -92,14 +107,16 @@ export default function TradeSubmit() {
   }, []);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authInitializing) return;
     let draftWines: TradeWineInput[] | null = null;
     let savedContact: TradeContactInput | null = null;
     try {
       const saved = JSON.parse(localStorage.getItem(draftKey) || "null");
       if (saved?.wines?.length) draftWines = saved.wines;
       if (saved?.contact) savedContact = saved.contact;
-    } catch {}
+    } catch {
+      // Malformed draft JSON — start from a blank wizard instead.
+    }
     if (isAuthenticated && user) {
       // Signed-in submitters skip the contact step entirely: the snapshot is
       // derived from their account, so the wizard opens straight on Wines.
@@ -115,11 +132,11 @@ export default function TradeSubmit() {
       if (savedContact) setContact({ ...blankContact, ...savedContact });
       setWines(draftWines?.length ? draftWines : [blankWine()]);
     }
-  }, [authLoading, isAuthenticated, user]);
+  }, [authInitializing, isAuthenticated, user]);
   useEffect(() => {
-    if (!authLoading)
+    if (!authInitializing)
       localStorage.setItem(draftKey, JSON.stringify({ contact, wines }));
-  }, [contact, wines, authLoading]);
+  }, [contact, wines, authInitializing]);
 
   // Signed-in users have no contact step to validate; anonymous submitters
   // need only a contact name and a valid email (everything else is optional).
@@ -203,6 +220,36 @@ export default function TradeSubmit() {
     setStep((current) => Math.min(2, current + 1));
   }
   async function submit() {
+    // If user is already authenticated, submit directly
+    if (isAuthenticated) {
+      return submitDirectly();
+    }
+
+    // For unauthenticated users, check if email exists
+    const email = contact.email.trim().toLowerCase();
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    setAuthBusy(true);
+    setAuthEmail(email);
+    try {
+      const { exists } = await tradeApi.checkEmail(email);
+      setAuthDialog(exists ? "login" : "signup");
+    } catch {
+      // The lookup only decides which dialog to show. If it fails (offline or
+      // a server hiccup) the submission must still complete as a guest — that
+      // is the documented promise of this form — so never dead-end on it.
+      setAuthDialog("none");
+      setError(null);
+      await submitDirectly();
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function submitDirectly() {
     setBusy(true);
     setError(null);
     try {
@@ -245,12 +292,105 @@ export default function TradeSubmit() {
     }
   }
 
+  async function handleLogin(password: string) {
+    setAuthBusy(true);
+    setError(null);
+    try {
+      const payload: SignInPayload = { email: authEmail, password };
+      await signIn(payload);
+      // Linked to the account now, so submit straight away — the redirect
+      // effect sends the user to the package detail page.
+      setAuthDialog("none");
+      await submitDirectly();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Login failed. Please check your credentials.",
+      );
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  function handleLoginForm(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    handleLogin(String(formData.get("password") ?? ""));
+  }
+
+  function handleSignupForm(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const password = String(formData.get("password") ?? "");
+    const confirmation = String(formData.get("confirm") ?? "");
+    if (password !== confirmation) {
+      setError("Passwords do not match.");
+      return;
+    }
+    handleSignup({
+      firstName: String(formData.get("firstName") ?? ""),
+      lastName: String(formData.get("lastName") ?? ""),
+      password,
+    });
+  }
+
+  async function handleSignup(data: {
+    firstName: string;
+    lastName: string;
+    password: string;
+  }) {
+    setAuthBusy(true);
+    setError(null);
+    try {
+      const payload: SignUpPayload = {
+        email: authEmail,
+        password: data.password,
+        password_confirmation: data.password,
+        first_name: data.firstName,
+        last_name: data.lastName,
+      };
+      await signUp(payload);
+      setAuthDialog("none");
+      await submitDirectly();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Account creation failed. Please try again.",
+      );
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  // "Continue as guest" closes the dialog and submits anonymously, so the
+  // submitter still receives the private guest link.
+  function handleContinueAsGuest() {
+    setAuthDialog("none");
+    void submitDirectly();
+  }
+
+  // showModal() puts the dialog in the top layer: centred in the viewport, with
+  // the ::backdrop scrim, focus trap and Escape-to-close — the in-flow `open`
+  // attribute rendered it at the bottom of a long page instead.
+  useEffect(() => {
+    const dialog = authDialogRef.current;
+    if (!dialog || dialog.open) return;
+    if (typeof dialog.showModal === "function") {
+      dialog.showModal();
+    } else {
+      // Environments without <dialog> support (older jsdom) still show the form.
+      dialog.setAttribute("open", "");
+    }
+  }, [authDialog]);
+
   // Redirect authenticated users after successful submission
   useEffect(() => {
     if (result && isAuthenticated) {
       navigate(`/trade/my-packages/${result.package_reference}`);
     }
-  }, [result, isAuthenticated]);
+  }, [result, isAuthenticated, navigate]);
 
   if (result) {
     if (isAuthenticated) {
@@ -297,7 +437,7 @@ export default function TradeSubmit() {
     );
   }
 
-  if (authLoading)
+  if (authInitializing)
     return (
       <div className={styles.page}>
         <p>Loading…</p>
@@ -323,7 +463,8 @@ export default function TradeSubmit() {
           </span>
         ))}
       </div>
-      {error && (
+      {/* While a dialog is open it renders the message itself. */}
+      {error && authDialog === "none" && (
         <div className={styles.error} role="alert">
           {error}
         </div>
@@ -800,6 +941,169 @@ export default function TradeSubmit() {
           </button>
         )}
       </div>
+      {authDialog === "login" && (
+        <dialog
+          ref={authDialogRef}
+          className={styles.authDialog}
+          aria-modal="true"
+          onCancel={() => setAuthDialog("none")}
+          onClose={() => setAuthDialog("none")}
+        >
+          <form onSubmit={handleLoginForm}>
+            <h2>Sign in to Wine Words</h2>
+            <p>
+              An account exists for <strong>{authEmail}</strong>. Sign in to
+              link this submission to your account.
+            </p>
+            {error && (
+              <div className={styles.error} role="alert">
+                {error}
+              </div>
+            )}
+            <div className={styles.field}>
+              <label htmlFor="login-password">Password</label>
+              <input
+                id="login-password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className="wine-btn wine-btn--secondary"
+                disabled={authBusy}
+                onClick={handleContinueAsGuest}
+              >
+                Continue as guest
+              </button>
+              <button
+                type="submit"
+                className="wine-btn wine-btn--primary"
+                disabled={authBusy}
+              >
+                {authBusy ? "Signing in…" : "Sign in & submit"}
+              </button>
+            </div>
+          </form>
+        </dialog>
+      )}
+      {authDialog === "signup" && (
+        <dialog
+          ref={authDialogRef}
+          className={styles.authDialog}
+          aria-modal="true"
+          onCancel={() => setAuthDialog("none")}
+          onClose={() => setAuthDialog("none")}
+        >
+          <form onSubmit={handleSignupForm}>
+            <h2>Create your Wine Words account</h2>
+            <p>
+              No account found for <strong>{authEmail}</strong>. Create one to
+              save your submission and track its progress.
+            </p>
+            <div className={styles.authBenefits}>
+              <h3>Why create an account?</h3>
+              <ul>
+                <li>
+                  Save time – Store your contact and winery details for quicker
+                  future submissions.
+                </li>
+                <li>
+                  Manage submissions – Keep a record of all wines and samples
+                  submitted.
+                </li>
+                <li>
+                  Track progress – Follow your wines from submission through to
+                  review.
+                </li>
+                <li>
+                  Get notified – Receive updates on review progress and
+                  publication.
+                </li>
+                <li>
+                  Access your reviews – View tasting notes, scores and published
+                  reviews in one place.
+                </li>
+                <li>
+                  Stay organised – Keep a complete history of your submissions
+                  and reviews.
+                </li>
+                <li>
+                  Get notified of special features and mentions in articles and
+                  tastings.
+                </li>
+              </ul>
+            </div>
+            {error && (
+              <div className={styles.error} role="alert">
+                {error}
+              </div>
+            )}
+            <div className={styles.field}>
+              <label htmlFor="signup-firstName">First name</label>
+              <input
+                id="signup-firstName"
+                name="firstName"
+                type="text"
+                required
+                autoComplete="given-name"
+              />
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="signup-lastName">Last name</label>
+              <input
+                id="signup-lastName"
+                name="lastName"
+                type="text"
+                required
+                autoComplete="family-name"
+              />
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="signup-password">Password</label>
+              <input
+                id="signup-password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+              />
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="signup-confirm">Confirm password</label>
+              <input
+                id="signup-confirm"
+                name="confirm"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+              />
+            </div>
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className="wine-btn wine-btn--secondary"
+                disabled={authBusy}
+                onClick={handleContinueAsGuest}
+              >
+                Continue as guest
+              </button>
+              <button
+                type="submit"
+                className="wine-btn wine-btn--primary"
+                disabled={authBusy}
+              >
+                {authBusy ? "Creating account…" : "Create account & submit"}
+              </button>
+            </div>
+          </form>
+        </dialog>
+      )}
     </div>
   );
 }

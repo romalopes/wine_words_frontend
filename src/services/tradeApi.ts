@@ -1,4 +1,5 @@
 import type { ApiRequester } from "./apiClient"
+import { buildQuery } from "./apiClient"
 import type {
   TradeMessage,
   TradePackage,
@@ -7,6 +8,14 @@ import type {
 
 export function createTradeApi(request: ApiRequester) {
   return {
+    checkEmail(email: string) {
+      // `request()` has no `query` option — query strings are built into the
+      // path, as every other namespace does. Dropping the email here made the
+      // backend answer 400 for a blank lookup.
+      return request<{ exists: boolean }>(
+        `/trade/submissions/check_email${buildQuery({ email })}`,
+      )
+    },
     submit(payload: Record<string, unknown>, idempotencyKey: string) {
       return request<TradeSubmissionResponse>("/trade/submissions", {
         method: "POST",

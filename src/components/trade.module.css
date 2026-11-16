@@ -72,3 +72,88 @@
 .linkBox { word-break: break-all; background: white; border: 1px dashed #27615e; padding: .75rem; border-radius: 8px; }
 .notice { margin-bottom: 1rem; }
 @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .fieldWide { grid-column: auto; } .table { display: block; overflow-x: auto; white-space: nowrap; } .hero { padding: 1.35rem; } .wineModeToggle { display: grid; grid-template-columns: 1fr; } .wineModeToggle .wine-btn { width: 100%; } }
+
+/* Auth Dialogs */
+/* Both dialogs live at the end of the wizard markup (after the Submit
+   button), so `open` alone would render them below the fold. They are
+   promoted to the top layer with showModal(), and these rules keep them
+   centred in the viewport — with their own scroll — no matter where the
+   page is scrolled to. */
+.authDialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  border: 1px solid #e4d9cd;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 28rem;
+  width: calc(100vw - 2rem);
+  background: #fffaf4;
+  box-shadow: 0 18px 45px rgb(36 27 25 / 28%);
+  z-index: 1200;
+}
+.authDialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+.authDialog h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: #4a1020;
+}
+.authDialog p {
+  margin: 0 0 1rem;
+  color: #766963;
+}
+.authDialog form {
+  display: grid;
+  gap: 0.75rem;
+}
+.authDialog .field {
+  display: grid;
+  gap: 0.25rem;
+}
+.authDialog label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.authDialog input {
+  padding: 0.65rem 0.7rem;
+  border: 1px solid #d7c8bb;
+  border-radius: 7px;
+  background: white;
+  color: #241b19;
+  font-size: 1rem;
+}
+.authDialog .actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.authDialog .actions button {
+  flex: 1;
+}
+.authBenefits {
+  background: #f5f0ea;
+  border: 1px solid #e4d9cd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+.authBenefits h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  color: #4a1020;
+}
+.authBenefits ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+  color: #4f4440;
+  line-height: 1.6;
+}
+.authBenefits li {
+  margin-bottom: 0.4rem;
+}
