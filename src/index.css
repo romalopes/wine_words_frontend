@@ -8453,6 +8453,73 @@ a.admin-user-card:hover {
   }
 }
 
+/* Trade-style hero variant, used by /reviews only: mirrors the gradient hero of
+   the trade submission pages (#4a1020 → #27615e, white type, 16px radius) so
+   the list page and the package detail share one identity. */
+.wine-app__detail-hero--trade {
+  align-items: center;
+  background: linear-gradient(135deg, #4a1020, #27615e);
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  margin: 0 0 1.25rem;
+  padding: 0.75rem;
+}
+
+/* The base card draws a decorative ring; the trade hero has no ornament. */
+.wine-app__detail-hero--trade::after {
+  display: none;
+}
+
+.wine-app__detail-hero--trade .wine-kicker {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.wine-app__detail-hero--trade .wine-app__detail-hero__title-row h1 {
+  color: #fff;
+  font-family: inherit;
+  font-size: clamp(1.9rem, 4vw, 2.4rem);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0 0 0.5rem;
+}
+
+.wine-app__detail-hero--trade .wine-app__detail-hero__intro {
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 0.35rem;
+}
+
+.wine-app__detail-hero--trade .wine-app__detail-hero__badge {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+/* The default primary (#681a2a) nearly vanishes on the #4a1020 half of the
+   gradient; invert hero CTAs to a cream surface, exactly like the trade pages. */
+.wine-app__detail-hero--trade
+  .wine-app__detail-hero__actions
+  .auth-form__submit {
+  background: #fff8f2;
+  border-color: #fff8f2;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  color: #681a2a;
+}
+
+.wine-app__detail-hero--trade
+  .wine-app__detail-hero__actions
+  .auth-form__submit:hover:not(:disabled) {
+  background: #f3e6da;
+  border-color: #f3e6da;
+  color: #4d1320;
+}
+
+@media (max-width: 720px) {
+  .wine-app__detail-hero--trade {
+    align-items: flex-start;
+    padding: 1.35rem;
+  }
+}
+
 /* Wine profile detail: a compact reference card, scoped to avoid changing wine details. */
 /* Wine profile detail: a compact reference card, scoped to avoid changing wine details. */
 .wine-profile-detail {

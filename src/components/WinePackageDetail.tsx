@@ -10,6 +10,7 @@ import {
 } from "../constants/winePackages";
 import { formatDate, formatDateTime, deadlineLabel } from "../utils/dates";
 import PackageStatusBadge from "./PackageStatusBadge";
+import DetailHero from "./DetailHero";
 import WinePackageItemForm from "./WinePackageItemForm";
 import ReviewForm from "./ReviewForm";
 import ShipmentTrackingPanel from "./ShipmentTrackingPanel";
@@ -238,19 +239,23 @@ function WinePackageDetail() {
       {error && <p className="wine-management__error">{error}</p>}
       {offlineCopy && <OfflineBadge cachedAt={cachedAt} offlineCopy />}
 
-      <div className={tradeStyles.hero}>
-        <h1>{pkg.producer_name || `Package #${pkg.id}`}</h1>
-        <div className={tradeStyles.packageStatus}>
-          <span className={tradeStyles.packageStatusLabel}>Status</span>
-          <PackageStatusBadge status={pkg.status} />
-          {canEdit && (
+      <DetailHero
+        className="wine-app__detail-hero--trade"
+        title={pkg.producer_name || `Package #${pkg.id}`}
+        actions={
+          canEdit ? (
             <Link
               to={`/wine-packages/${pkg.id}/edit`}
               className="wine-btn wine-btn--secondary wine-btn--sm"
             >
               Edit package
             </Link>
-          )}
+          ) : undefined
+        }
+      >
+        <div className={tradeStyles.packageStatus}>
+          <span className={tradeStyles.packageStatusLabel}>Status</span>
+          <PackageStatusBadge status={pkg.status} />
         </div>
         <p className={tradeStyles.packageStatusHint}>
           Source: {sourceLabel(pkg.source)} · Reviewer:{" "}
@@ -266,7 +271,7 @@ function WinePackageDetail() {
             ? " · Completed deliberately"
             : ""}
         </p>
-      </div>
+      </DetailHero>
 
       {(pkg.status === "rejected" && pkg.rejection_reason) ||
       pkg.producer_reference ||

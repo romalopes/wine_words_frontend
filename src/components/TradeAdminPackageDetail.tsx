@@ -4,6 +4,7 @@ import { tradeApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { canManageAllPackages } from "../constants/roles";
 import PackageStatusBadge from "./PackageStatusBadge";
+import DetailHero from "./DetailHero";
 import { formatDateTime } from "../utils/dates";
 import type { TradeMessage, TradePackage } from "../types/trade";
 import styles from "./trade.module.css";
@@ -125,8 +126,10 @@ export default function TradeAdminPackageDetail() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.hero}>
-        <h1>Trade submission #{pkg.id}</h1>
+      <DetailHero
+        className="wine-app__detail-hero--trade"
+        title={`Trade submission #${pkg.id}`}
+      >
         <div className={styles.packageStatus}>
           <span className={styles.packageStatusLabel}>Status</span>
           <PackageStatusBadge status={pkg.status} />
@@ -136,7 +139,7 @@ export default function TradeAdminPackageDetail() {
             </span>
           )}
         </div>
-      </div>
+      </DetailHero>
 
       {contact && (
         <section className={styles.card}>

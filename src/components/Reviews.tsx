@@ -356,6 +356,7 @@ function Reviews() {
         &larr; Back to Dashboard
       </Link>
       <DetailHero
+        className="wine-app__detail-hero--trade"
         kicker={selectedCategory ? "Category" : ""}
         title="Reviews"
         intro=""

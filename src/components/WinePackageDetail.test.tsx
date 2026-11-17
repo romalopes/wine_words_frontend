@@ -190,11 +190,16 @@ describe("WinePackageDetail", () => {
   });
 
   it("shows the producer, status, source and deadline countdown", async () => {
-    renderDetail();
+    const { container } = renderDetail();
 
     expect(
       await screen.findByRole("heading", { name: "Penfolds" }),
     ).toBeInTheDocument();
+    // The header is the shared DetailHero with the trade identity variant,
+    // the same component /reviews and /admin/trade/packages use.
+    expect(
+      container.querySelector(".wine-app__detail-hero--trade"),
+    ).not.toBeNull();
     expect(screen.getByText("Arrived")).toBeInTheDocument();
     expect(screen.getByText(/Source: Unexpected delivery/)).toBeInTheDocument();
     expect(screen.getByText(/Reviewer: Reviewer/)).toBeInTheDocument();
