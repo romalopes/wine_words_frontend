@@ -528,7 +528,7 @@ describe("WinePackageDetail", () => {
     expect(mockGetStaffMessages).toHaveBeenCalledWith(7);
 
     await userEvent.type(
-      screen.getByLabelText("Reply to the submitter"),
+      screen.getByLabelText("Send a message"),
       "Reviewing this week.",
     );
     await userEvent.click(screen.getByRole("button", { name: "Send message" }));

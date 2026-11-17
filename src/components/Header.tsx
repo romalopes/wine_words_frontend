@@ -116,6 +116,8 @@ function Header() {
   // contributors and unrelated Readers out of the package area.
   const canSeePackages = canAccessPackages(user);
   const canSeeAnalytics = canAccessAnalytics(user);
+  // The Extras menu is only shown to users with editorial roles (Reviewer, Editor, Admin).
+  const canSeeExtras = canManageWinesRole(user);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
@@ -324,107 +326,87 @@ function Header() {
             ...navCategories("for_article", "sort_order_article"),
           ]}
         />
-        <div
-          className="settings-menu"
-          onMouseEnter={() => setExtrasOpen(true)}
-          onMouseLeave={() => setExtrasOpen(false)}
-        >
-          <button
-            type="button"
-            className="settings-menu__toggle"
-            aria-haspopup="true"
-            aria-expanded={extrasOpen}
-            onClick={() => setExtrasOpen((open) => !open)}
+        {canSeeExtras && (
+          <div
+            className="settings-menu"
+            onMouseEnter={() => setExtrasOpen(true)}
+            onMouseLeave={() => setExtrasOpen(false)}
           >
-            Extras
-          </button>
-          {extrasOpen && (
-            <div className="settings-menu__dropdown">
-              {canSeePackages && (
-                <NavLink
-                  to="/wine-packages"
-                  onClick={() => {
-                    setExtrasOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Wine Packages
-                </NavLink>
-              )}
-              {canSeeArticleProjects && (
-                <NavLink
-                  to="/article-projects"
-                  onClick={() => {
-                    setExtrasOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Article Projects
-                </NavLink>
-              )}
-              {canSeeAnalytics && (
-                <NavLink
-                  to="/analytics"
-                  onClick={() => {
-                    setExtrasOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Analytics
-                </NavLink>
-              )}
+            <button
+              type="button"
+              className="settings-menu__toggle"
+              aria-haspopup="true"
+              aria-expanded={extrasOpen}
+              onClick={() => setExtrasOpen((open) => !open)}
+            >
+              Extras
+            </button>
+            {extrasOpen && (
+              <div className="settings-menu__dropdown">
+                {canSeeAnalytics && (
+                  <NavLink
+                    to="/analytics"
+                    onClick={() => {
+                      setExtrasOpen(false);
+                      handleCloseMenu();
+                    }}
+                  >
+                    Analytics
+                  </NavLink>
+                )}
 
-              {user && (
+                {user && (
+                  <NavLink
+                    onClick={() => {
+                      setExtrasOpen(false);
+                      handleCloseMenu();
+                    }}
+                    to="/following"
+                  >
+                    Following
+                  </NavLink>
+                )}
+
                 <NavLink
+                  to="/finder"
                   onClick={() => {
                     setExtrasOpen(false);
                     handleCloseMenu();
                   }}
-                  to="/following"
                 >
-                  Following
+                  Finder
                 </NavLink>
-              )}
-
-              <NavLink
-                to="/finder"
-                onClick={() => {
-                  setExtrasOpen(false);
-                  handleCloseMenu();
-                }}
-              >
-                Finder
-              </NavLink>
-              <NavLink
-                to="/quiz"
-                onClick={() => {
-                  setExtrasOpen(false);
-                  handleCloseMenu();
-                }}
-              >
-                Quiz
-              </NavLink>
-              <NavLink
-                to="/search"
-                onClick={() => {
-                  setExtrasOpen(false);
-                  handleCloseMenu();
-                }}
-              >
-                Search
-              </NavLink>
-              <NavLink
-                to="/archive"
-                onClick={() => {
-                  setExtrasOpen(false);
-                  handleCloseMenu();
-                }}
-              >
-                Archive
-              </NavLink>
-            </div>
-          )}
-        </div>
+                <NavLink
+                  to="/quiz"
+                  onClick={() => {
+                    setExtrasOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Quiz
+                </NavLink>
+                <NavLink
+                  to="/search"
+                  onClick={() => {
+                    setExtrasOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Search
+                </NavLink>
+                <NavLink
+                  to="/archive"
+                  onClick={() => {
+                    setExtrasOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Archive
+                </NavLink>
+              </div>
+            )}
+          </div>
+        )}
         <NavLink to="/about" onClick={handleCloseMenu}>
           About
         </NavLink>
@@ -462,6 +444,37 @@ function Header() {
                   }}
                 >
                   Producers
+                </NavLink>
+                {canSeePackages && (
+                  <NavLink
+                    to="/wine-packages"
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      handleCloseMenu();
+                    }}
+                  >
+                    Wine Packages
+                  </NavLink>
+                )}
+                {canSeeArticleProjects && (
+                  <NavLink
+                    to="/article-projects"
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      handleCloseMenu();
+                    }}
+                  >
+                    Article Projects
+                  </NavLink>
+                )}
+                <NavLink
+                  to="/admin/trade/packages"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Admin Trade Packages
                 </NavLink>
                 <NavLink
                   to="/settings/reviews"

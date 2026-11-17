@@ -75,20 +75,18 @@ describe("Header Analytics link", () => {
   );
 
   it.each([[[]], [["Reader"]], [["Guest"]]])(
-    "hides Analytics in Extras for non-privileged roles %s",
+    "hides Extras menu for non-privileged roles %s",
     (roles) => {
       authState.user = makeUserWithRoles(roles);
       renderHeader();
-      openExtrasMenu();
-      expect(screen.queryByRole("link", { name: "Analytics" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Extras" })).not.toBeInTheDocument();
     },
   );
 
-  it("hides Analytics in Extras for logged-out visitors", () => {
+  it("hides Extras menu for logged-out visitors", () => {
     authState.user = null;
     renderHeader();
-    openExtrasMenu();
-    expect(screen.queryByRole("link", { name: "Analytics" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Extras" })).not.toBeInTheDocument();
   });
 });
 
@@ -100,39 +98,74 @@ describe("Header Extras links", () => {
   it("hidden for logged-out visitors (content stays gated)", () => {
     authState.user = null;
     renderHeader();
-    openExtrasMenu();
-    expect(screen.queryByRole("link", { name: "Wine Packages" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Article Projects" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Extras" })).not.toBeInTheDocument();
   });
 
-  it("shows gated links but keeps role exemptions when user is Reviewer", () => {
+  it("shows Analytics in Extras for Reviewer", () => {
     authState.user = makeUserWithRoles(["Reviewer"]);
     renderHeader();
     openExtrasMenu();
-    expect(screen.getByRole("link", { name: "Wine Packages" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Article Projects" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Analytics" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Users" })).not.toBeInTheDocument();
   });
 
-  it("shows Wine Packages to a Reader who manages a producer", () => {
+  it("hides Extras menu for a Reader who manages a producer", () => {
     authState.user = {
       ...makeUserWithRoles(["Reader"]),
       can_access_wine_packages: true,
     };
     renderHeader();
-    openExtrasMenu();
-
-    expect(screen.getByRole("link", { name: "Wine Packages" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Article Projects" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Extras" })).not.toBeInTheDocument();
   });
 
-  it("hides Wine Packages from a Reader without producer management access", () => {
+  it("hides Extras menu for a Reader without producer management access", () => {
     authState.user = makeUserWithRoles(["Reader"]);
     renderHeader();
-    openExtrasMenu();
+    expect(screen.queryByRole("button", { name: "Extras" })).not.toBeInTheDocument();
+  });
+});
 
-    expect(screen.queryByRole("link", { name: "Wine Packages" })).not.toBeInTheDocument();
+describe("Header Settings menu", () => {
+  function openSettingsMenu() {
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+  }
+
+  it("shows Wine Packages, Article Projects, and Admin Trade Packages for Reviewer", () => {
+    authState.user = makeUserWithRoles(["Reviewer"]);
+    renderHeader();
+    openSettingsMenu();
+    expect(screen.getByRole("link", { name: "Wine Packages" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Article Projects" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Admin Trade Packages" })).toBeInTheDocument();
+  });
+
+  it("shows Wine Packages, Article Projects, and Admin Trade Packages for Editor", () => {
+    authState.user = makeUserWithRoles(["Editor"]);
+    renderHeader();
+    openSettingsMenu();
+    expect(screen.getByRole("link", { name: "Wine Packages" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Article Projects" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Admin Trade Packages" })).toBeInTheDocument();
+  });
+
+  it("shows Wine Packages, Article Projects, and Admin Trade Packages for Admin", () => {
+    authState.user = makeUserWithRoles(["Admin"]);
+    renderHeader();
+    openSettingsMenu();
+    expect(screen.getByRole("link", { name: "Wine Packages" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Article Projects" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Admin Trade Packages" })).toBeInTheDocument();
+  });
+
+  it("hides Settings menu for Reader", () => {
+    authState.user = makeUserWithRoles(["Reader"]);
+    renderHeader();
+    expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
+  });
+
+  it("hides Settings menu for logged-out visitors", () => {
+    authState.user = null;
+    renderHeader();
+    expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
   });
 });
 

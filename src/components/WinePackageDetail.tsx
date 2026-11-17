@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { winePackageItemsApi, winePackagesApi, tradeApi } from "../services/api";
+import {
+  winePackageItemsApi,
+  winePackagesApi,
+  tradeApi,
+} from "../services/api";
 import { canManageAllPackages } from "../constants/roles";
 import { useReturnToLink } from "../hooks/useReturnToLink";
 import {
@@ -22,8 +26,8 @@ import type {
   WinePackageItem,
 } from "../types/winePackage";
 import type { WinePackageTimelineEvent } from "../types/api";
-import type { TradeMessage } from "../types/trade";
 import tradeStyles from "./trade.module.css";
+import TradeMessages from "./TradeMessages";
 import { useAuth } from "../contexts/AuthContext";
 import { isOfflineEnabled } from "../constants/featureFlags";
 import { cachePackageDetail, getCachedPackageDetail } from "../offline";
@@ -55,6 +59,13 @@ function WinePackageDetail() {
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
 
+  // Editorial assessment state.
+  const [assessing, setAssessing] = useState(false);
+  const [assessError, setAssessError] = useState<string | null>(null);
+  const [assessed, setAssessed] = useState(false);
+  const [packageDecision, setPackageDecision] = useState<"approve" | "reject" | "">("");
+  const [packageReason, setPackageReason] = useState("");
+
   const load = useCallback(async () => {
     try {
       setError(null);
@@ -65,7 +76,8 @@ function WinePackageDetail() {
       setPkg(data);
       setTimeline(activity.events || []);
       setOfflineCopy(false);
-      if (isOfflineEnabled() && user?.id) setCachedAt(await cachePackageDetail(user.id, data));
+      if (isOfflineEnabled() && user?.id)
+        setCachedAt(await cachePackageDetail(user.id, data));
     } catch (err) {
       if (isOfflineEnabled() && user?.id && mayUseOfflineFallback(err)) {
         const cached = await getCachedPackageDetail(user.id, id);
@@ -91,50 +103,32 @@ function WinePackageDetail() {
   // Trade submissions carry a conversation with the submitter. Editors/Admins
   // read and answer it here too (the payload is the same staff endpoint the
   // /admin/trade page uses); producer packages have no conversation.
-  const canChat = canManageAllPackages(user) && pkg?.source === "trade_submission";
-  const conversationPackageId = pkg?.id;
-  const [messages, setMessages] = useState<TradeMessage[]>([]);
-  const [messageBody, setMessageBody] = useState("");
-  const [sending, setSending] = useState(false);
-  const [messageError, setMessageError] = useState<string | null>(null);
+  const canChat =
+    canManageAllPackages(user) && pkg?.source === "trade_submission";
 
-  useEffect(() => {
-    if (!canChat || !conversationPackageId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const thread = await tradeApi.getStaffMessages(conversationPackageId);
-        if (!cancelled) setMessages(thread);
-      } catch (err) {
-        if (!cancelled) {
-          setMessageError(
-            err instanceof Error ? err.message : "Unable to load messages",
-          );
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [canChat, conversationPackageId]);
-
-  async function handleSendMessage() {
-    const body = messageBody.trim();
-    if (!body || !pkg) return;
-
-    setSending(true);
-    setMessageError(null);
+  async function handleAssess() {
+    if (!pkg?.id || !packageDecision) return;
+    setAssessing(true);
+    setAssessError(null);
     try {
-      const message = await tradeApi.sendStaffMessage(pkg.id, body);
-      setMessages((current) => [...current, message]);
-      setMessageBody("");
+      // Build decisions: for "approve", send "approved" for all wines;
+      // for "reject", send "rejected" for all wines.
+      const decisions: Record<string, "approved" | "rejected"> = {};
+      for (const item of pkg.items ?? []) {
+        decisions[item.id.toString()] = packageDecision === "approve" ? "approved" : "rejected";
+      }
+      await tradeApi.assessPackage(pkg.id, {
+        decisions,
+        reason: packageReason.trim() || null,
+      });
+      setAssessed(true);
       await load();
     } catch (err) {
-      setMessageError(
-        err instanceof Error ? err.message : "Unable to send message",
+      setAssessError(
+        err instanceof Error ? err.message : "Unable to record assessment",
       );
     } finally {
-      setSending(false);
+      setAssessing(false);
     }
   }
 
@@ -223,7 +217,9 @@ function WinePackageDetail() {
   const canCreateReview = Boolean(can.create_review);
   const producerMode = pkg.source === "producer_request" && !canCreateReview;
 
-  const progress: ReviewProgress = (pkg.review_progress as ReviewProgress | undefined) || {
+  const progress: ReviewProgress = (pkg.review_progress as
+    | ReviewProgress
+    | undefined) || {
     requested: 0,
     reviewed: 0,
     pending: 0,
@@ -315,7 +311,77 @@ function WinePackageDetail() {
         </div>
       ) : null}
 
-      {(canManageImages || (Array.isArray(pkg.images) && pkg.images.length > 0)) && (
+      {/* Editorial decision — for trade submissions awaiting approval. */}
+      {(pkg.status === "editorial_pending" || pkg.status === "assessment_in_progress") && (
+        <div className={tradeStyles.card}>
+          <h2>Editorial decision</h2>
+          {assessError && (
+            <div className={tradeStyles.error} role="alert">
+              {assessError}
+            </div>
+          )}
+          {assessed && (
+            <div className={tradeStyles.success}>
+              Package approved. The submitter is notified and can now ship wines.
+            </div>
+          )}
+          {!assessed && (
+            <>
+              <p className={tradeStyles.muted}>
+                Approve this submission to start the review process, or reject it
+                with a reason.
+              </p>
+              <div className={tradeStyles.field}>
+                <label>Decision</label>
+                <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <input
+                      type="radio"
+                      name="package-decision"
+                      value="approve"
+                      checked={packageDecision === "approve"}
+                      onChange={(e) => setPackageDecision(e.target.value as "approve" | "reject")}
+                    />
+                    <strong>Approve submission</strong>
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <input
+                      type="radio"
+                      name="package-decision"
+                      value="reject"
+                      checked={packageDecision === "reject"}
+                      onChange={(e) => setPackageDecision(e.target.value as "approve" | "reject")}
+                    />
+                    <strong>Reject submission</strong>
+                  </label>
+                </div>
+              </div>
+              <div className={tradeStyles.fieldWide}>
+                <label>Reason (required for rejection)</label>
+                <textarea
+                  value={packageReason}
+                  onChange={(e) => setPackageReason(e.target.value)}
+                  placeholder="Explain the decision for the submitter…"
+                  rows={3}
+                />
+              </div>
+              <div className={tradeStyles.actions}>
+                <button
+                  type="button"
+                  className="wine-btn wine-btn--primary"
+                  disabled={assessing || !packageDecision || (packageDecision === "reject" && !packageReason.trim())}
+                  onClick={handleAssess}
+                >
+                  {assessing ? "Processing…" : packageDecision === "approve" ? "Approve submission" : "Reject submission"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {(canManageImages ||
+        (Array.isArray(pkg.images) && pkg.images.length > 0)) && (
         <div className={tradeStyles.card}>
           <h2>Package images</h2>
           {canManageImages ? (
@@ -370,20 +436,51 @@ function WinePackageDetail() {
         </div>
       </div>
 
-      {(can.submit || can.withdraw || can.restore_draft || can.accept || can.reject || can.mark_in_transit || can.mark_arrived || can.start_reviewing || can.mark_completed || can.reopen || can.cancel) && (
+      {(can.submit ||
+        can.withdraw ||
+        can.restore_draft ||
+        can.accept ||
+        can.reject ||
+        can.mark_in_transit ||
+        can.mark_arrived ||
+        can.start_reviewing ||
+        can.mark_completed ||
+        can.reopen ||
+        can.cancel) && (
         <div className={tradeStyles.actions}>
           {can.submit && (
-            <button type="button" className="wine-btn wine-btn--primary" disabled={busy} onClick={() => runAction(() => winePackagesApi.submit(pkg.id))}>
+            <button
+              type="button"
+              className="wine-btn wine-btn--primary"
+              disabled={busy}
+              onClick={() => runAction(() => winePackagesApi.submit(pkg.id))}
+            >
               Submit Request
             </button>
           )}
           {can.withdraw && (
-            <button type="button" className="wine-btn wine-btn--secondary" disabled={busy} onClick={() => runAction(() => winePackagesApi.withdraw(pkg.id), { confirm: "Withdraw this pending request?" })}>
+            <button
+              type="button"
+              className="wine-btn wine-btn--secondary"
+              disabled={busy}
+              onClick={() =>
+                runAction(() => winePackagesApi.withdraw(pkg.id), {
+                  confirm: "Withdraw this pending request?",
+                })
+              }
+            >
               Withdraw Request
             </button>
           )}
           {can.restore_draft && (
-            <button type="button" className="wine-btn wine-btn--secondary" disabled={busy} onClick={() => runAction(() => winePackagesApi.restoreDraft(pkg.id))}>
+            <button
+              type="button"
+              className="wine-btn wine-btn--secondary"
+              disabled={busy}
+              onClick={() =>
+                runAction(() => winePackagesApi.restoreDraft(pkg.id))
+              }
+            >
               Restore Draft
             </button>
           )}
@@ -434,7 +531,14 @@ function WinePackageDetail() {
             </button>
           )}
           {can.start_reviewing && (
-            <button type="button" className="wine-btn wine-btn--secondary" disabled={busy} onClick={() => runAction(() => winePackagesApi.startReviewing(pkg.id))}>
+            <button
+              type="button"
+              className="wine-btn wine-btn--secondary"
+              disabled={busy}
+              onClick={() =>
+                runAction(() => winePackagesApi.startReviewing(pkg.id))
+              }
+            >
               Start Reviewing
             </button>
           )}
@@ -574,38 +678,44 @@ function WinePackageDetail() {
                     <td>
                       {(canManageItems || canCreateReview) && (
                         <div className={styles.rowActions}>
-                          {canCreateReview && item.reviewable && !item.review_id && (
+                          {canCreateReview &&
+                            item.reviewable &&
+                            !item.review_id && (
+                              <button
+                                type="button"
+                                className="wine-btn wine-btn--primary wine-btn--sm"
+                                onClick={() =>
+                                  setReviewItemId(
+                                    reviewItemId === item.id ? null : item.id,
+                                  )
+                                }
+                              >
+                                Create review
+                              </button>
+                            )}
+                          {canManageItems && (
                             <button
                               type="button"
-                              className="wine-btn wine-btn--primary wine-btn--sm"
+                              className="wine-btn wine-btn--ghost wine-btn--sm"
                               onClick={() =>
-                                setReviewItemId(
-                                  reviewItemId === item.id ? null : item.id,
+                                setEditingItem(
+                                  editingItem === item.id ? null : item.id,
                                 )
                               }
                             >
-                              Create review
+                              Edit
                             </button>
                           )}
-                          {canManageItems && <button
-                            type="button"
-                            className="wine-btn wine-btn--ghost wine-btn--sm"
-                            onClick={() =>
-                              setEditingItem(
-                                editingItem === item.id ? null : item.id,
-                              )
-                            }
-                          >
-                            Edit
-                          </button>}
-                          {canManageItems && <button
-                            type="button"
-                            className="wine-btn wine-btn--danger"
-                            disabled={busy}
-                            onClick={() => handleRemoveItem(item)}
-                          >
-                            Remove
-                          </button>}
+                          {canManageItems && (
+                            <button
+                              type="button"
+                              className="wine-btn wine-btn--danger"
+                              disabled={busy}
+                              onClick={() => handleRemoveItem(item)}
+                            >
+                              Remove
+                            </button>
+                          )}
                         </div>
                       )}
                     </td>
@@ -644,7 +754,8 @@ function WinePackageDetail() {
                 );
               })()}
 
-            {canCreateReview && reviewItemId != null &&
+            {canCreateReview &&
+              reviewItemId != null &&
               (() => {
                 const reviewItem = pkg.items?.find(
                   (candidate) => candidate.id === reviewItemId,
@@ -709,6 +820,11 @@ function WinePackageDetail() {
         onChanged={load}
       />
 
+      {/* Conversation — trade submissions only. */}
+      {canChat && (
+        <TradeMessages packageId={pkg.id} mode="staff" />
+      )}
+
       <div className={tradeStyles.card}>
         <h2>Activity</h2>
         {timeline.length === 0 ? (
@@ -717,66 +833,16 @@ function WinePackageDetail() {
           <ul className={tradeStyles.muted}>
             {timeline.map((event) => (
               <li key={`${event.source}-${event.id}`}>
-                {formatDateTime(event.occurred_at) || "—"} · {event.description || event.message || event.status || event.event_type.replaceAll("_", " ")}
+                {formatDateTime(event.occurred_at) || "—"} ·{" "}
+                {event.description ||
+                  event.message ||
+                  event.status ||
+                  event.event_type.replaceAll("_", " ")}
               </li>
             ))}
           </ul>
         )}
       </div>
-
-      {canChat && (
-        <div className={tradeStyles.card}>
-          <h2>Conversation</h2>
-          {messageError && (
-            <div className={tradeStyles.error} role="alert">
-              {messageError}
-            </div>
-          )}
-          <div className={tradeStyles.timeline}>
-            {messages.length === 0 ? (
-              <p className={tradeStyles.muted}>No messages yet.</p>
-            ) : (
-              messages.map((message) => (
-                <article key={message.id} className={tradeStyles.message}>
-                  <div className={tradeStyles.messageMeta}>
-                    <span className={tradeStyles.messageSender}>
-                      {message.sender_name}
-                    </span>
-                    <span className={tradeStyles.messageSenderType}>
-                      {message.sender_type}
-                    </span>
-                    {formatDateTime(message.created_at)}
-                  </div>
-                  <p className={tradeStyles.messageBody}>{message.body}</p>
-                </article>
-              ))
-            )}
-          </div>
-          <div className={tradeStyles.field}>
-            <label htmlFor="package-message">Reply to the submitter</label>
-            <textarea
-              id="package-message"
-              value={messageBody}
-              onChange={(event) => setMessageBody(event.target.value)}
-              placeholder="Write your message…"
-              disabled={sending}
-            />
-          </div>
-          <div className={tradeStyles.actions}>
-            <button
-              type="button"
-              className="wine-btn wine-btn--primary"
-              disabled={sending || !messageBody.trim()}
-              onClick={handleSendMessage}
-            >
-              {sending ? "Sending…" : "Send message"}
-            </button>
-          </div>
-          <p className={tradeStyles.muted}>
-            The submitter is notified by email and in their in-app notifications.
-          </p>
-        </div>
-      )}
 
       {can.destroy && (
         <div className={tradeStyles.actions}>

@@ -28,6 +28,23 @@ export function createTradeApi(request: ApiRequester) {
     getStaffPackage(id: string | number) {
       return request<TradePackage>(`/admin/trade/packages/${id}`, { auth: true })
     },
+    // Staff list of trade submissions with filtering/pagination.
+    listStaffPackages(params?: {
+      status?: string;
+      q?: string;
+      page?: number;
+      per_page?: number;
+    }) {
+      const query = new URLSearchParams()
+      if (params?.status) query.set("status", params.status)
+      if (params?.q) query.set("q", params.q)
+      if (params?.page) query.set("page", String(params.page))
+      if (params?.per_page) query.set("per_page", String(params.per_page))
+      return request<{
+        packages: TradePackage[]
+        meta: { limit: number; offset: number; total_count: number }
+      }>(`/admin/trade/packages?${query.toString()}`, { auth: true })
+    },
     // Staff conversation with the submitter: reading the thread and replying.
     // Every reply notifies the submitter (email + in-app when they have an
     // account), handled by Trade::Messages::Send server-side.
@@ -41,6 +58,20 @@ export function createTradeApi(request: ApiRequester) {
       return request<TradeMessage>(
         `/admin/trade/packages/${packageId}/messages`,
         { method: "POST", auth: true, body: { body } },
+      )
+    },
+    // Editorial assessment: per-wine decisions sent as approved/rejected.
+    // The frontend determines per-wine decisions based on package-level approve/reject.
+    assessPackage(
+      packageId: string | number,
+      payload: {
+        decisions: Record<string, "approved" | "rejected">;
+        reason?: string | null;
+      },
+    ) {
+      return request<TradePackage>(
+        `/admin/trade/packages/${packageId}/assess`,
+        { method: "PATCH", auth: true, body: payload },
       )
     },
     listPackages() {

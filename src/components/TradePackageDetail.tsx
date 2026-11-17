@@ -82,6 +82,29 @@ export default function TradePackageDetail({
               Wine Words is reviewing your submission.
             </span>
           )}
+          {pkg.status === "assessment_in_progress" && (
+            <span className={styles.packageStatusHint}>
+              Our editorial team is assessing your submission.
+            </span>
+          )}
+          {pkg.status === "partially_approved" && (
+            <span className={styles.packageStatusHint}>
+              Some wines were approved — others need more information or were
+              declined.
+            </span>
+          )}
+          {pkg.status === "approved" && (
+            <span className={styles.packageStatusHint}>
+              Your submission was approved. We&rsquo;ll be in touch about next
+              steps.
+            </span>
+          )}
+          {pkg.status === "rejected" && (
+            <span className={styles.packageStatusHint}>
+              Your submission was not approved. Please contact us if you have
+              questions.
+            </span>
+          )}
         </div>
         {guestToken && pkg.claimable && isAuthenticated && (
           <button
@@ -165,6 +188,11 @@ export default function TradePackageDetail({
           </>
         )}
       </section>
+
+      <section className={styles.card}>
+        <h2>Conversation</h2>
+        <TradeMessages packageId={pkg.id} guestToken={guestToken} />
+      </section>
       <section className={styles.card}>
         <h2>Activity</h2>
         <div className={styles.timeline}>
@@ -175,10 +203,6 @@ export default function TradePackageDetail({
             </div>
           ))}
         </div>
-      </section>
-      <section className={styles.card}>
-        <h2>Conversation</h2>
-        <TradeMessages packageId={pkg.id} guestToken={guestToken} />
       </section>
     </div>
   );

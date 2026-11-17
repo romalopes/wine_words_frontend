@@ -5,6 +5,7 @@
 
 export const PACKAGE_STATUSES = [
   "draft", "requested", "accepted", "rejected", "announced", "in_transit", "arrived", "reviewing", "completed", "cancelled",
+  "editorial_pending", "assessment_in_progress", "partially_approved", "approved",
 ] as const
 
 export const PACKAGE_SOURCES = ["manual", "unexpected", "producer_request", "producer_announcement"] as const
@@ -36,6 +37,10 @@ const STATUS_LABELS: Readonly<Record<PackageStatus, string>> = {
   reviewing: "Reviewing",
   completed: "Completed",
   cancelled: "Cancelled",
+  editorial_pending: "Editorial pending",
+  assessment_in_progress: "Assessment in progress",
+  partially_approved: "Partially approved",
+  approved: "Approved",
 };
 
 const SOURCE_LABELS: Readonly<Record<PackageSource, string>> = {
@@ -57,6 +62,10 @@ const STATUS_TONES: Readonly<Record<PackageStatus, BadgeTone>> = {
   reviewing: "warn",
   completed: "ok",
   cancelled: "neutral",
+  editorial_pending: "warn",
+  assessment_in_progress: "info",
+  partially_approved: "warn",
+  approved: "ok",
 };
 
 export function statusLabel(status: PackageStatus | string | null | undefined): string {

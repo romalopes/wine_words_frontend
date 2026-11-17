@@ -5,8 +5,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { canManageAllPackages } from "../constants/roles";
 import PackageStatusBadge from "./PackageStatusBadge";
 import DetailHero from "./DetailHero";
+import TradeMessages from "./TradeMessages";
 import { formatDateTime } from "../utils/dates";
-import type { TradeMessage, TradePackage } from "../types/trade";
+import type { TradePackage } from "../types/trade";
 import styles from "./trade.module.css";
 
 // Staff view of one trade submission (IDENTITY_206 Phase 7).
@@ -23,10 +24,15 @@ export default function TradeAdminPackageDetail() {
   const allowed = canManageAllPackages(user);
   const [pkg, setPkg] = useState<TradePackage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [messages, setMessages] = useState<TradeMessage[]>([]);
-  const [messageBody, setMessageBody] = useState("");
-  const [sending, setSending] = useState(false);
-  const [messageError, setMessageError] = useState<string | null>(null);
+
+  // Package-level editorial assessment state.
+  const [assessing, setAssessing] = useState(false);
+  const [assessError, setAssessError] = useState<string | null>(null);
+  const [assessed, setAssessed] = useState(false);
+  const [packageDecision, setPackageDecision] = useState<
+    "approve" | "reject" | ""
+  >("");
+  const [packageReason, setPackageReason] = useState("");
 
   useEffect(() => {
     if (!allowed || !id) return;
@@ -48,54 +54,49 @@ export default function TradeAdminPackageDetail() {
     };
   }, [allowed, id]);
 
-  // Conversation thread: shared messages only (internal notes stay in the
-  // timeline as "note added" events and never reach the submitter).
-  useEffect(() => {
-    if (!allowed || !id) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const thread = await tradeApi.getStaffMessages(id);
-        if (!cancelled) setMessages(thread);
-      } catch (err) {
-        if (!cancelled) {
-          setMessageError(
-            err instanceof Error ? err.message : "Unable to load messages",
-          );
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [allowed, id]);
-
-  async function handleSendMessage() {
-    const body = messageBody.trim();
-    if (!body || !id) return;
-
-    setSending(true);
-    setMessageError(null);
+  async function handleAssess() {
+    if (!id || !packageDecision) return;
+    setAssessing(true);
+    setAssessError(null);
     try {
-      const message = await tradeApi.sendStaffMessage(id, body);
-      setMessages((current) => [...current, message]);
-      setMessageBody("");
-      // The reply also lands on the package timeline.
+      // Build decisions: for "approve", send "approved" for all wines;
+      // for "reject", send "rejected" for all wines.
+      const decisions: Record<string, "approved" | "rejected"> = {};
+      for (const item of pkg.items) {
+        decisions[item.id.toString()] =
+          packageDecision === "approve" ? "approved" : "rejected";
+      }
+      await tradeApi.assessPackage(id, {
+        decisions,
+        reason: packageReason.trim() || null,
+      });
+      setAssessed(true);
+      // Refresh the package so the new status and timeline events are shown.
       setPkg(await tradeApi.getStaffPackage(id));
     } catch (err) {
-      setMessageError(
-        err instanceof Error ? err.message : "Unable to send message",
+      setAssessError(
+        err instanceof Error ? err.message : "Unable to record assessment",
       );
     } finally {
-      setSending(false);
+      setAssessing(false);
     }
   }
 
   if (!allowed) {
     return (
       <div className={styles.page}>
-        <div className={styles.error}>
-          This page is restricted to Editor and Admin accounts.
+        <DetailHero
+          className="wine-app__detail-hero--trade"
+          title="Trade submission #{pkg?.id || id}"
+          intro="This page is restricted to Editor and Admin accounts."
+        />
+        <div className={styles.actions}>
+          <Link
+            to="/admin/trade/packages"
+            className="wine-btn wine-btn--secondary"
+          >
+            Back to list
+          </Link>
         </div>
       </div>
     );
@@ -233,6 +234,142 @@ export default function TradeAdminPackageDetail() {
         </div>
       </section>
 
+      {(quotes.length > 0 || invoices.length > 0) && (
+        <section className={styles.card}>
+          <h2>Commercial</h2>
+          {quotes.map((quote) => (
+            <p key={`quote-${quote.id}`}>
+              Quote #{quote.id}: {quote.status} · {quote.total} {quote.currency}
+            </p>
+          ))}
+          {invoices.map((invoice) => (
+            <p key={`invoice-${invoice.id}`}>
+              Invoice {invoice.invoice_number}: {invoice.status} ·{" "}
+              {invoice.total} {invoice.currency}
+            </p>
+          ))}
+        </section>
+      )}
+
+      {/* Editorial assessment — shown while the submission is awaiting review. */}
+      {pkg.status === "editorial_pending" && (
+        <section className={styles.card}>
+          <h2>Editorial decision</h2>
+          {assessError && (
+            <div className={styles.error} role="alert">
+              {assessError}
+            </div>
+          )}
+          {assessed && (
+            <div className={styles.success}>
+              Package approved. The submitter is notified and can now ship
+              wines.
+              <br />
+              <Link
+                to={`/wine-packages/${pkg.id}`}
+                className="wine-btn wine-btn--secondary"
+                style={{ marginTop: "0.5rem", display: "inline-block" }}
+              >
+                Manage package →
+              </Link>
+            </div>
+          )}
+          {!assessed && (
+            <>
+              <p className={styles.muted}>
+                Approve this submission to start the review process, or reject
+                it with a reason.
+              </p>
+              <div className={styles.field}>
+                <label>Decision</label>
+                <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="package-decision"
+                      value="approve"
+                      checked={packageDecision === "approve"}
+                      onChange={(e) =>
+                        setPackageDecision(
+                          e.target.value as "approve" | "reject",
+                        )
+                      }
+                    />
+                    <strong>Approve submission</strong>
+                  </label>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="package-decision"
+                      value="reject"
+                      checked={packageDecision === "reject"}
+                      onChange={(e) =>
+                        setPackageDecision(
+                          e.target.value as "approve" | "reject",
+                        )
+                      }
+                    />
+                    <strong>Reject submission</strong>
+                  </label>
+                </div>
+              </div>
+              <div className={styles.fieldWide}>
+                <label>Reason (required for rejection)</label>
+                <textarea
+                  value={packageReason}
+                  onChange={(e) => setPackageReason(e.target.value)}
+                  placeholder="Explain the decision for the submitter…"
+                  rows={3}
+                />
+              </div>
+              <div className={styles.actions}>
+                <button
+                  type="button"
+                  className="wine-btn wine-btn--primary"
+                  disabled={
+                    assessing ||
+                    !packageDecision ||
+                    (packageDecision === "reject" && !packageReason.trim())
+                  }
+                  onClick={handleAssess}
+                >
+                  {assessing
+                    ? "Processing…"
+                    : packageDecision === "approve"
+                      ? "Approve submission"
+                      : "Reject submission"}
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
+      {/* Conversation — staff view (mode="staff"). */}
+      <TradeMessages packageId={pkg.id} mode="staff" />
+
+      {pkg.status === "approved" && (
+        <div className={styles.success}>
+          <p>
+            Submission approved —{" "}
+            <Link to={`/wine-packages/${pkg.id}`}>manage the package</Link> to
+            add wines, record receipts, assign reviewers, and ship.
+          </p>
+        </div>
+      )}
+
       {pkg.events.length > 0 && (
         <section className={styles.card}>
           <h2>Timeline</h2>
@@ -251,76 +388,13 @@ export default function TradeAdminPackageDetail() {
         </section>
       )}
 
-      {(quotes.length > 0 || invoices.length > 0) && (
-        <section className={styles.card}>
-          <h2>Commercial</h2>
-          {quotes.map((quote) => (
-            <p key={`quote-${quote.id}`}>
-              Quote #{quote.id}: {quote.status} · {quote.total} {quote.currency}
-            </p>
-          ))}
-          {invoices.map((invoice) => (
-            <p key={`invoice-${invoice.id}`}>
-              Invoice {invoice.invoice_number}: {invoice.status} ·{" "}
-              {invoice.total} {invoice.currency}
-            </p>
-          ))}
-        </section>
-      )}
-
-      <section className={styles.card}>
-        <h2>Conversation</h2>
-        {messageError && (
-          <div className={styles.error} role="alert">
-            {messageError}
-          </div>
-        )}
-        <div className={styles.timeline}>
-          {messages.length === 0 ? (
-            <p className={styles.muted}>No messages yet.</p>
-          ) : (
-            messages.map((message) => (
-              <article key={message.id} className={styles.message}>
-                <div className={styles.messageMeta}>
-                  <span className={styles.messageSender}>
-                    {message.sender_name}
-                  </span>
-                  <span className={styles.messageSenderType}>
-                    {message.sender_type}
-                  </span>
-                  {formatDateTime(message.created_at)}
-                </div>
-                <p className={styles.messageBody}>{message.body}</p>
-              </article>
-            ))
-          )}
-        </div>
-        <div className={styles.field}>
-          <label htmlFor="admin-message">Reply to the submitter</label>
-          <textarea
-            id="admin-message"
-            value={messageBody}
-            onChange={(event) => setMessageBody(event.target.value)}
-            placeholder="Write your message…"
-            disabled={sending}
-          />
-        </div>
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className="wine-btn wine-btn--primary"
-            disabled={sending || !messageBody.trim()}
-            onClick={handleSendMessage}
-          >
-            {sending ? "Sending…" : "Send message"}
-          </button>
-        </div>
-        <p className={styles.muted}>
-          The submitter is notified by email and in their in-app notifications.
-        </p>
-      </section>
-
       <div className={styles.actions}>
+        <Link
+          to="/admin/trade/packages"
+          className="wine-btn wine-btn--secondary"
+        >
+          Back to list
+        </Link>
         <Link to="/notifications" className="wine-btn wine-btn--secondary">
           Back to notifications
         </Link>

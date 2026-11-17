@@ -62,6 +62,7 @@ import TradeSubmit from "./TradeSubmit";
 import TradeMyPackages from "./TradeMyPackages";
 import TradePackageDetail, { TradeGuestPackageRoute } from "./TradePackageDetail";
 import TradeAdminPackageDetail from "./TradeAdminPackageDetail";
+import TradeAdminPackagesList from "./TradeAdminPackagesList";
 
 function AppRoutes() {
   return (
@@ -137,6 +138,7 @@ function AppRoutes() {
         <Route element={<TradeMyPackages />} path="/trade/my-packages" />
         <Route element={<TradePackageDetail />} path="/trade/my-packages/:id" />
         <Route element={<TradeGuestPackageRoute />} path="/trade/packages/:token" />
+        <Route element={<TradeAdminPackagesList />} path="/admin/trade/packages" />
         <Route
           element={<TradeAdminPackageDetail />}
           path="/admin/trade/packages/:id"
