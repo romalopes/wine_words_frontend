@@ -8477,7 +8477,7 @@ a.admin-user-card:hover {
 
 .wine-app__detail-hero--trade .wine-app__detail-hero__title-row h1 {
   color: #fff;
-  font-family: inherit;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(1.9rem, 4vw, 2.4rem);
   letter-spacing: -0.01em;
   line-height: 1.15;
