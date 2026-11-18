@@ -9,7 +9,7 @@ import Contact from "./Contact"
 // Signed-in state is controlled per test; the page must work for both anonymous
 // visitors (editable email) and members (read-only account email).
 const authState = vi.hoisted(() => ({
-  user: null as { email?: string | null } | null,
+  user: null as { email?: string | null; display_name?: string | null } | null,
 }))
 
 vi.mock("../contexts/AuthContext", () => ({
@@ -129,33 +129,58 @@ describe("Contact", () => {
     )
   })
 
-  it("shows the signed-in user's account email instead of asking for it", async () => {
-    authState.user = { email: "member@example.com" }
+  it("shows the signed-in user's account name and email instead of asking for them", async () => {
+    authState.user = { email: "member@example.com", display_name: "Jane Member" }
     const user = userEvent.setup()
     createSpy.mockResolvedValue({ status: "received" })
     renderContact()
+
+    const nameField = screen.getByRole("textbox", { name: /name/i })
+    expect(nameField).toHaveValue("Jane Member")
+    expect(nameField).toHaveAttribute("readonly")
 
     const emailField = screen.getByRole("textbox", { name: /email/i })
     expect(emailField).toHaveValue("member@example.com")
     expect(emailField).toHaveAttribute("readonly")
     expect(screen.getByText(/reply to your account email/i)).toBeInTheDocument()
 
-    // No email entry needed: the form is submitted with the account address.
-    await fillValidForm(user, { withEmail: false })
+    // No name or email entry needed: the form uses the account identity.
+    await user.selectOptions(screen.getByRole("combobox", { name: /category/i }), "business")
+    await user.type(screen.getByRole("textbox", { name: /subject/i }), "Partnership idea")
+    await user.type(
+      screen.getByRole("textbox", { name: /message/i }),
+      "We would like to discuss a partnership.",
+    )
     await user.click(screen.getByRole("button", { name: /send message/i }))
 
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(/message has been received/i),
     )
     expect(createSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ email: "member@example.com" }),
+      expect.objectContaining({
+        name: "Jane Member",
+        email: "member@example.com",
+        contact_type: "business",
+      }),
     )
   })
 
-  it("keeps the email field editable for anonymous visitors", () => {
+  it("falls back to the email local-part when no display name is set", () => {
+    authState.user = { email: "fallback@example.com" }
     renderContact()
 
+    const nameField = screen.getByRole("textbox", { name: /name/i })
+    expect(nameField).toHaveValue("fallback")
+    expect(nameField).toHaveAttribute("readonly")
+  })
+
+  it("keeps the name and email fields editable for anonymous visitors", () => {
+    renderContact()
+
+    const nameField = screen.getByRole("textbox", { name: /name/i })
     const emailField = screen.getByRole("textbox", { name: /email/i })
+    expect(nameField).toHaveValue("")
+    expect(nameField).not.toHaveAttribute("readonly")
     expect(emailField).toHaveValue("")
     expect(emailField).not.toHaveAttribute("readonly")
   })

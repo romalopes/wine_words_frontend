@@ -41,10 +41,11 @@ const blankForm = (): FormState => ({
   message: "",
 })
 
-function validate(form: FormState, accountEmail = ""): FieldErrors {
+function validate(form: FormState, accountEmail = "", accountName = ""): FieldErrors {
   const errors: FieldErrors = {}
   const email = accountEmail || form.email
-  if (!form.name.trim()) errors.name = "Please enter your name."
+  const name = accountName || form.name
+  if (!name.trim()) errors.name = "Please enter your name."
   if (!email.trim()) errors.email = "Please enter your email address."
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
     errors.email = "Please enter a valid email address."
@@ -73,9 +74,14 @@ function serverFieldErrors(error: unknown): FieldErrors {
 
 export default function Contact() {
   const { user } = useAuth()
-  // A signed-in visitor never retypes their address: we show it, use it for the
-  // submission and still let the API validate it.
+  // Signed-in visitors never retype their identity: we show their account name
+  // and email, use them for the submission, and still let the API validate.
   const accountEmail = user?.email?.trim() ?? ""
+  const accountName = user
+    ? user.display_name?.trim() ||
+      user.first_name?.trim() ||
+      (user.email ? user.email.slice(0, user.email.indexOf("@")) : "")
+    : ""
   const [form, setForm] = useState<FormState>(blankForm)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [error, setError] = useState<string | null>(null)
@@ -96,7 +102,7 @@ export default function Contact() {
     event.preventDefault()
     if (busy) return
 
-    const clientErrors = validate(form, accountEmail)
+    const clientErrors = validate(form, accountEmail, accountName)
     if (Object.keys(clientErrors).length > 0) {
       setFieldErrors(clientErrors)
       setError("Please correct the highlighted fields.")
@@ -113,7 +119,7 @@ export default function Contact() {
     setFieldErrors({})
 
     const payload: ContactMessageInput = {
-      name: form.name.trim(),
+      name: accountName || form.name.trim(),
       email: accountEmail || form.email.trim(),
       contact_type: form.contact_type as ContactType,
       subject: form.subject.trim(),
@@ -195,28 +201,50 @@ export default function Contact() {
           )}
 
           <div className={styles.row}>
-            <div className={`${styles.field} ${fieldErrors.name ? styles.fieldInvalid : ""}`}>
-              <label htmlFor="contact-name">
-                Name<span className={styles.required} aria-hidden="true">*</span>
-              </label>
-              <input
-                id="contact-name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                maxLength={MAX_NAME}
-                required
-                value={form.name}
-                aria-invalid={Boolean(fieldErrors.name)}
-                aria-describedby={fieldErrors.name ? "contact-name-error" : undefined}
-                onChange={(event) => update("name", event.target.value)}
-              />
-              {fieldErrors.name && (
-                <span id="contact-name-error" className={styles.fieldError}>
-                  {fieldErrors.name}
+            {accountName ? (
+              <div className={`${styles.field} ${fieldErrors.name ? styles.fieldInvalid : ""}`}>
+                <label htmlFor="contact-name">Name</label>
+                <input
+                  id="contact-name"
+                  name="name"
+                  type="text"
+                  value={accountName}
+                  readOnly
+                  aria-describedby="contact-name-hint"
+                />
+                <span id="contact-name-hint" className={styles.hint}>
+                  Sending as your account name.
                 </span>
-              )}
-            </div>
+                {fieldErrors.name && (
+                  <span id="contact-name-error" className={styles.fieldError}>
+                    {fieldErrors.name}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className={`${styles.field} ${fieldErrors.name ? styles.fieldInvalid : ""}`}>
+                <label htmlFor="contact-name">
+                  Name<span className={styles.required} aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="contact-name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  maxLength={MAX_NAME}
+                  required
+                  value={form.name}
+                  aria-invalid={Boolean(fieldErrors.name)}
+                  aria-describedby={fieldErrors.name ? "contact-name-error" : undefined}
+                  onChange={(event) => update("name", event.target.value)}
+                />
+                {fieldErrors.name && (
+                  <span id="contact-name-error" className={styles.fieldError}>
+                    {fieldErrors.name}
+                  </span>
+                )}
+              </div>
+            )}
 
             {accountEmail ? (
               <div className={`${styles.field} ${fieldErrors.email ? styles.fieldInvalid : ""}`}>
