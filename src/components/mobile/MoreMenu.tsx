@@ -5,6 +5,7 @@ import {
   canAccessAnalytics,
   canAccessArticleProjects,
   canAccessPackages,
+  canManageContactMessages,
   canManageWinesRole,
   isAdmin,
 } from "../../constants/roles"
@@ -82,6 +83,10 @@ function MoreMenu({ onClose }: MoreMenuProps) {
   if (canManageWinesRole(user)) {
     staffLinks.push({ label: "Settings", to: "/settings/wines" })
   }
+  // Contact Messages inbox: Editors and Admins (IDENTITY_209).
+  if (canManageContactMessages(user)) {
+    staffLinks.push({ label: "Contact Messages", to: "/settings/contact-messages" })
+  }
   if (isAdmin(user)) {
     staffLinks.push({ label: "Admin", to: "/admin/configuration" })
   }
@@ -91,7 +96,10 @@ function MoreMenu({ onClose }: MoreMenuProps) {
 
   groups.push({
     heading: "About",
-    links: [{ label: "About Wine Words", to: "/about" }],
+    links: [
+      { label: "Contact", to: "/contact" },
+      { label: "About Wine Words", to: "/about" },
+    ],
   })
 
   return (

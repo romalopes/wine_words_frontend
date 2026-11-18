@@ -1,5 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import AboutPage from "./about/AboutPage";
+import Contact from "./Contact";
+import ContactMessages from "./ContactMessages";
+import ContactMessageDetail from "./ContactMessageDetail";
 import AccountSettings from "./AccountSettings";
 import Archive from "./Archive";
 import Dashboard from "./Dashboard";
@@ -74,6 +77,8 @@ function AppRoutes() {
         <Route element={<Home />} path="/finder" />
         <Route element={<Quiz />} path="quiz" />
         <Route element={<AboutPage />} path="about" />
+        {/* Public Contact form — no authentication required (IDENTITY_209). */}
+        <Route element={<Contact />} path="/contact" />
         <Route element={<Archive />} path="/archive" />
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -92,6 +97,15 @@ function AppRoutes() {
         <Route element={<ArticleDetail />} path="/articles/:slug/edit" />
         <Route element={<ArticlesManagement />} path="/settings/articles" />
         <Route element={<WinesManagement />} path="/settings/wines" />
+        {/* Contact Messages inbox — Editors/Admins only; the API enforces it. */}
+        <Route
+          element={<ContactMessages />}
+          path="/settings/contact-messages"
+        />
+        <Route
+          element={<ContactMessageDetail />}
+          path="/settings/contact-messages/:id"
+        />
         <Route element={<WineSearch />} path="/search" />
         <Route element={<WineList />} path="/wines" />
         <Route element={<WineDetail />} path="/wines/:slug" />

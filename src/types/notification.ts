@@ -10,6 +10,8 @@ export type NotificationType =
   // Trade portal: a public submission arrived and needs editorial triage.
   | "trade_message_received"
   | "trade_submission_received"
+  // Contact form (IDENTITY_209): a public message arrived in the inbox.
+  | "contact_message_received"
   // Follow-based notifications (issue #192)
   | "review_published"
   | "review_updated"

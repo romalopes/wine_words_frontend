@@ -28,6 +28,7 @@ const TYPE_LABELS: Record<string, string> = {
   wine_package_completed: "Package completed",
   wine_package_rejected: "Package rejected",
   trade_message_received: "Message received",
+  contact_message_received: "Contact message",
   review_published: "Review published",
   review_updated: "Review updated",
   review_comment: "Review comment",

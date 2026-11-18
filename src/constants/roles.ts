@@ -36,6 +36,13 @@ export function canManageAllPackages(user: RoleUser | null | undefined): boolean
   return user?.roles?.some((role) => role === ROLES.ADMIN || role === ROLES.EDITOR) ?? false
 }
 
+/**
+ * Contact Messages inbox (IDENTITY_209): global Admins and Editors only.
+ * Reviewers keep their content-management rights but do not read the inbox —
+ * the API's ContactMessagePolicy enforces the same rule.
+ */
+export const canManageContactMessages = canManageAllPackages
+
 /** Admins and Editors only (excludes Reviewers) — used for the `source` badge. */
 export function canSeeSource(user: RoleUser | null | undefined): boolean {
   return user?.roles?.some((role) => role === ROLES.ADMIN || role === ROLES.EDITOR) ?? false

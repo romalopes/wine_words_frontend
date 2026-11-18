@@ -48,6 +48,7 @@ import {
   createTestAccessApi,
 } from "./adminApi";
 import { createTradeApi } from "./tradeApi";
+import { createContactApi } from "./contactApi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; //|| "http://localhost:3000/api/v1").replace(/\/+$/, "");
 
@@ -220,5 +221,8 @@ export const shipmentTrackingsApi = createShipmentTrackingsApi(request);
 // The signed-in user's own notifications (review-deadline reminders).
 export const notificationsApi = createNotificationsApi(request);
 export const tradeApi = createTradeApi(request);
+
+// Public Contact form + Editor/Admin inbox (IDENTITY_209).
+export const contactApi = createContactApi(request);
 
 export { API_BASE_URL };

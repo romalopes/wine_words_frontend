@@ -7,6 +7,7 @@ import {
   canAccessPackages,
   canAccessArticleProjects,
   canAccessAnalytics,
+  canManageContactMessages,
 } from "../constants/roles";
 import { categoriesApi } from "../services/api";
 import { useTestAccess } from "../contexts/TestAccessContext";
@@ -407,6 +408,9 @@ function Header() {
             )}
           </div>
         )}
+        <NavLink to="/contact" onClick={handleCloseMenu}>
+          Contact
+        </NavLink>
         <NavLink to="/about" onClick={handleCloseMenu}>
           About
         </NavLink>
@@ -548,6 +552,17 @@ function Header() {
                 >
                   Wine Profiles
                 </NavLink>
+                {canManageContactMessages(effectiveIdentity) && (
+                  <NavLink
+                    to="/settings/contact-messages"
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      handleCloseMenu();
+                    }}
+                  >
+                    Contact Messages
+                  </NavLink>
+                )}
               </div>
             )}
           </div>

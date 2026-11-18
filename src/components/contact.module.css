@@ -1,0 +1,373 @@
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  text-align: left;
+}
+
+.hero {
+  background: linear-gradient(135deg, #4a1020, #27615e);
+  color: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.25rem;
+}
+
+.hero h1 {
+  margin: 0 0 0.5rem;
+}
+
+.hero p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.card {
+  background: #fffaf4;
+  border: 1px solid #e4d9cd;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.field label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.required {
+  color: #8a2238;
+  margin-left: 0.15rem;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid #d7c8bb;
+  border-radius: 7px;
+  background: white;
+  color: #241b19;
+  font: inherit;
+}
+
+.field textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible {
+  outline: 2px solid #27615e;
+  outline-offset: 1px;
+}
+
+/* Signed-in visitors see their account email instead of an editable field. */
+.field input[readonly] {
+  background: #f4ece3;
+  color: #5b4a43;
+  cursor: default;
+}
+
+.fieldInvalid input,
+.fieldInvalid select,
+.fieldInvalid textarea {
+  border-color: #b03a4f;
+}
+
+.fieldError {
+  color: #8a2238;
+  font-size: 0.85rem;
+}
+
+.hint {
+  color: #766963;
+  font-size: 0.8rem;
+}
+
+/* Honeypot: removed from the visual and accessibility tree, but still a real
+   input a naive bot will fill. Never use display:none — some bots skip those. */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.turnstile {
+  min-height: 65px;
+}
+
+.turnstileNote {
+  color: #766963;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.error {
+  background: #fff0f0;
+  color: #8a2238;
+  border: 1px solid #e1aab5;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.success {
+  background: #effaf5;
+  color: #1f654a;
+  border: 1px solid #a9d9c2;
+  padding: 1rem;
+  border-radius: 8px;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.privacy {
+  color: #766963;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 1.4rem;
+  }
+}
+
+/* ---- Inbox (Editors/Admins) ---------------------------------------------- */
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.inbox {
+  display: grid;
+  gap: 1rem;
+}
+
+.filterBar {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.searchForm {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1 1 320px;
+}
+
+.searchForm input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #d7c8bb;
+  border-radius: 7px;
+  background: white;
+  font: inherit;
+}
+
+.filterBar select {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #d7c8bb;
+  border-radius: 7px;
+  background: white;
+  font: inherit;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.tab {
+  border: 1px solid #d7c8bb;
+  background: #fffaf4;
+  color: #4f4440;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.tabActive {
+  background: #27615e;
+  border-color: #27615e;
+  color: white;
+}
+
+.countBadge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  background: #8a2238;
+  color: white;
+  border-radius: 999px;
+  padding: 0 0.45rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  background: #fffaf4;
+  border: 1px solid #e4d9cd;
+  border-radius: 12px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.65rem;
+  border-bottom: 1px solid #eee4db;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #766963;
+}
+
+.unreadRow td {
+  background: #fff6ec;
+  font-weight: 600;
+}
+
+.subjectLink {
+  color: #4a1020;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: #efe5dc;
+  color: #4f4440;
+}
+
+.status-unread {
+  background: #fff3e0;
+  border: 1px solid #f4c48d;
+  color: #7a4a0a;
+}
+
+.status-read {
+  background: #eaf4f2;
+  border: 1px solid #a9d9c2;
+  color: #1f654a;
+}
+
+.status-archived {
+  background: #f0f0f0;
+  border: 1px solid #cccccc;
+  color: #5b5b5b;
+}
+
+.muted {
+  color: #766963;
+  font-weight: 400;
+}
+
+/* ---- Message detail ------------------------------------------------------ */
+
+.detailMeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.detailMeta div {
+  background: white;
+  border: 1px solid #e4d9cd;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+}
+
+.detailMeta dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #766963;
+  margin: 0 0 0.2rem;
+}
+
+.detailMeta dd {
+  margin: 0;
+  color: #241b19;
+  word-break: break-word;
+}
+
+.messageBody {
+  background: white;
+  border: 1px solid #e4d9cd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: inherit;
+}
+
+@media (max-width: 700px) {
+  .detailMeta {
+    grid-template-columns: 1fr;
+  }
+
+  .searchForm {
+    flex-direction: column;
+    flex-basis: 100%;
+  }
+}
+

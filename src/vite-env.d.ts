@@ -40,6 +40,11 @@ interface ImportMetaEnv {
   readonly VITE_PWA_ENABLED?: string
   /** Issue #201, Phase 5 — enable IndexedDB repositories and offline UX. */
   readonly VITE_OFFLINE_ENABLED?: string
+  /**
+   * Cloudflare Turnstile PUBLIC site key (IDENTITY_209). Never a secret —
+   * the Rails API holds TURNSTILE_SECRET_KEY server-side.
+   */
+  readonly VITE_TURNSTILE_SITE_KEY?: string
 }
 
 interface ImportMeta {
