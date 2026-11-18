@@ -453,7 +453,7 @@ export default function TradeSubmit() {
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
-        <h1>Submit a wine</h1>
+        <h1>Submit wines</h1>
         <p>
           Share one or more wines with the Wine Words editorial team. No account
           is required.

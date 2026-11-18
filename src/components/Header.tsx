@@ -670,7 +670,9 @@ function Header() {
                 <span className="site-header__user-email">{user.email}</span>
               )}
             </div>
-            <NavLink className="site-header__auth" to="/trade/my-packages">My packages</NavLink>
+            <NavLink className="site-header__auth" to="/trade/my-packages">
+              My packages
+            </NavLink>
             <NavLink className="site-header__auth" to="/account">
               {initials}
             </NavLink>
@@ -683,7 +685,14 @@ function Header() {
             </button>
           </div>
         ) : (
-          <><NavLink className="site-header__auth" to="/trade/submit">Submit a wine</NavLink><NavLink className="site-header__auth" to="/login">Login / Sign up</NavLink></>
+          <>
+            <NavLink className="site-header__auth" to="/trade/submit">
+              Submit wines
+            </NavLink>
+            <NavLink className="site-header__auth" to="/login">
+              Login / Sign up
+            </NavLink>
+          </>
         )}
 
         <button
