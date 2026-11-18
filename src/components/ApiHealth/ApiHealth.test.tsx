@@ -48,7 +48,7 @@ const detailedResult = {
   expectedStatus: 200,
   latencyMs: 120,
   latencyRating: "excellent",
-  payload: { status: "ok", version: "0.0.22", service: "wine-api" },
+  payload: { status: "ok", version: "0.0.23", service: "wine-api" },
   requestHeaders: {},
   error: null,
   retried: false,
@@ -56,7 +56,7 @@ const detailedResult = {
 
 const mismatchResult = {
   ...detailedResult,
-  payload: { status: "ok", version: "0.0.21", service: "wine-api" },
+  payload: { status: "ok", version: "0.0.22", service: "wine-api" },
 };
 
 // Locate the "Test" button that belongs to a given check row. Each row renders
@@ -113,7 +113,7 @@ describe("ApiHealth", () => {
     expect(options.getAuthToken()).toBe("fake-token");
   });
 
-  it("displays backend version 0.0.21 when the API reports 0.0.21, even though React is 0.0.22", async () => {
+  it("displays backend version 0.0.22 when the API reports 0.0.22, even though React is 0.0.23", async () => {
     mockRunCheck.mockResolvedValueOnce(mismatchResult);
 
     render(
@@ -125,23 +125,23 @@ describe("ApiHealth", () => {
     await userEvent.click(testButtonFor("Detailed Infrastructure Health"));
 
     // Wait for the async update — the backend version must come from the API
-    // response (0.0.21), not from APP_VERSION (0.0.22).
+    // response (0.0.22), not from APP_VERSION (0.0.23).
     await waitFor(() => {
       expect(
         screen.getByText(
-          /Version mismatch: backend reports 0\.0\.21 but frontend expects 0\.0\.22/i,
+          /Version mismatch: backend reports 0\.0\.22 but frontend expects 0\.0\.23/i,
         ),
       ).toBeInTheDocument();
     });
 
     // The header meta renders the backend version inside a <code> element.
     expect(
-      screen.getByText("0.0.21", { selector: "code" }),
+      screen.getByText("0.0.22", { selector: "code" }),
     ).toBeInTheDocument();
 
     // It must not claim the backend is on the frontend's version.
     expect(
-      screen.queryByText(/Version match: backend 0\.0\.22/i),
+      screen.queryByText(/Version match: backend 0\.0\.23/i),
     ).not.toBeInTheDocument();
   });
 
@@ -153,7 +153,7 @@ describe("ApiHealth", () => {
     // Only this check validates; without a validator the assertion is vacuous.
     if (!versionCheck.validate) throw new Error("the check has no validator");
     expect(versionCheck.validate({ version: APP_VERSION })).toBe(true);
-    expect(versionCheck.validate({ version: "0.0.21" })).toBe(false);
+    expect(versionCheck.validate({ version: "0.0.22" })).toBe(false);
   });
 
   // --- Notification test sandbox ---------------------------------------------

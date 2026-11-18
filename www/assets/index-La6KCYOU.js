@@ -42137,7 +42137,7 @@ function gq() {
     ],
   });
 }
-const om = "0.0.21";
+const om = "0.0.22";
 function yq() {
   return r.jsxs("footer", {
     className: "site-footer",
