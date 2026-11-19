@@ -35,7 +35,7 @@ export default function TradeMyPackages() {
           to="/trade/submit"
           className={`wine-btn wine-btn--lg ${styles.heroCta}`}
         >
-          Submit another wine
+          Submit wine package
         </Link>
       </div>
       {error && <div className={styles.error}>{error}</div>}

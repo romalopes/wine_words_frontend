@@ -59619,7 +59619,7 @@ function ST() {
             children: "← Back",
           }),
           r.jsx(Wl, {
-            kicker: "Cellar",
+            kicker: "",
             title: n ? "Edit Wine" : "Add New Wine",
           }),
           W && r.jsx("p", { className: "auth-form__error", children: W }),

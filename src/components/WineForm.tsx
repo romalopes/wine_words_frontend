@@ -33,11 +33,11 @@ import type { UserWineProfile } from "../types/user";
  * them as strings until submit and converts there.
  */
 interface VintageFormRow {
-  id: number | null
-  year: string
-  prompt: string
-  price: string
-  no_vintage: boolean
+  id: number | null;
+  year: string;
+  prompt: string;
+  price: string;
+  no_vintage: boolean;
 }
 
 /**
@@ -57,20 +57,20 @@ const INITIAL_VINTAGE: VintageFormRow = {
 
 /** The text fields this form manages. Numbers stay as strings while typing. */
 interface WineFormData {
-  id: number | null
-  name: string
-  color: string
-  closure: string
-  alcohol_percentage: string
-  volume_ml: string
-  prompt: string
-  producer_id: string
-  producer_name: string
-  designation_name: string
-  wine_profile_id: string | null
-  category_ids: number[]
-  fortified: boolean
-  sparkling: boolean
+  id: number | null;
+  name: string;
+  color: string;
+  closure: string;
+  alcohol_percentage: string;
+  volume_ml: string;
+  prompt: string;
+  producer_id: string;
+  producer_name: string;
+  designation_name: string;
+  wine_profile_id: string | null;
+  category_ids: number[];
+  fortified: boolean;
+  sparkling: boolean;
 }
 
 function WineForm() {
@@ -147,7 +147,9 @@ function WineForm() {
 
   function selectWineProfile(profile: UserWineProfile) {
     if (profile.id == null) {
-      setSearchError("This wine profile cannot be selected because its ID is missing.");
+      setSearchError(
+        "This wine profile cannot be selected because its ID is missing.",
+      );
       return;
     }
     setFormData((previous) => ({
@@ -158,7 +160,8 @@ function WineForm() {
       setTasteScores((previous) =>
         previous.map((score) => ({
           ...score,
-          score: profile.parameters?.[score.taste_parameter_slug] ?? score.score,
+          score:
+            profile.parameters?.[score.taste_parameter_slug] ?? score.score,
         })),
       );
       setTasteParamsTouched(true);
@@ -312,7 +315,11 @@ function WineForm() {
     autoName,
   ]);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
+  function handleChange(
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) {
     if (e.target.name === "name" && autoName) setAutoName(false);
     const target = e.target;
     // A checkbox reports `checked`; selects and text inputs report `value`.
@@ -383,9 +390,8 @@ function WineForm() {
       // Untouched sliders do not submit: when the server receives no taste
       // attributes it auto-fills the closest profile. An edit or any touched
       // slider always submits the current scores.
-      const wineTasteParameters = isEditing || tasteParamsTouched
-        ? wineTasteParametersAttributes
-        : [];
+      const wineTasteParameters =
+        isEditing || tasteParamsTouched ? wineTasteParametersAttributes : [];
 
       const payload = {
         name: formData.name,
@@ -459,10 +465,7 @@ function WineForm() {
       >
         &larr; Back
       </Link>
-      <PageHero
-        kicker="Cellar"
-        title={isEditing ? "Edit Wine" : "Add New Wine"}
-      />
+      <PageHero kicker="" title={isEditing ? "Edit Wine" : "Add New Wine"} />
       {error && <p className="auth-form__error">{error}</p>}
       <form onSubmit={handleSubmit} className="wine-form wine-catalog-form">
         <div className="wine-form__fields wine-catalog-form__fields">
@@ -688,7 +691,9 @@ function WineForm() {
         <TasteParameterSliders
           parameters={tasteParams}
           getScore={(_, index) => tasteScores[index]?.score ?? 3}
-          onScoreChange={(_, index, score) => handleTasteChange(index, String(score))}
+          onScoreChange={(_, index, score) =>
+            handleTasteChange(index, String(score))
+          }
         />
 
         <div className="wine-form__vintages">
