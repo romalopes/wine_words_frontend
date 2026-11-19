@@ -282,6 +282,7 @@ function Dashboard() {
   return (
     <main className="wine-app">
       <DetailHero
+        className="wine-app__detail-hero--trade"
         kicker=""
         title="Welcome to Wine Words"
         intro=""

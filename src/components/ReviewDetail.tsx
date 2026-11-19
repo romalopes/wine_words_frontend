@@ -3,7 +3,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import DetailHero from "./DetailHero";
 import { reviewsApi } from "../services/api";
 import ReviewForm from "./ReviewForm";
-import ContentStatusActions, { type ContentStatus } from "./ContentStatusActions";
+import ContentStatusActions, {
+  type ContentStatus,
+} from "./ContentStatusActions";
 import RelatedContent from "./RelatedContent";
 import LikeButton from "./LikeButton";
 import FollowButton from "./FollowButton";
@@ -76,8 +78,9 @@ function ReviewDetail() {
   const { orientation: heroOrientation, handleLoad: handleHeroLoad } =
     useImageOrientation(hero);
 
-  const isOwner =
-    Boolean(user && review && Number(review.user_id) === Number(user.id));
+  const isOwner = Boolean(
+    user && review && Number(review.user_id) === Number(user.id),
+  );
   const canEdit = canManageWinesRole(user) || isOwner;
   const showSource = canSeeSource(user);
 
@@ -146,11 +149,7 @@ function ReviewDetail() {
   }, [loadReview]);
 
   async function handleDelete() {
-    if (
-      !window.confirm(
-        "Delete this review? This action cannot be undone.",
-      )
-    ) {
+    if (!window.confirm("Delete this review? This action cannot be undone.")) {
       return;
     }
     // `review` is non-null by the time this button can be reached — the render
@@ -222,10 +221,11 @@ function ReviewDetail() {
   const images = Array.isArray(review.images) ? review.images : [];
   const gallery = images.filter((src) => src !== hero);
   const categories = review.categories ?? [];
-  const kicker = categories[0]?.name ?? "Review";
+  const kicker = categories[0]?.name ?? "";
   const bylineDate = formatDate(review.published_at ?? review.created_at);
   const hasDrinkWindow = review.drink_from != null || review.drink_to != null;
-  const showVintage = Boolean(review.vintage_year) && !review.vintage_no_vintage;
+  const showVintage =
+    Boolean(review.vintage_year) && !review.vintage_no_vintage;
 
   return (
     <main className="wine-app">
@@ -271,7 +271,12 @@ function ReviewDetail() {
         >
           <div className="review-page__facts">
             {review.score != null && (
-              <ScoreBadge score={review.score} size="lg" user={user} producerId={review.producer_id} />
+              <ScoreBadge
+                score={review.score}
+                size="lg"
+                user={user}
+                producerId={review.producer_id}
+              />
             )}
             {showVintage && (
               <span className="review-page__fact">
@@ -289,7 +294,9 @@ function ReviewDetail() {
 
           <div className="article-page__byline">
             <span className="article-page__byline-info">
-              <span className="article-page__author">by {review.reviewer_name}</span>
+              <span className="article-page__author">
+                by {review.reviewer_name}
+              </span>
               {bylineDate && (
                 <>
                   <span className="article-page__meta-dot" aria-hidden="true">
@@ -297,7 +304,9 @@ function ReviewDetail() {
                   </span>
                   <time
                     className="article-page__date"
-                    dateTime={review.published_at ?? review.created_at ?? undefined}
+                    dateTime={
+                      review.published_at ?? review.created_at ?? undefined
+                    }
                   >
                     {bylineDate}
                   </time>
@@ -319,7 +328,10 @@ function ReviewDetail() {
             </span>
 
             <span className="article-page__byline-actions">
-              <FollowButton kind="Review" identifier={review.slug || review.id} />
+              <FollowButton
+                kind="Review"
+                identifier={review.slug || review.id}
+              />
               <LikeButton
                 kind="review"
                 identifier={review.slug || review.id}
@@ -327,7 +339,9 @@ function ReviewDetail() {
                 initialCount={review.likes_count}
                 onChange={({ liked, likes_count }) =>
                   setReview((prev) =>
-                    prev ? { ...prev, liked_by_current_user: liked, likes_count } : prev,
+                    prev
+                      ? { ...prev, liked_by_current_user: liked, likes_count }
+                      : prev,
                   )
                 }
               />

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import PageHero from "./PageHero";
+import DetailHero from "./DetailHero";
 import {
   winesApi,
   tasteParametersApi,
@@ -465,7 +465,11 @@ function WineForm() {
       >
         &larr; Back
       </Link>
-      <PageHero kicker="" title={isEditing ? "Edit Wine" : "Add New Wine"} />
+      <DetailHero
+        kicker=""
+        title={isEditing ? "Edit Wine" : "Add New Wine"}
+        className="wine-app__detail-hero--trade"
+      />
       {error && <p className="auth-form__error">{error}</p>}
       <form onSubmit={handleSubmit} className="wine-form wine-catalog-form">
         <div className="wine-form__fields wine-catalog-form__fields">

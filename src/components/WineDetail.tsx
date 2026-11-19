@@ -75,8 +75,10 @@ function WineDetail() {
   >({});
   const images = wineImageGallery(wine?.images);
   const canManageReviews = canManageWinesRole(user);
-  const canEditWine = wine?.capabilities?.update === true;
-  const canDeleteWine = wine?.capabilities?.destroy === true;
+  const canManageWines = canManageWinesRole(user);
+  const canEditWine = canManageWines || wine?.capabilities?.update === true;
+  const canDeleteWine = canManageWines || wine?.capabilities?.destroy === true;
+  // "Add vintage" is allowed for any signed-in user (enforced by API)
   const canAddVintage = wine?.capabilities?.add_vintage === true;
 
   // Inline "add vintage" form (any signed-in user; enforced by the API too).
@@ -232,6 +234,7 @@ function WineDetail() {
         &larr; Back to Wines
       </Link>
       <DetailHero
+        className="wine-app__detail-hero--trade"
         kicker={wine.producer?.name || "Wine"}
         title={wine.name}
         badge={wine.color ? { label: wine.color, tone: wine.color } : undefined}

@@ -82428,8 +82428,7 @@ function Eoe() {
             r.jsx(nn, {
               kicker: "Cellar",
               title: "Wine Packages",
-              intro:
-                "Wines received from producers, and the reviews they still need.",
+              intro: "",
               actions:
                 (t || n) &&
                 r.jsxs("div", {

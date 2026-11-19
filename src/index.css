@@ -8513,6 +8513,51 @@ a.admin-user-card:hover {
   color: #4d1320;
 }
 
+/* Secondary/destructive controls on the dark gradient: the light-surface
+   palette (#8a2238 text on #d7c8bb borders) is unreadable over the maroon half,
+   so they invert to ghost-white outlines. Used by the wine detail actions. */
+.wine-app__detail-hero--trade
+  .wine-app__detail-hero__actions
+  .wine-management__delete-btn {
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #fff;
+}
+
+.wine-app__detail-hero--trade
+  .wine-app__detail-hero__actions
+  .wine-management__delete-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #fff;
+  color: #fff;
+}
+
+/* Follow/like pills rendered in the hero body (wine detail). Same reasoning:
+   light-surface colours disappear on the gradient, so use ghost-white pills. */
+.wine-app__detail-hero--trade .follow-button,
+.wine-app__detail-hero--trade .like-button {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.wine-app__detail-hero--trade .follow-button:hover:not(:disabled),
+.wine-app__detail-hero--trade .like-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: #fff;
+  color: #fff;
+}
+
+.wine-app__detail-hero--trade .follow-button--following,
+.wine-app__detail-hero--trade .like-button--liked {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #fff;
+  color: #fff;
+}
+
+.wine-app__detail-hero--trade .follow-button__error,
+.wine-app__detail-hero--trade .like-button__error {
+  color: #ffd7de;
+}
+
 @media (max-width: 720px) {
   .wine-app__detail-hero--trade {
     align-items: flex-start;

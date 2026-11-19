@@ -435,6 +435,7 @@ function WineList() {
           &larr; Back to Dashboard
         </Link>
         <DetailHero
+          className="wine-app__detail-hero--trade"
           kicker="Cellar"
           title="Advanced Search Results"
           intro="Every wine matching the filters you set below."
@@ -509,6 +510,7 @@ function WineList() {
           &larr; Back to Dashboard
         </Link>
         <DetailHero
+          className="wine-app__detail-hero--trade"
           kicker="Cellar"
           title="Search Results"
           intro="Browse wines matching your search across names, producers, regions, and grapes."
@@ -585,6 +587,7 @@ function WineList() {
           &larr; Back to Dashboard
         </Link>
         <DetailHero
+          className="wine-app__detail-hero--trade"
           kicker="Cellar"
           title={`${selectedCategory} Wines`}
           intro={`Browse wines filed under ${selectedCategory}.`}
@@ -659,6 +662,7 @@ function WineList() {
         &larr; Back to Dashboard
       </Link>
       <DetailHero
+        className="wine-app__detail-hero--trade"
         kicker=""
         title="List of Wines"
         intro=""

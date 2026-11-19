@@ -3,7 +3,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import DetailHero from "./DetailHero";
 import { articlesApi } from "../services/api";
 import ArticleForm from "./ArticleForm";
-import ContentStatusActions, { type ContentStatus } from "./ContentStatusActions";
+import ContentStatusActions, {
+  type ContentStatus,
+} from "./ContentStatusActions";
 import ReviewCard from "./ReviewCard";
 import RelatedContent from "./RelatedContent";
 import LikeButton from "./LikeButton";
@@ -71,12 +73,12 @@ function ArticleDetail() {
   // orientation hook is always called (rules of hooks). When the article has no
   // image, fall back to the first linked review's image (`fallback_review_image`).
   const hero = article
-    ? article.primary_image ??
+    ? (article.primary_image ??
       (Array.isArray(article.images) ? article.images[0] : null) ??
       (typeof article.fallback_review_image === "string" &&
       article.fallback_review_image.length > 0
         ? article.fallback_review_image
-        : null)
+        : null))
     : null;
   const { orientation: heroOrientation, handleLoad: handleHeroLoad } =
     useImageOrientation(hero);
@@ -91,13 +93,21 @@ function ArticleDetail() {
       setOfflineCopy(false);
       if (isOfflineEnabled()) {
         await cacheContent(user?.id, "article", slug, data);
-        const cached = await getCachedContent<Article>(user?.id, "article", slug);
+        const cached = await getCachedContent<Article>(
+          user?.id,
+          "article",
+          slug,
+        );
         setCachedAt(cached?.cachedAt ?? null);
         setSavedOffline(cached?.savedOffline ?? false);
       }
     } catch (err) {
       if (isOfflineEnabled() && mayUseOfflineFallback(err)) {
-        const cached = await getCachedContent<Article>(user?.id, "article", slug);
+        const cached = await getCachedContent<Article>(
+          user?.id,
+          "article",
+          slug,
+        );
         if (cached) {
           setArticle(cached.data);
           setCachedAt(cached.cachedAt);
@@ -198,7 +208,9 @@ function ArticleDetail() {
   if (error || !article) {
     return (
       <main className="wine-app">
-        <p className="wine-management__error">{error || "Article not found."}</p>
+        <p className="wine-management__error">
+          {error || "Article not found."}
+        </p>
         <Link to="/articles" className="auth-form__submit">
           Back to Articles
         </Link>
@@ -227,7 +239,7 @@ function ArticleDetail() {
   // (`hero` and its orientation were resolved above, before the early returns.)
   const images = Array.isArray(article.images) ? article.images : [];
   const gallery = images.filter((src) => src !== hero);
-  const kicker = categories[0]?.name ?? "Article";
+  const kicker = categories[0]?.name ?? "";
   const bylineDate = formatDate(article.published_at ?? article.created_at);
 
   return (
@@ -263,7 +275,9 @@ function ArticleDetail() {
         >
           <div className="article-page__byline">
             <span className="article-page__byline-info">
-              <span className="article-page__author">by {article.author_name}</span>
+              <span className="article-page__author">
+                by {article.author_name}
+              </span>
               {bylineDate && (
                 <>
                   <span className="article-page__meta-dot" aria-hidden="true">
@@ -271,7 +285,9 @@ function ArticleDetail() {
                   </span>
                   <time
                     className="article-page__date"
-                    dateTime={article.published_at ?? article.created_at ?? undefined}
+                    dateTime={
+                      article.published_at ?? article.created_at ?? undefined
+                    }
                   >
                     {bylineDate}
                   </time>
@@ -293,7 +309,10 @@ function ArticleDetail() {
             </span>
 
             <span className="article-page__byline-actions">
-              <FollowButton kind="Article" identifier={article.slug || article.id} />
+              <FollowButton
+                kind="Article"
+                identifier={article.slug || article.id}
+              />
               <LikeButton
                 kind="article"
                 identifier={article.slug || article.id}
@@ -301,7 +320,9 @@ function ArticleDetail() {
                 initialCount={article.likes_count}
                 onChange={({ liked, likes_count }) =>
                   setArticle((prev) =>
-                    prev ? { ...prev, liked_by_current_user: liked, likes_count } : prev,
+                    prev
+                      ? { ...prev, liked_by_current_user: liked, likes_count }
+                      : prev,
                   )
                 }
               />
@@ -321,7 +342,10 @@ function ArticleDetail() {
                 </Link>
               ))}
               {tags.map((tag) => (
-                <span key={tag} className="article-page__chip article-page__chip--tag">
+                <span
+                  key={tag}
+                  className="article-page__chip article-page__chip--tag"
+                >
                   {tag}
                 </span>
               ))}
@@ -331,7 +355,11 @@ function ArticleDetail() {
 
         {canEdit && !editing && (
           <div className="wine-detail__actions article-page__actions">
-            <button type="button" className="auth-form__submit" onClick={() => setEditing(true)}>
+            <button
+              type="button"
+              className="auth-form__submit"
+              onClick={() => setEditing(true)}
+            >
               Edit Article
             </button>
             <ContentStatusActions
@@ -414,7 +442,9 @@ function ArticleDetail() {
                         {vintage.wine_name} {vintage.year}
                       </Link>
                       {vintage.region && (
-                        <span className="article-page__link-meta">{vintage.region}</span>
+                        <span className="article-page__link-meta">
+                          {vintage.region}
+                        </span>
                       )}
                     </li>
                   ))}
@@ -427,7 +457,9 @@ function ArticleDetail() {
                 <ul className="article-page__link-list">
                   {producers.map((producer) => (
                     <li key={producer.id}>
-                      <Link to={returnToLink(`/producers/${producer.slug}`)}>{producer.name}</Link>
+                      <Link to={returnToLink(`/producers/${producer.slug}`)}>
+                        {producer.name}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -436,7 +468,10 @@ function ArticleDetail() {
           </div>
         )}
 
-        <CommentSection kind="article" identifier={article.slug || article.id} />
+        <CommentSection
+          kind="article"
+          identifier={article.slug || article.id}
+        />
 
         <RelatedContent kind="article" item={article} />
       </article>

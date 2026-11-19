@@ -37,7 +37,7 @@ export interface ReviewCardProps {
   /** Full authenticated user (with producer memberships) for score visibility. */
   currentUser?: User | null;
   /** Producer ID of the reviewed wine (for score visibility). */
-  producerId?: number | null;
+  producerId?: number | null | undefined;
   /** Disables the status buttons while a transition is in flight. */
   statusBusy?: boolean;
   onDelete?: (() => void) | undefined;

@@ -326,14 +326,14 @@ function WinePackageDetail() {
             </div>
           )}
           {!assessed && (
-            <>
+            <div className={tradeStyles.fieldGroup}>
               <p className={tradeStyles.muted}>
                 Approve this submission to start the review process, or reject it
                 with a reason.
               </p>
               <div className={tradeStyles.field}>
                 <label>Decision</label>
-                <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                <div className={tradeStyles.radioGroup} style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
                   <label style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
                     <input
                       type="radio"
@@ -375,7 +375,7 @@ function WinePackageDetail() {
                   {assessing ? "Processing…" : packageDecision === "approve" ? "Approve submission" : "Reject submission"}
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
       )}

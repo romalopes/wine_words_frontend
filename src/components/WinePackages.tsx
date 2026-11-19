@@ -41,13 +41,20 @@ function WinePackages() {
       const cacheId = JSON.stringify(params);
       try {
         const response = await winePackagesApi.list(params);
-        if (isOfflineEnabled() && user?.id) await cachePackageList(user.id, cacheId, responseItems(response));
+        if (isOfflineEnabled() && user?.id)
+          await cachePackageList(user.id, cacheId, responseItems(response));
         return response;
       } catch (error) {
         if (isOfflineEnabled() && user?.id) {
           const cached = await getCachedPackageList(user.id, cacheId);
           if (cached) {
-            return { items: cached.items, page: 1, per_page: cached.items.length, total_count: cached.items.length, total_pages: 1 };
+            return {
+              items: cached.items,
+              page: 1,
+              per_page: cached.items.length,
+              total_count: cached.items.length,
+              total_pages: 1,
+            };
           }
         }
         throw error;
@@ -96,30 +103,37 @@ function WinePackages() {
         &larr; Back to Dashboard
       </Link>
       <DetailHero
-        kicker="Cellar"
+        kicker=""
         title="Wine Packages"
-        intro="Wines received from producers, and the reviews they still need."
+        intro=""
+        className="wine-app__detail-hero--trade"
         actions={
           (canCreate || canRequest) && (
             <div className={styles.headerActions}>
-              {canCreate && <Link
-                to="/wine-packages/new?mode=arrived"
-                className="wine-btn wine-btn--primary"
-              >
-                + Record Received Package
-              </Link>}
-              {canCreate && <Link
-                to="/wine-packages/new?mode=announced"
-                className="wine-btn wine-btn--primary"
-              >
-                + Add Expected Package
-              </Link>}
-              {canRequest && <Link
-                to="/wine-packages/new?mode=request"
-                className="wine-btn wine-btn--primary"
-              >
-                + New Package Request
-              </Link>}
+              {canCreate && (
+                <Link
+                  to="/wine-packages/new?mode=arrived"
+                  className="wine-btn wine-btn--primary"
+                >
+                  + Record Received Package
+                </Link>
+              )}
+              {canCreate && (
+                <Link
+                  to="/wine-packages/new?mode=announced"
+                  className="wine-btn wine-btn--primary"
+                >
+                  + Add Expected Package
+                </Link>
+              )}
+              {canRequest && (
+                <Link
+                  to="/wine-packages/new?mode=request"
+                  className="wine-btn wine-btn--primary"
+                >
+                  + New Package Request
+                </Link>
+              )}
             </div>
           )
         }
@@ -163,7 +177,9 @@ function WinePackages() {
             id="package-overdue"
             type="checkbox"
             checked={overdue}
-            onChange={(event) => setFilter("overdue", event.target.checked ? "true" : "")}
+            onChange={(event) =>
+              setFilter("overdue", event.target.checked ? "true" : "")
+            }
           />
           Overdue only
         </label>
@@ -184,12 +200,18 @@ function WinePackages() {
         <div className="wine-management__empty">
           <p>No wine packages found.</p>
           {canCreate && (
-            <Link to="/wine-packages/new?mode=arrived" className="wine-btn wine-btn--primary">
+            <Link
+              to="/wine-packages/new?mode=arrived"
+              className="wine-btn wine-btn--primary"
+            >
               Record Your First Package
             </Link>
           )}
           {canRequest && (
-            <Link to="/wine-packages/new?mode=request" className="wine-btn wine-btn--primary">
+            <Link
+              to="/wine-packages/new?mode=request"
+              className="wine-btn wine-btn--primary"
+            >
               Create Your First Package Request
             </Link>
           )}
@@ -215,20 +237,29 @@ function WinePackages() {
                 {list.items.map((pkg) => (
                   <tr key={pkg.id}>
                     <td>
-                      <Link to={`/wine-packages/${pkg.id}`} className={styles.producerLink}>
+                      <Link
+                        to={`/wine-packages/${pkg.id}`}
+                        className={styles.producerLink}
+                      >
                         {pkg.producer_name || `Package #${pkg.id}`}
                       </Link>
                       {pkg.reviewer_name && (
-                        <div className={styles.cellMuted}>Reviewer: {pkg.reviewer_name}</div>
+                        <div className={styles.cellMuted}>
+                          Reviewer: {pkg.reviewer_name}
+                        </div>
                       )}
                     </td>
                     <td>
                       <PackageStatusBadge status={pkg.status} />
                       {pkg.auto_completed && (
-                        <div className={styles.cellMuted}>completed automatically</div>
+                        <div className={styles.cellMuted}>
+                          completed automatically
+                        </div>
                       )}
                     </td>
-                    <td className={styles.cellMuted}>{sourceLabel(pkg.source)}</td>
+                    <td className={styles.cellMuted}>
+                      {sourceLabel(pkg.source)}
+                    </td>
                     <td className={styles.cellMuted}>
                       {pkg.arrived_at ? (
                         <div>Arrived {formatDate(pkg.arrived_at)}</div>
@@ -241,9 +272,7 @@ function WinePackages() {
                     <td>
                       {pkg.review_deadline ? (
                         <span
-                          className={
-                            pkg.overdue ? styles.overdue : undefined
-                          }
+                          className={pkg.overdue ? styles.overdue : undefined}
                         >
                           {formatDate(pkg.review_deadline)}
                           <div className={styles.cellMuted}>
@@ -257,7 +286,8 @@ function WinePackages() {
                     <td className={styles.cellMuted}>
                       {pkg.review_progress?.requested > 0 ? (
                         <>
-                          {pkg.review_progress.percent}% ({pkg.review_progress.reviewed}/
+                          {pkg.review_progress.percent}% (
+                          {pkg.review_progress.reviewed}/
                           {pkg.review_progress.requested})
                           {pkg.review_progress.pending > 0 && (
                             <div className={styles.overdue}>
@@ -287,17 +317,40 @@ function WinePackages() {
             {list.items.map((pkg) => (
               <article className={styles.mobileCard} key={pkg.id}>
                 <div className={styles.mobileCardHeader}>
-                  <Link to={`/wine-packages/${pkg.id}`} className={styles.producerLink}>
+                  <Link
+                    to={`/wine-packages/${pkg.id}`}
+                    className={styles.producerLink}
+                  >
                     {pkg.producer_name || `Package #${pkg.id}`}
                   </Link>
                   <PackageStatusBadge status={pkg.status} />
                 </div>
                 <p>{sourceLabel(pkg.source)}</p>
                 {pkg.reviewer_name && <p>Reviewer: {pkg.reviewer_name}</p>}
-                <p>{pkg.arrived_at ? `Arrived ${formatDate(pkg.arrived_at)}` : pkg.expected_at ? `Expected ${formatDate(pkg.expected_at)}` : "Date not set"}</p>
-                {pkg.review_deadline && <p className={pkg.overdue ? styles.overdue : undefined}>Deadline {formatDate(pkg.review_deadline)} · {deadlineLabel(pkg.review_deadline)}</p>}
-                <p>{pkg.review_progress?.requested > 0 ? `${pkg.review_progress.percent}% reviewed (${pkg.review_progress.reviewed}/${pkg.review_progress.requested})` : `${pkg.items_count} item(s)`}</p>
-                <Link to={`/wine-packages/${pkg.id}`} className="wine-btn wine-btn--ghost">Open package</Link>
+                <p>
+                  {pkg.arrived_at
+                    ? `Arrived ${formatDate(pkg.arrived_at)}`
+                    : pkg.expected_at
+                      ? `Expected ${formatDate(pkg.expected_at)}`
+                      : "Date not set"}
+                </p>
+                {pkg.review_deadline && (
+                  <p className={pkg.overdue ? styles.overdue : undefined}>
+                    Deadline {formatDate(pkg.review_deadline)} ·{" "}
+                    {deadlineLabel(pkg.review_deadline)}
+                  </p>
+                )}
+                <p>
+                  {pkg.review_progress?.requested > 0
+                    ? `${pkg.review_progress.percent}% reviewed (${pkg.review_progress.reviewed}/${pkg.review_progress.requested})`
+                    : `${pkg.items_count} item(s)`}
+                </p>
+                <Link
+                  to={`/wine-packages/${pkg.id}`}
+                  className="wine-btn wine-btn--ghost"
+                >
+                  Open package
+                </Link>
               </article>
             ))}
           </div>
