@@ -80,6 +80,13 @@ export function createTradeApi(request: ApiRequester) {
     getPackage(id: string | number) {
       return request<TradePackage>(`/trade/packages/${id}`, { auth: true })
     },
+    /** Links an unclaimed guest submission to the signed-in account (by email). */
+    claimPackage(id: string | number) {
+      return request<TradePackage>(`/trade/packages/${id}/claim`, {
+        method: "POST",
+        auth: true,
+      })
+    },
     getGuestPackage(token: string) {
       return request<TradePackage>(`/trade/guest_packages/${encodeURIComponent(token)}`)
     },

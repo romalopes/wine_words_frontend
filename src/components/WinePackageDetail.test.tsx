@@ -324,7 +324,7 @@ describe("WinePackageDetail", () => {
     ).toHaveLength(1);
   });
 
-  it("scopes the add-wine line form to the package's producer", async () => {
+  it("offers a global catalogue search when adding a wine line", async () => {
     const user = userEvent.setup();
     renderDetail();
 
@@ -332,35 +332,31 @@ describe("WinePackageDetail", () => {
       await screen.findByRole("button", { name: "+ Add a wine" }),
     );
 
-    // The picker lists one producer's catalogue on mount, so the reviewer
-    // chooses a bottle instead of typing a wine name.
-    await waitFor(() =>
-      expect(winesApi.search).toHaveBeenCalledWith({ producerId: 3 }),
-    );
-    expect(await screen.findByText(/Wines from/i)).toHaveTextContent(
-      /Wines from Penfolds/,
-    );
+    // Editorial users can resolve a line to a wine from ANY producer, so the
+    // picker searches the whole catalogue rather than the package's producer.
+    await waitFor(() => expect(winesApi.search).toHaveBeenCalledWith({}));
+    expect(
+      await screen.findByText(/Search wines \(all producers\)/i),
+    ).toBeInTheDocument();
   });
 
-  it("scopes the edit-line form to the package's producer too", async () => {
+  it("offers the same global search when editing a line", async () => {
     const user = userEvent.setup();
     renderDetail();
 
     await screen.findByText("Grange 2018");
     const table = screen.getByRole("table");
     // The second row is the matched line (it carries a vintage_id), so the
-    // picker — and therefore the producer scope — is visible.
+    // picker — and therefore the catalogue search — is visible.
     const editButtons = within(table).getAllByRole("button", { name: "Edit" });
     const matchedEdit = editButtons[1];
     if (!matchedEdit) throw new Error("the matched line has no Edit button");
     await user.click(matchedEdit);
 
-    await waitFor(() =>
-      expect(winesApi.search).toHaveBeenCalledWith({ producerId: 3 }),
-    );
-    expect(await screen.findByText(/Wines from/i)).toHaveTextContent(
-      /Wines from Penfolds/,
-    );
+    await waitFor(() => expect(winesApi.search).toHaveBeenCalledWith({}));
+    expect(
+      await screen.findByText(/Search wines \(all producers\)/i),
+    ).toBeInTheDocument();
   });
 
   it("creates the review through the package endpoint with the full form", async () => {

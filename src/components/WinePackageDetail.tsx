@@ -16,6 +16,7 @@ import { formatDate, formatDateTime, deadlineLabel } from "../utils/dates";
 import PackageStatusBadge from "./PackageStatusBadge";
 import DetailHero from "./DetailHero";
 import WinePackageItemForm from "./WinePackageItemForm";
+import WinePackageForm from "./WinePackageForm";
 import ReviewForm from "./ReviewForm";
 import ShipmentTrackingPanel from "./ShipmentTrackingPanel";
 import ImageManager from "./ImageManager";
@@ -58,6 +59,13 @@ function WinePackageDetail() {
   const [timeline, setTimeline] = useState<WinePackageTimelineEvent[]>([]);
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
+  // Inline "Edit package details" (the form previously only on /edit).
+  const [showEditDetails, setShowEditDetails] = useState(false);
+  // Trade-chain status moves (mirrors /admin/trade/packages assessment).
+  const [tradeDecision, setTradeDecision] = useState<"" | "approve" | "reject">("");
+  const [tradeReason, setTradeReason] = useState("");
+  const [tradeBusy, setTradeBusy] = useState(false);
+  const [tradeError, setTradeError] = useState<string | null>(null);
 
   // Editorial assessment state.
   const [assessing, setAssessing] = useState(false);
@@ -217,6 +225,38 @@ function WinePackageDetail() {
   const canCreateReview = Boolean(can.create_review);
   const producerMode = pkg.source === "producer_request" && !canCreateReview;
 
+  // Trade submissions move through the trade chain (assess → quote → …). The
+  // editorial buttons above do not apply, so surface the same assessment
+  // action the trade admin queue offers, right here.
+  async function runTradeAssessment() {
+    if (!tradeDecision) return;
+    const current = pkg;
+    if (!current) return;
+    const items = current.items ?? [];
+    setTradeBusy(true);
+    setTradeError(null);
+    try {
+      const decisions: Record<string, "approved" | "rejected"> = {};
+      items.forEach((item) => {
+        decisions[item.id.toString()] =
+          tradeDecision === "approve" ? "approved" : "rejected";
+      });
+      await tradeApi.assessPackage(current.id, {
+        decisions,
+        reason: tradeReason,
+      });
+      setTradeDecision("");
+      setTradeReason("");
+      load();
+    } catch (err) {
+      setTradeError(
+        err instanceof Error ? err.message : "Unable to record assessment",
+      );
+    } finally {
+      setTradeBusy(false);
+    }
+  }
+
   const progress: ReviewProgress = (pkg.review_progress as
     | ReviewProgress
     | undefined) || {
@@ -240,12 +280,13 @@ function WinePackageDetail() {
         title={pkg.producer_name || `Package #${pkg.id}`}
         actions={
           canEdit ? (
-            <Link
-              to={`/wine-packages/${pkg.id}/edit`}
+            <button
+              type="button"
               className="wine-btn wine-btn--secondary wine-btn--sm"
+              onClick={() => setShowEditDetails((open) => !open)}
             >
-              Edit package
-            </Link>
+              {showEditDetails ? "Close editor" : "Edit package"}
+            </button>
           ) : undefined
         }
       >
@@ -268,6 +309,18 @@ function WinePackageDetail() {
             : ""}
         </p>
       </DetailHero>
+
+      {showEditDetails && (
+        <WinePackageForm
+          packageId={pkg.id}
+          embedded
+          onSaved={() => {
+            setShowEditDetails(false);
+            load();
+          }}
+          onCancel={() => setShowEditDetails(false)}
+        />
+      )}
 
       {(pkg.status === "rejected" && pkg.rejection_reason) ||
       pkg.producer_reference ||
@@ -624,6 +677,72 @@ function WinePackageDetail() {
         </form>
       )}
 
+      {/* Trade submissions move through the trade chain, not the editorial
+          buttons above — offer the same assessment action the trade admin
+          queue uses, so status can be changed from this page too. */}
+      {pkg.source === "trade_submission" &&
+        canManageAllPackages(user) &&
+        (pkg.status === "editorial_pending" ||
+          pkg.status === "partially_approved") && (
+        <div className={tradeStyles.card}>
+          <h2>Editorial assessment</h2>
+          <p className={tradeStyles.muted}>
+            Apply the Wine Words decision for this submission — identical to the
+            trade admin queue.
+          </p>
+          {tradeError && <div className={styles.error}>{tradeError}</div>}
+          <div
+            className={tradeStyles.actions}
+            style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}
+          >
+            <label className={styles.checkboxField}>
+              <input
+                type="radio"
+                name={`trade-decision-${pkg.id}`}
+                checked={tradeDecision === "approve"}
+                onChange={() => setTradeDecision("approve")}
+              />
+              Approve submission (all wines approved)
+            </label>
+            <label className={styles.checkboxField}>
+              <input
+                type="radio"
+                name={`trade-decision-${pkg.id}`}
+                checked={tradeDecision === "reject"}
+                onChange={() => setTradeDecision("reject")}
+              />
+              Reject submission
+            </label>
+            {tradeDecision === "reject" && (
+              <textarea
+                rows={3}
+                placeholder="Reason (required for rejection)"
+                value={tradeReason}
+                onChange={(event) => setTradeReason(event.target.value)}
+              />
+            )}
+            <div>
+              <button
+                type="button"
+                className="wine-btn wine-btn--primary"
+                disabled={
+                  tradeBusy ||
+                  !tradeDecision ||
+                  (tradeDecision === "reject" && !tradeReason.trim())
+                }
+                onClick={runTradeAssessment}
+              >
+                {tradeBusy
+                  ? "Processing…"
+                  : tradeDecision === "approve"
+                    ? "Approve submission"
+                    : "Reject submission"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={tradeStyles.card}>
         <h2>Wines in this package</h2>
 
@@ -742,8 +861,8 @@ function WinePackageDetail() {
                   <WinePackageItemForm
                     packageId={pkg.id}
                     item={editing}
-                    producerId={pkg.producer_id ?? null}
-                    producerName={pkg.producer_name ?? null}
+                    packageProducerId={pkg.producer_id ?? null}
+                    packageProducerName={pkg.producer_name ?? null}
                     producerMode={producerMode}
                     onSaved={() => {
                       setEditingItem(null);
@@ -788,8 +907,8 @@ function WinePackageDetail() {
             {showAddItem ? (
               <WinePackageItemForm
                 packageId={pkg.id}
-                producerId={pkg.producer_id ?? null}
-                producerName={pkg.producer_name ?? null}
+                packageProducerId={pkg.producer_id ?? null}
+                packageProducerName={pkg.producer_name ?? null}
                 producerMode={producerMode}
                 onSaved={() => {
                   setShowAddItem(false);

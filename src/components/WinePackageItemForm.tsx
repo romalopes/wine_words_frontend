@@ -1,18 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { winesApi, winePackageItemsApi } from "../services/api";
+import { winesApi, vintagesApi, winePackageItemsApi } from "../services/api";
 import type { WinePackageItemWritePayload } from "../types/api";
-import type { Vintage, Wine, WineListItem } from "../types/wine";
+import type { WineListItem } from "../types/wine";
 import { errorMessage } from "../utils/errors";
 import InlineVintageCreateForm from "./InlineVintageCreateForm";
 import InlineWineCreateForm from "./InlineWineCreateForm";
 import styles from "./winePackages.module.css";
 
-/**
- * The subset of a package line this form reads and writes. `WinePackageItem`
- * carries an open index signature, so these fields are declared explicitly here
- * rather than read off that type.
- */
 interface PackageItemDraft {
   id: number;
   vintage_id?: number | null;
@@ -22,16 +17,11 @@ interface PackageItemDraft {
   notes?: string | null;
   proposed_wine_name?: string | null;
   proposed_vintage_year?: number | null;
+  resolution_status?: string;
 }
 
-/** Which create-panel currently replaces this form. */
 type CreatePanel = "wine" | "vintage";
 
-/**
- * Editable line fields. `quantity` is a number on first render (taken from the
- * line) and a string once the reviewer types, hence the union — the input needs
- * a string and `Number()` normalises it on submit.
- */
 interface ItemFormState {
   quantity: string | number;
   review_requested: boolean;
@@ -41,35 +31,32 @@ interface ItemFormState {
 
 interface WinePackageItemFormProps {
   packageId: number | string;
-  /** Present when editing an existing line, absent when adding a new one. */
   item?: PackageItemDraft;
+  /** The package's primary producer (reference only — items may use any producer). */
+  packageProducerId?: number | string | null;
+  packageProducerName?: string | null;
+  /** Legacy aliases kept so existing call sites keep working. */
   producerId?: number | string | null;
   producerName?: string | null;
   onSaved: (saved: Awaited<ReturnType<typeof winePackageItemsApi.create>>) => void;
   onCancel: () => void;
-  /** Producer users are restricted to this package's producer catalogue. */
   producerMode?: boolean;
 }
 
-// Add or edit one wine line inside a package.
-//
-// The package's producer decides the catalogue on offer: the line lists that
-// producer's wines and their vintages, so the reviewer picks a bottle instead of
-// guessing a wine name. A wine or a vintage we have never recorded can be added
-// right here (a new wine is created together with its first vintage), and the
-// unmatched fallback stays for a bottle nobody can identify yet.
-//
-// We review a vintage of a wine — never a wine — so any line that is not
-// unmatched carries a vintage_id.
 function WinePackageItemForm({
   packageId,
   item,
+  packageProducerId,
+  packageProducerName,
   producerId,
   producerName,
   onSaved,
   onCancel,
   producerMode = false,
 }: WinePackageItemFormProps) {
+  // Accept either the new or legacy prop names for the package producer.
+  const ownerProducerId = packageProducerId ?? producerId ?? null;
+  const ownerProducerName = packageProducerName ?? producerName ?? null;
   const [wines, setWines] = useState<WineListItem[]>([]);
   const [loadingWines, setLoadingWines] = useState(false);
   const [filter, setFilter] = useState("");
@@ -78,394 +65,424 @@ function WinePackageItemForm({
     item?.vintage_id ? String(item.vintage_id) : "",
   );
   const [panel, setPanel] = useState<CreatePanel | null>(null);
-  // A line that exists but has no vintage is the "not in the catalogue yet" case.
-  const [unmatched, setUnmatched] = useState(
-    item !== undefined && !item.vintage_id,
-  );
-  const [proposedName, setProposedName] = useState(item?.proposed_wine_name || "");
-  const [proposedYear, setProposedYear] = useState(
-    item?.proposed_vintage_year ? String(item.proposed_vintage_year) : "",
-  );
+  // Track if vintage was manually selected by user
+  const [vintageManuallySet, setVintageManuallySet] = useState(false);
+
+  const isUnmatched = !wineId && !vintageId;
+
+  const originalProposedName = item?.proposed_wine_name || "";
+  const originalProposedYear = item?.proposed_vintage_year
+    ? String(item.proposed_vintage_year)
+    : "";
+
+  const [proposedName, setProposedName] = useState(originalProposedName);
+  const [proposedYear, setProposedYear] = useState(originalProposedYear);
   const [form, setForm] = useState<ItemFormState>({
-    quantity: item?.quantity ?? 1,
-    review_requested: item?.review_requested ?? true,
+    quantity: item?.quantity ? String(item.quantity) : "1",
+    review_requested: item?.review_requested ?? false,
     condition: item?.condition || "",
     notes: item?.notes || "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const editing = item !== undefined;
+  const packageProducerIdNum = ownerProducerId ? Number(ownerProducerId) : null;
 
-  const editing = Boolean(item);
+  // Debounced search timer + guards so a stale response never replaces a newer one.
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const firstSearchRef = useRef(true);
+  const requestIdRef = useRef(0);
 
-  const selectedWine = useMemo(
-    () => wines.find((candidate) => String(candidate.id) === wineId) || null,
-    [wines, wineId],
-  );
+  // Runs a server-side catalogue search. The query is only sent when the user
+  // has typed something, so an empty box never replaces the producer listing.
+  function loadWines(query: string) {
+    const requestId = ++requestIdRef.current;
+    setLoadingWines(true);
+    const params: Record<string, string | number> = {};
+    if (query.trim()) params.q = query.trim();
+    if (producerMode && packageProducerIdNum) params.producerId = packageProducerIdNum;
+    Promise.resolve(winesApi.search(params))
+      .then((data) => {
+        if (requestId === requestIdRef.current) setWines(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (requestId === requestIdRef.current) setError(errorMessage(err, "Failed to load wines"));
+      })
+      .finally(() => {
+        if (requestId === requestIdRef.current) setLoadingWines(false);
+      });
+  }
 
-  const visibleWines = useMemo(() => {
-    const needle = filter.trim().toLowerCase();
-    if (!needle) return wines;
-    return wines.filter((candidate) => candidate.name.toLowerCase().includes(needle));
-  }, [wines, filter]);
-
-  // Load this producer's catalogue once; the reviewer filters it locally.
+  // Load the initial catalogue once (the producer's list in producer mode).
   useEffect(() => {
-    if (!producerId) return undefined;
+    loadWines("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [producerMode, packageProducerIdNum]);
 
-    // Captured as a const so the narrowing above survives into `load`, which
-    // TS does not carry into a closure for a reassignable parameter binding.
-    const ownerProducerId = producerId;
-    let cancelled = false;
-
-    async function load() {
-      setLoadingWines(true);
-      try {
-        const data = await winesApi.search({ producerId: ownerProducerId });
-        if (!cancelled) setWines(Array.isArray(data) ? data : []);
-      } catch (err) {
-        if (!cancelled) {
-          setError(errorMessage(err, "Could not load this producer's wines"));
-        }
-      } finally {
-        if (!cancelled) setLoadingWines(false);
-      }
+  // Debounced server-side search whenever the filter text changes. The first
+  // run is skipped because the mount effect above already loaded the catalogue.
+  useEffect(() => {
+    if (firstSearchRef.current) {
+      firstSearchRef.current = false;
+      return;
     }
-
-    load();
-
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => loadWines(filter), 300);
     return () => {
-      cancelled = true;
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
-  }, [producerId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, producerMode, packageProducerIdNum]);
 
-  // An edited line arrives without its wine, so recover it from the vintage.
+  // Editing: recover the wine from the item's vintage once the list is loaded.
   useEffect(() => {
-    const targetVintageId = item?.vintage_id;
-    if (!targetVintageId || wineId || wines.length === 0) return;
-
+    if (wineId !== "" || !item?.vintage_id || wines.length === 0) return;
+    const targetVintage = String(item.vintage_id);
     const owner = wines.find((candidate) =>
-      (candidate.vintages || []).some(
-        (vintage) => String(vintage.id) === String(targetVintageId),
-      ),
+      (candidate.vintages || []).some((v) => String(v.id) === targetVintage),
     );
-
     if (owner) {
       setWineId(String(owner.id));
-      setUnmatched(false);
+      setVintageId(targetVintage);
+      setVintageManuallySet(true);
     }
   }, [wines, item, wineId]);
 
-  function updateField<K extends keyof ItemFormState>(
-    key: K,
-    value: ItemFormState[K],
-  ) {
-    setForm((current) => ({ ...current, [key]: value }));
+  // Preselect a sensible vintage when a wine is chosen (unless the user picked one).
+  useEffect(() => {
+    if (vintageManuallySet || wineId === "") return;
+    const wine = wines.find((w) => String(w.id) === wineId);
+    if (!wine?.vintages?.length) {
+      setVintageId("");
+      return;
+    }
+    const match = proposedYear
+      ? wine.vintages.find((v) => String(v.year) === proposedYear)
+      : undefined;
+    const sorted = [...wine.vintages].sort((a, b) => (b.year || 0) - (a.year || 0));
+    const chosen = match ?? sorted[0];
+    if (chosen) setVintageId(String(chosen.id));
+  }, [wineId, wines, proposedYear, vintageManuallySet]);
+
+  function updateField(key: keyof ItemFormState, value: string | number | boolean) {
+    setForm((c) => ({ ...c, [key]: value }));
   }
 
-  function vintageLabel(vintage: Vintage): string {
-    return vintage.no_vintage
-      ? `NV (${vintage.year ?? ""})`
-      : String(vintage.year);
+  function handleVintageSelectChange(event: { target: { value: string } }) {
+    setVintageId(event.target.value);
+    setVintageManuallySet(true);
   }
 
-  function chooseWine(nextId: string) {
-    setWineId(nextId);
-    setUnmatched(false);
-
-    const next = wines.find((candidate) => String(candidate.id) === nextId);
-    // Preselect the newest vintage; the reviewer can change it.
-    const first = next?.vintages?.[0];
-    setVintageId(first ? String(first.id) : "");
-  }
-
-  function handleVintageCreated(vintage: Vintage) {
-    setPanel(null);
+  // Add the freshly created vintage to the loaded wine so the dropdown shows it
+  // immediately (no full reload, and the value can be selected straight away).
+  function handleVintageCreated(created: Awaited<ReturnType<typeof vintagesApi.create>>) {
     setWines((current) =>
-      current.map((candidate) =>
-        String(candidate.id) === wineId
-          ? { ...candidate, vintages: [...(candidate.vintages || []), vintage] }
-          : candidate,
+      current.map((wine) =>
+        String(wine.id) === wineId
+          ? { ...wine, vintages: [...(wine.vintages || []), created] }
+          : wine,
       ),
     );
-    setVintageId(String(vintage.id));
+    setVintageId(String(created.id));
+    setVintageManuallySet(true);
+    setPanel(null);
   }
 
-  function handleWineCreated({
-    wine,
-    vintageId: createdVintageId,
-  }: {
-    wine: Wine;
+  function handleWineCreated(result: {
+    wine: Awaited<ReturnType<typeof winesApi.create>>;
     vintageId: number;
   }) {
+    setWines((current) => {
+      const created = {
+        ...result.wine,
+        vintages: result.wine.vintages || [],
+      };
+      const exists = current.some((wine) => wine.id === created.id);
+      return exists
+        ? current.map((wine) => (wine.id === created.id ? created : wine))
+        : [created, ...current];
+    });
+    setWineId(String(result.wine.id));
+    setVintageId(String(result.vintageId));
+    setVintageManuallySet(true);
     setPanel(null);
-    setFilter("");
-    setWines((current) =>
-      [...current.filter((candidate) => candidate.id !== wine.id), wine].sort(
-        (a, b) => a.name.localeCompare(b.name),
-      ),
-    );
-    setWineId(String(wine.id));
-    setVintageId(String(createdVintageId));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (producerMode && isUnmatched && !proposedName.trim()) {
+      setError("Enter the wine name when it is not in the catalogue yet.");
+      return;
+    }
+    if (!producerMode && isUnmatched) {
+      setError("Select a wine and vintage from the catalogue.");
+      return;
+    }
+    const payload: WinePackageItemWritePayload = {
+      quantity: Number(form.quantity),
+      review_requested: form.review_requested,
+      condition: form.condition || null,
+      notes: form.notes || null,
+    };
+    if (isUnmatched) {
+      payload.proposed_wine_name = proposedName || null;
+      payload.proposed_vintage_year = proposedYear ? Number(proposedYear) : null;
+    } else {
+      payload.vintage_id = Number(vintageId);
+    }
     setSaving(true);
     setError(null);
-
     try {
-      const payload: WinePackageItemWritePayload = {
-        quantity: Number(form.quantity) || 1,
-        review_requested: Boolean(form.review_requested),
-        condition: form.condition || null,
-        notes: form.notes || null,
-      };
-
-      if (unmatched) {
-        payload.vintage_id = null;
-        if (producerMode) {
-          if (!proposedName.trim()) {
-            setError("Enter the wine name when it is not in the catalogue yet.");
-            setSaving(false);
-            return;
-          }
-          payload.proposed_wine_name = proposedName.trim();
-          payload.proposed_vintage_year = proposedYear ? Number(proposedYear) : null;
-        }
-      } else if (vintageId) {
-        payload.vintage_id = Number(vintageId);
-      } else if (!editing) {
-        setError(
-          "Pick a wine and a vintage, or mark the line as not in the catalogue yet.",
-        );
-        setSaving(false);
-        return;
-      }
-
-      const saved =
-        item && editing
-          ? await winePackageItemsApi.update(packageId, item.id, payload)
-          : await winePackageItemsApi.create(packageId, payload);
-
+      const saved = editing
+        ? await winePackageItemsApi.update(packageId, item.id, payload)
+        : await winePackageItemsApi.create(packageId, payload);
       onSaved(saved);
     } catch (err) {
-      setError(errorMessage(err, "Failed to save this wine line"));
+      setError(errorMessage(err, "Failed to save line"));
       setSaving(false);
     }
   }
 
-  // Creating a wine or a vintage takes over this form: both panels post their own
-  // request, so they must not be nested inside the line's <form> element.
-  if (panel === "wine") {
-    return (
-      <InlineWineCreateForm
-        producerId={producerId ?? null}
-        producerName={producerName}
-        defaultName={filter.trim()}
-        onCreated={handleWineCreated}
-        onCancel={() => setPanel(null)}
-      />
-    );
-  }
+  const selectedWine = wines.find((w) => String(w.id) === wineId);
+  const selectedVintage = selectedWine?.vintages?.find((v) => String(v.id) === vintageId);
+  // Keep the selected wine in the list even when a new search no longer returns
+  // it, so a search never silently clears an existing selection.
+  const wineOptions =
+    selectedWine && !wines.some((wine) => wine.id === selectedWine.id)
+      ? [selectedWine, ...wines]
+      : wines;
 
-  if (panel === "vintage") {
-    return (
-      <InlineVintageCreateForm
-        wine={selectedWine}
-        onCreated={handleVintageCreated}
-        onCancel={() => setPanel(null)}
-      />
-    );
-  }
-
+  // The line form and the create panels are siblings, never nested: the create
+  // panels post their own request and must stay visible next to the wine fields.
   return (
-    <form className={styles.inlineForm} onSubmit={handleSubmit}>
-      {error && <p className="wine-management__error">{error}</p>}
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <form
+        className={`${styles.inlineForm} ${styles.lineForm}`}
+        onSubmit={handleSubmit}
+      >
+        {error && (
+          <p className={`wine-management__error ${styles.spanFull}`}>{error}</p>
+        )}
 
-      {!unmatched && (
-        <>
-          <p className={styles.cellMuted}>
-            Wines from <strong>{producerName || "this producer"}</strong>. Pick the wine
-            and then the vintage that arrived — we review a vintage of a wine.
+        {producerMode === true && ownerProducerName && (
+          <p className={`${styles.cellMuted} ${styles.spanFull}`}>
+            Catalogue limited to <strong>{ownerProducerName}</strong>.
           </p>
+        )}
 
-          <div className={styles.filterField} style={{ flex: "1 1 12rem" }}>
-            <label htmlFor="item-wine-filter">Filter wines</label>
+        {producerMode === false && (
+          <div className={`${styles.filterField} ${styles.spanSearch}`}>
+            <label htmlFor="item-wine-filter">Search wines (all producers)</label>
             <input
               id="item-wine-filter"
-              type="search"
-              placeholder="Start typing a wine name…"
+              type="text"
+              placeholder="Type to search..."
               value={filter}
               onChange={(event) => setFilter(event.target.value)}
             />
-          </div>
-
-          <div className={styles.filterField} style={{ flex: "1 1 14rem" }}>
-            <label htmlFor="item-wine">Wine</label>
-            <select
-              id="item-wine"
-              value={wineId}
-              disabled={loadingWines || visibleWines.length === 0}
-              onChange={(event) => chooseWine(event.target.value)}
-            >
-              <option value="">
-                {loadingWines
-                  ? "Loading…"
-                  : visibleWines.length === 0
-                    ? "No wines to pick"
-                    : "Select a wine…"}
-              </option>
-              {visibleWines.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {candidate.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {selectedWine && (selectedWine.vintages || []).length > 0 && (
-            <div className={styles.filterField}>
-              <label htmlFor="item-vintage">Vintage</label>
-              <select
-                id="item-vintage"
-                required
-                value={vintageId}
-                onChange={(event) => setVintageId(event.target.value)}
-              >
-                {(selectedWine.vintages || []).map((vintage) => (
-                  <option key={vintage.id} value={vintage.id}>
-                    {vintageLabel(vintage)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {!loadingWines && wines.length === 0 && (
-            <p className={styles.cellMuted}>
-              {producerName || "This producer"} has no wines in the catalogue yet — add
-              the first one below.
-            </p>
-          )}
-
-          {selectedWine && (selectedWine.vintages || []).length === 0 && (
-            <p className={styles.cellMuted}>
-              <strong>{selectedWine.name}</strong> has no vintages recorded yet — add the
-              vintage that arrived.
-            </p>
-          )}
-
-          <div className={styles.inlineFormActions}>
-            {selectedWine && (
-              <button
-                type="button"
-                className="wine-btn wine-btn--secondary"
-                onClick={() => setPanel("vintage")}
-              >
-                Add a vintage
-              </button>
+            {loadingWines && (
+              <span className={styles.cellMuted}>Searching the catalogue...</span>
             )}
+          </div>
+        )}
+
+        {producerMode === false && (
+          <div className={`${styles.inlineFormActions} ${styles.spanActions}`}>
             <button
               type="button"
               className="wine-btn wine-btn--secondary"
-              onClick={() => setPanel("wine")}
+              onClick={() => setPanel(panel === "vintage" ? null : "vintage")}
+              disabled={wineId === "" || saving}
             >
-              Add a new wine
+              {panel === "vintage" ? "Close vintage form" : "Add a vintage"}
+            </button>
+            <button
+              type="button"
+              className="wine-btn wine-btn--secondary"
+              onClick={() => setPanel(panel === "wine" ? null : "wine")}
+            >
+              {panel === "wine" ? "Close new wine form" : "Add a new wine"}
             </button>
           </div>
-        </>
-      )}
+        )}
 
-      <label className={styles.checkboxField} htmlFor="item-unmatched">
-        <input
-          id="item-unmatched"
-          type="checkbox"
-          checked={unmatched}
-          onChange={(event) => {
-            setUnmatched(event.target.checked);
-            if (event.target.checked) setVintageId("");
-          }}
-        />
-        Not in the catalogue yet
-      </label>
-
-      {unmatched && producerMode && (
-        <div className={styles.filters}>
-          <div className={styles.filterField}>
-            <label htmlFor="item-proposed-name">Wine name</label>
-            <input
-              id="item-proposed-name"
-              type="text"
-              required
-              value={proposedName}
-              onChange={(event) => setProposedName(event.target.value)}
-            />
-          </div>
-          <div className={styles.filterField}>
-            <label htmlFor="item-proposed-year">Vintage year (optional)</label>
-            <input
-              id="item-proposed-year"
-              type="number"
-              min="1900"
-              max={new Date().getFullYear() + 2}
-              value={proposedYear}
-              onChange={(event) => setProposedYear(event.target.value)}
-            />
-          </div>
+        <div className={`${styles.filterField} ${styles.spanWine}`}>
+          <label htmlFor="item-wine-select">
+            {producerMode ? "Wine (package producer)" : "Wine"}
+          </label>
+          <select
+            id="item-wine-select"
+            value={wineId}
+            onChange={(event) => {
+              setWineId(event.target.value);
+              setVintageManuallySet(false);
+            }}
+          >
+            <option value="">Select a wine...</option>
+            {wineOptions.map((wine) => (
+              <option key={wine.id} value={String(wine.id)}>
+                {wine.name} -- {wine.producer?.name || "Unknown producer"}
+              </option>
+            ))}
+          </select>
         </div>
+
+        <div className={`${styles.filterField} ${styles.spanVintage}`}>
+          <label htmlFor="item-vintage-select">Vintage</label>
+          <select
+            id="item-vintage-select"
+            value={vintageId}
+            onChange={handleVintageSelectChange}
+          >
+            <option value="">Select a vintage...</option>
+            {selectedWine?.vintages?.map((vintage) => (
+              <option key={vintage.id} value={String(vintage.id)}>
+                {vintage.no_vintage ? "NV" : vintage.year}
+              </option>
+            ))}
+          </select>
+        </div>
+        {isUnmatched && (
+          <div className={`${styles.unmatchedInfo} ${styles.spanFull}`}>
+            <p className={styles.unmatchedLabel}>
+              {producerMode
+                ? "Proposed wine (not in catalogue yet)"
+                : "Unmatched -- select a wine from the catalogue"}
+            </p>
+            {originalProposedName && (
+              <p className={styles.referenceValue}>
+                <strong>Submitted wine:</strong> {originalProposedName}
+                {originalProposedYear && <span> ({originalProposedYear})</span>}
+              </p>
+            )}
+          </div>
+        )}
+
+        {isUnmatched && producerMode && (
+          <>
+            <div className={`${styles.filterField} ${styles.spanProposedName}`}>
+              <label htmlFor="item-proposed-name">Wine name *</label>
+              <input
+                id="item-proposed-name"
+                type="text"
+                required
+                value={proposedName}
+                onChange={(event) => setProposedName(event.target.value)}
+                placeholder="e.g. Estate Shiraz"
+              />
+            </div>
+            <div className={`${styles.filterField} ${styles.spanProposedYear}`}>
+              <label htmlFor="item-proposed-year">Vintage year (optional)</label>
+              <input
+                id="item-proposed-year"
+                type="number"
+                min="1900"
+                max={new Date().getFullYear() + 2}
+                value={proposedYear}
+                onChange={(event) => setProposedYear(event.target.value)}
+                placeholder="2024"
+              />
+            </div>
+          </>
+        )}
+
+        {wineId !== "" && (
+          <div className={`${styles.wineInfo} ${styles.spanFull}`}>
+            <p className={styles.wineInfoLabel}>
+              <strong>Selected:</strong> {selectedWine?.name}
+              {selectedWine?.producer?.name && (
+                <span> -- {selectedWine.producer.name}</span>
+              )}
+              {selectedVintage && (
+                <span> {selectedVintage.no_vintage ? "NV" : selectedVintage.year}</span>
+              )}
+            </p>
+            {originalProposedName && (
+              <p className={styles.referenceValue}>
+                <strong>Submitted wine:</strong> {originalProposedName}
+                {originalProposedYear && <span> ({originalProposedYear})</span>}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className={`${styles.filterField} ${styles.spanBottles}`}>
+          <label htmlFor="item-quantity">Bottles</label>
+          <input
+            id="item-quantity"
+            type="number"
+            min="1"
+            value={form.quantity}
+            onChange={(event) => updateField("quantity", event.target.value)}
+          />
+        </div>
+
+        <div className={`${styles.filterField} ${styles.spanCondition}`}>
+          <label htmlFor="item-condition">Condition</label>
+          <input
+            id="item-condition"
+            type="text"
+            placeholder="sealed, damaged label..."
+            value={form.condition}
+            onChange={(event) => updateField("condition", event.target.value)}
+          />
+        </div>
+
+        <div className={`${styles.filterField} ${styles.spanNotes}`}>
+          <label htmlFor="item-notes">Notes</label>
+          <input
+            id="item-notes"
+            type="text"
+            value={form.notes}
+            onChange={(event) => updateField("notes", event.target.value)}
+          />
+        </div>
+
+        <label
+          className={`${styles.checkboxField} ${styles.spanFull}`}
+          htmlFor="item-review-requested"
+        >
+          <input
+            id="item-review-requested"
+            type="checkbox"
+            checked={form.review_requested}
+            onChange={(event) => updateField("review_requested", event.target.checked)}
+          />
+          Review requested
+        </label>
+
+        <div className={`${styles.inlineFormActions} ${styles.spanFull}`}>
+          <button
+            type="submit"
+            className="wine-btn wine-btn--primary wine-btn--lg"
+            disabled={saving}
+          >
+            {saving ? "Saving..." : editing ? "Save Line" : "Add Line"}
+          </button>
+          <button type="button" className="wine-btn wine-btn--secondary" onClick={onCancel}>
+            Cancel
+          </button>
+        </div>
+      </form>
+
+      {panel === "vintage" && (
+        <InlineVintageCreateForm
+          wine={{ slug: selectedWine?.slug || null, name: selectedWine?.name || null }}
+          defaultYear={proposedYear || String(new Date().getFullYear())}
+          onCreated={handleVintageCreated}
+          onCancel={() => setPanel(null)}
+        />
       )}
 
-      <div className={styles.filterField}>
-        <label htmlFor="item-quantity">Bottles</label>
-        <input
-          id="item-quantity"
-          type="number"
-          min="1"
-          value={form.quantity}
-          onChange={(event) => updateField("quantity", event.target.value)}
+      {panel === "wine" && (
+        <InlineWineCreateForm
+          defaultName={proposedName}
+          defaultVintageYear={proposedYear}
+          onCreated={handleWineCreated}
+          onCancel={() => setPanel(null)}
         />
-      </div>
-
-      <label className={styles.checkboxField} htmlFor="item-review-requested">
-        <input
-          id="item-review-requested"
-          type="checkbox"
-          checked={form.review_requested}
-          onChange={(event) => updateField("review_requested", event.target.checked)}
-        />
-        Review requested
-      </label>
-
-      <div className={styles.filterField}>
-        <label htmlFor="item-condition">Condition</label>
-        <input
-          id="item-condition"
-          type="text"
-          placeholder="sealed, damaged label…"
-          value={form.condition}
-          onChange={(event) => updateField("condition", event.target.value)}
-        />
-      </div>
-
-      <div className={styles.filterField} style={{ flex: "1 1 14rem" }}>
-        <label htmlFor="item-notes">Notes</label>
-        <input
-          id="item-notes"
-          type="text"
-          value={form.notes}
-          onChange={(event) => updateField("notes", event.target.value)}
-        />
-      </div>
-
-      <div className={styles.inlineFormActions}>
-        <button type="submit" className="wine-btn wine-btn--primary wine-btn--lg" disabled={saving}>
-          {saving ? "Saving…" : editing ? "Save Line" : "Add Line"}
-        </button>
-        <button type="button" className="wine-btn wine-btn--secondary" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    </form>
+      )}
+    </div>
   );
 }
 

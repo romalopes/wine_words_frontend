@@ -218,7 +218,21 @@ export default function TradeAdminPackageDetail() {
             <tbody>
               {pkg.items.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.wine_name}</td>
+                  <td>
+                    {item.wine_name}
+                    {/* Only reconcile when there was an original submission;
+                        lines the team added from the catalogue have no
+                        snapshot to match against. */}
+                    {item.submitted && item.catalogue_wine_name && (
+                      <div className={styles.muted}>
+                        Matched to <strong>{item.catalogue_wine_name}</strong>
+                        {item.catalogue_producer_name
+                          ? ` — ${item.catalogue_producer_name}`
+                          : ""}
+                        {item.vintage_label ? ` (${item.vintage_label})` : ""}
+                      </div>
+                    )}
+                  </td>
                   <td>{item.vintage || "—"}</td>
                   <td>{item.quantity ?? 1}</td>
                   <td>{item.region || "—"}</td>

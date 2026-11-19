@@ -47,8 +47,10 @@ export interface TradeMessage {
 
 export interface TradePackageItem {
   id: number
+  /** The name the submitter sent. Never overwritten by a catalogue match. */
   wine_name: string
   quantity?: number
+  /** The vintage the submitter sent (snapshot). */
   vintage?: string | number | null
   region?: string | null
   appellation?: string | null
@@ -62,6 +64,22 @@ export interface TradePackageItem {
   review_progress: string
   received: boolean
   condition?: string | null
+  /** True once the Wine Words team linked this line to a catalogue wine + vintage. */
+  resolved?: boolean
+  /** True when the line came from the submitter's form (has a snapshot name). */
+  submitted?: boolean
+  /** The catalogue wine the line was resolved to (null until matched). */
+  catalogue_wine_id?: number | null
+  catalogue_wine_name?: string | null
+  catalogue_wine_slug?: string | null
+  catalogue_producer_id?: number | null
+  catalogue_producer_name?: string | null
+  catalogue_producer_slug?: string | null
+  /** The catalogue vintage the line was resolved to. */
+  vintage_id?: number | null
+  vintage_year?: number | null
+  vintage_no_vintage?: boolean | null
+  vintage_label?: string | null
 }
 
 export interface TradeQuote {

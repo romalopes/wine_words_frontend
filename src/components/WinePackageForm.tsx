@@ -12,7 +12,6 @@ import { todayInputValue } from "../utils/dates";
 import ImageManager from "./ImageManager";
 import { imagesApi } from "../services/api";
 import { errorMessage } from "../utils/errors";
-import { responseItems } from "../types/common";
 
 import styles from "./winePackages.module.css";
 import ProducerWinePackageForm from "./ProducerWinePackageForm";
@@ -80,10 +79,25 @@ interface PackageFormState {
 // the review clock and schedules the deadline reminders on the backend. On edit
 // the status and source are intentionally not editable: they belong to the
 // workflow actions on the detail page.
-function WinePackageForm() {
-  const { id } = useParams<{ id: string }>();
+interface WinePackageFormProps {
+  /** Embed the form on another page (detail view) with an explicit package id. */
+  packageId?: string | number;
+  /** Embedded mode: no page hero/back link; success is reported via onSaved. */
+  embedded?: boolean;
+  onSaved?: () => void;
+  onCancel?: () => void;
+}
+
+function WinePackageForm({
+  packageId,
+  embedded = false,
+  onSaved,
+  onCancel,
+}: WinePackageFormProps = {}) {
+  const routeId = useParams<{ id: string }>().id;
   // Written as a comparison rather than `Boolean(id)` so TS keeps the
   // `id !== undefined` narrowing wherever `editing` is checked.
+  const id = packageId !== undefined ? String(packageId) : routeId;
   const editing = id !== undefined;
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -171,7 +185,7 @@ function WinePackageForm() {
     return () => {
       cancelled = true;
     };
-  }, [editing, id]);
+  }, [editing, id, canPickReviewer]);
 
   function updateField<K extends keyof PackageFormState>(
     key: K,
@@ -212,6 +226,11 @@ function WinePackageForm() {
         payload.review_deadline = form.review_deadline || null;
         if (canPickReviewer && reviewerId) payload.reviewer_id = Number(reviewerId);
         await winePackagesApi.update(id, payload);
+        if (embedded) {
+          // Rendered inside the detail page: the parent refreshes and closes.
+          onSaved?.();
+          return;
+        }
         navigate(`/wine-packages/${id}`);
         return;
       }
@@ -264,20 +283,35 @@ function WinePackageForm() {
 
   return (
     <div className="wine-app">
-      <Link
-        to={editing ? `/wine-packages/${id}` : "/wine-packages"}
-        className="wine-detail__back"
-      >
-        &larr; Back to Wine Packages
-      </Link>
-
-      <div className={styles.header}>
-        <div>
-          <p className="wine-kicker">Cellar</p>
-          <h1>{editing ? `Edit Package #${id}` : modeConfig.title}</h1>
-          <p className={styles.cellMuted}>{modeConfig.help}</p>
+      {embedded ? (
+        <div className={styles.header}>
+          <div>
+            <p className="wine-kicker">Cellar</p>
+            <h1>Edit package details</h1>
+            <p className={styles.cellMuted}>
+              Update the producer, dates, reviewer and notes without leaving the
+              package.
+            </p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <Link
+            to={editing ? `/wine-packages/${id}` : "/wine-packages"}
+            className="wine-detail__back"
+          >
+            &larr; Back to Wine Packages
+          </Link>
+
+          <div className={styles.header}>
+            <div>
+              <p className="wine-kicker">Cellar</p>
+              <h1>{editing ? `Edit Package #${id}` : modeConfig.title}</h1>
+              <p className={styles.cellMuted}>{modeConfig.help}</p>
+            </div>
+          </div>
+        </>
+      )}
 
       {error && <p className="wine-management__error">{error}</p>}
 
@@ -421,12 +455,22 @@ function WinePackageForm() {
           <button type="submit" className="wine-btn wine-btn--primary wine-btn--lg" disabled={saving}>
             {saving ? "Saving…" : editing ? "Save Changes" : "Create Package"}
           </button>
-          <Link
-            to={editing ? `/wine-packages/${id}` : "/wine-packages"}
-            className="wine-btn wine-btn--secondary"
-          >
-            Cancel
-          </Link>
+          {embedded && onCancel ? (
+            <button
+              type="button"
+              className="wine-btn wine-btn--secondary"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          ) : (
+            <Link
+              to={editing ? `/wine-packages/${id}` : "/wine-packages"}
+              className="wine-btn wine-btn--secondary"
+            >
+              Cancel
+            </Link>
+          )}
         </div>
       </form>
     </div>

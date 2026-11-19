@@ -124,6 +124,7 @@ function ProducerSearch({ value, onChange }: ProducerSearchProps) {
             onChange={handleInputChange}
             placeholder="Start typing a producer name…"
             autoComplete="off"
+            aria-label="Producer"
           />
           {searching && <p className="wine-management__loading">Searching…</p>}
           {error && <p className="review-form__error">{error}</p>}

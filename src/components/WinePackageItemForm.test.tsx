@@ -3,59 +3,26 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import WinePackageItemForm from "./WinePackageItemForm";
 
-// Partial mock: the real module is loaded and only the endpoints this form
-// calls are replaced, so the test cannot break when unrelated exports change.
 vi.mock("../services/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../services/api")>();
   return {
     ...actual,
     winesApi: { search: vi.fn(), create: vi.fn() },
     vintagesApi: { create: vi.fn() },
+    producersApi: { search: vi.fn(), create: vi.fn() },
     winePackageItemsApi: { create: vi.fn(), update: vi.fn(), destroy: vi.fn() },
   };
 });
 
-import { winesApi, vintagesApi, winePackageItemsApi } from "../services/api";
+import { winesApi, vintagesApi, producersApi, winePackageItemsApi } from "../services/api";
 
-// The module above replaces the endpoints this form calls with `vi.fn()`, so the
-// real signatures are preserved but the mock controls are only visible through
-// `vi.mocked`. Aliases keep the assertions below readable.
 const mockWineSearch = vi.mocked(winesApi.search);
 const mockWineCreate = vi.mocked(winesApi.create);
 const mockVintageCreate = vi.mocked(vintagesApi.create);
+const mockProducersSearch = vi.mocked(producersApi.search);
+const mockProducersCreate = vi.mocked(producersApi.create);
 const mockItemCreate = vi.mocked(winePackageItemsApi.create);
-const mockItemUpdate = vi.mocked(winePackageItemsApi.update);
 
-/**
- * `querySelector` returns `null` for a missing match. A test that cannot find
- * the element it is about to act on is a failing test, so this throws with a
- * message instead of letting `fireEvent` complain about a nullable argument.
- */
-/** The first element matching `selector` inside `root`, narrowed to `T`. */
-function query<T extends Element>(root: ParentNode, selector: string): T {
-  const found = root.querySelector<T>(selector);
-  if (!found) throw new Error(`No element matched "${selector}"`);
-  return found;
-}
-
-/**
- * The first form rendered inside `root`. Used where the form under test *is* the
- * main line form, so the nearest enclosing one is also the only one.
- */
-function firstForm(root: ParentNode): HTMLFormElement {
-  const form = root.querySelector("form");
-  if (!(form instanceof HTMLFormElement)) {
-    throw new Error("no <form> was rendered");
-  }
-  return form;
-}
-
-/**
- * The form an element sits in. Mirrors `Element.closest("form")` but narrows the
- * result to `HTMLFormElement` and fails loudly when there is no enclosing form
- * — the inline create panels each post from their own form, so the tests need
- * to submit a specific one rather than the first on the page.
- */
 function enclosingForm(element: Element): HTMLFormElement {
   const form = element.closest("form");
   if (!(form instanceof HTMLFormElement)) {
@@ -64,7 +31,6 @@ function enclosingForm(element: Element): HTMLFormElement {
   return form;
 }
 
-// The producer's catalogue, as GET /wines/search?producer_id=3 returns it.
 const PRODUCER_WINES = [
   {
     id: 1,
@@ -75,6 +41,7 @@ const PRODUCER_WINES = [
       { id: 11, year: 2018, no_vintage: false },
       { id: 12, year: 2020, no_vintage: false },
     ],
+    producer: { id: 3, name: "Penfolds", slug: "penfolds" },
   },
   {
     id: 2,
@@ -82,7 +49,25 @@ const PRODUCER_WINES = [
     slug: "bin-389",
     color: "Red",
     vintages: [{ id: 21, year: null, no_vintage: true }],
+    producer: { id: 3, name: "Penfolds", slug: "penfolds" },
   },
+];
+
+const OTHER_PRODUCER = { id: 5, name: "Other Winery", slug: "other-winery" };
+const OTHER_WINES = [
+  {
+    id: 10,
+    name: "Other Wine",
+    slug: "other-wine",
+    color: "White",
+    vintages: [{ id: 101, year: 2021, no_vintage: false }],
+    producer: OTHER_PRODUCER,
+  },
+];
+
+const ALL_PRODUCERS = [
+  { id: 3, name: "Penfolds", slug: "penfolds" },
+  { id: 5, name: "Other Winery", slug: "other-winery" },
 ];
 
 type FormOverrides = Partial<ComponentProps<typeof WinePackageItemForm>>;
@@ -91,118 +76,81 @@ function renderForm(overrides: FormOverrides = {}) {
   return render(
     <WinePackageItemForm
       packageId={7}
-      producerId={3}
-      producerName="Penfolds"
+      packageProducerId={3}
+      packageProducerName="Penfolds"
       onSaved={vi.fn()}
       onCancel={vi.fn()}
       {...overrides}
-    />,
+    />
   );
 }
 
-describe("WinePackageItemForm", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockWineSearch.mockResolvedValue(PRODUCER_WINES);
-    mockWineCreate.mockResolvedValue({
-      id: 9,
-      name: "New Wine",
-      slug: "new-wine",
-      vintages: [{ id: 99, year: 2020, no_vintage: false }],
-    });
-    mockVintageCreate.mockResolvedValue({ id: 22, year: 2021, no_vintage: false });
-    mockItemCreate.mockResolvedValue({
-      id: 5,
-      wine_package_id: 7,
-      wine_id: 0,
-    });
-    mockItemUpdate.mockResolvedValue({
-      id: 5,
-      wine_package_id: 7,
-      wine_id: 0,
-    });
-    vi.mocked(winePackageItemsApi.destroy).mockResolvedValue({});
-  });
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockWineSearch.mockResolvedValue(PRODUCER_WINES);
+  mockProducersSearch.mockResolvedValue(ALL_PRODUCERS);
+});
 
-  it("lists the package producer's wines without typing a search", async () => {
+describe("WinePackageItemForm", () => {
+  it("loads wines from all producers (global search) for editorial mode", async () => {
+    mockWineSearch.mockResolvedValue([...PRODUCER_WINES, ...OTHER_WINES]);
     renderForm();
 
-    await waitFor(() =>
-      expect(mockWineSearch).toHaveBeenCalledWith({ producerId: 3 }),
-    );
+    await screen.findByRole("option", { name: /Grange/i });
+    await screen.findByRole("option", { name: /Other Wine/i });
+
+    expect(mockWineSearch).toHaveBeenCalledWith({});
   });
 
-  it("renders the producer's wines and their vintages", async () => {
-    const { container } = renderForm();
+  it("renders wines with their producers and vintages", async () => {
+    renderForm();
 
-    await waitFor(() => expect(mockWineSearch).toHaveBeenCalled());
-    await waitFor(() =>
-      expect(screen.getByRole("option", { name: /Grange/i })).toBeTruthy(),
-    );
-    expect(screen.getByRole("option", { name: /Bin 389/i })).toBeTruthy();
+    await screen.findByRole("option", { name: /Grange/i });
+    expect(screen.getByRole("option", { name: /Grange -- Penfolds/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Bin 389 -- Penfolds/i })).toBeInTheDocument();
 
-    // Selecting a wine exposes that wine's vintages.
-    const wineSelect = query<HTMLSelectElement>(container, "select");
-    fireEvent.change(wineSelect, { target: { value: "1" } });
-
-    await waitFor(() =>
-      expect(screen.getByRole("option", { name: /2018/ })).toBeTruthy(),
-    );
-    expect(screen.getByRole("option", { name: /2020/ })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Wine"), { target: { value: "1" } });
+    await screen.findByRole("option", { name: /2018/i });
+    expect(screen.getByRole("option", { name: /2020/i })).toBeInTheDocument();
   });
 
-  it("refuses to submit a line without a vintage", async () => {
-    const { container } = renderForm();
+  it("refuses to submit a line without selecting a wine/vintage", async () => {
+    renderForm();
+    await screen.findByRole("option", { name: /Grange/i });
 
-    await waitFor(() => expect(mockWineSearch).toHaveBeenCalled());
+    fireEvent.submit(await screen.findByRole("button", { name: /add line/i }));
 
-    // Nothing picked at all. Choosing a wine preselects its newest vintage, so
-    // the "no vintage" case only exists before any wine is chosen.
-    fireEvent.submit(firstForm(container));
-
-    await waitFor(() => expect(mockItemCreate).not.toHaveBeenCalled());
-    expect(
-      screen.getByText(
-        /Pick a wine and a vintage, or mark the line as not in the catalogue yet/i,
-      ),
-    ).toBeTruthy();
+    await waitFor(() => expect(screen.getByText(/Select a wine and vintage from the catalogue/)).toBeInTheDocument());
+    expect(mockItemCreate).not.toHaveBeenCalled();
   });
 
   it("submits the selected vintage with the line", async () => {
-    const { container } = renderForm();
-
-    // The vintage select is only rendered once a wine is chosen, and the wine
-    // select stays disabled until the catalogue arrives.
+    renderForm();
     await screen.findByRole("option", { name: /Grange/i });
-    fireEvent.change(screen.getByLabelText(/^wine$/i), { target: { value: "1" } });
 
-    fireEvent.change(await screen.findByLabelText(/^vintage$/i), {
-      target: { value: "11" },
-    });
-    fireEvent.submit(firstForm(container));
+    fireEvent.change(screen.getByLabelText("Wine"), { target: { value: "1" } });
+    await screen.findByRole("option", { name: /2020/i });
+    fireEvent.change(screen.getByLabelText("Vintage"), { target: { value: "12" } });
+    fireEvent.submit(await screen.findByRole("button", { name: /add line/i }));
 
     await waitFor(() => expect(mockItemCreate).toHaveBeenCalled());
-    const payload = mockItemCreate.mock.calls[0]?.at(-1);
-    expect(payload).toMatchObject({ vintage_id: 11, review_requested: true });
-    expect(mockItemCreate.mock.calls[0]?.[0]).toBe(7);
+    expect(mockItemCreate.mock.calls[0]?.[1]).toMatchObject({
+      vintage_id: 12,
+      review_requested: false,
+    });
   });
 
   it("allows adding a vintage to a wine already in the catalogue", async () => {
+    mockVintageCreate.mockResolvedValue({ id: 99, year: 2021, no_vintage: false });
     renderForm();
-
     await screen.findByRole("option", { name: /Grange/i });
-    expect(screen.getByRole("button", { name: /add a new wine/i })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/^wine$/i), { target: { value: "1" } });
 
-    // The inline panel replaces the line form and posts its own request.
+    fireEvent.change(screen.getByLabelText("Wine"), { target: { value: "1" } });
+    await screen.findByRole("option", { name: /2018/i });
     fireEvent.click(await screen.findByRole("button", { name: /add a vintage/i }));
 
-    fireEvent.change(await screen.findByLabelText(/^year$/i), {
-      target: { value: "2021" },
-    });
-    fireEvent.submit(
-      enclosingForm(screen.getByRole("button", { name: /^add vintage$/i })),
-    );
+    fireEvent.change(await screen.findByLabelText(/^year$/i), { target: { value: "2021" } });
+    fireEvent.submit(enclosingForm(screen.getByRole("button", { name: /^add vintage$/i })));
 
     await waitFor(() => expect(mockVintageCreate).toHaveBeenCalled());
     expect(mockVintageCreate).toHaveBeenCalledWith("grange", {
@@ -211,72 +159,190 @@ describe("WinePackageItemForm", () => {
     });
   });
 
-  it("allows creating a wine that is not in the catalogue yet", async () => {
+  it("allows creating a wine with a different producer via the producer search", async () => {
+    mockWineCreate.mockResolvedValue({
+      id: 20,
+      name: "New Wine",
+      slug: "new-wine",
+      vintages: [{ id: 201, year: 2022, no_vintage: false }],
+      producer: OTHER_PRODUCER,
+    });
     renderForm();
 
     await screen.findByRole("option", { name: /Grange/i });
 
     fireEvent.click(await screen.findByRole("button", { name: /add a new wine/i }));
 
+    // The producer picker is the same searchable one used on /wines/new.
+    const search = await screen.findByRole("textbox", { name: "Producer" });
+    fireEvent.change(search, { target: { value: "Other" } });
+    fireEvent.click(await screen.findByRole("button", { name: /Other Winery/ }));
+
     const name = await screen.findByLabelText(/wine name/i);
     fireEvent.change(name, { target: { value: "New Wine" } });
     fireEvent.submit(enclosingForm(name));
 
     await waitFor(() => expect(mockWineCreate).toHaveBeenCalled());
-
     const payload = mockWineCreate.mock.calls[0]?.[0] as Record<string, unknown>;
-    // The producer is pre-filled from the package and locked in the form.
-    expect(payload).toMatchObject({ name: "New Wine", producer_id: 3 });
-    // The wine and its first vintage are created in one request.
+    expect(payload).toMatchObject({ name: "New Wine", producer_id: 5 });
     expect(payload.vintages_attributes).toHaveLength(1);
   });
 
-  it("saves a line marked as not in the catalogue yet without a vintage", async () => {
+  it("lets the editor create a brand-new producer inline", async () => {
+    mockProducersSearch.mockResolvedValue([]);
+    mockProducersCreate.mockResolvedValue({
+      id: 9,
+      name: "Park Wines",
+      slug: "park-wines",
+    });
+    mockWineCreate.mockResolvedValue({
+      id: 21,
+      name: "Park Shiraz",
+      slug: "park-shiraz",
+      vintages: [{ id: 211, year: 2022, no_vintage: false }],
+      producer: { id: 9, name: "Park Wines", slug: "park-wines" },
+    });
     renderForm();
 
     await screen.findByRole("option", { name: /Grange/i });
 
-    fireEvent.click(screen.getByLabelText(/not in the catalogue yet/i));
-    fireEvent.submit(enclosingForm(screen.getByRole("button", { name: /add line/i })));
+    fireEvent.click(await screen.findByRole("button", { name: /add a new wine/i }));
 
-    await waitFor(() => expect(mockItemCreate).toHaveBeenCalled());
-    expect(mockItemCreate.mock.calls[0]?.[0]).toBe(7);
-    expect(mockItemCreate.mock.calls[0]?.[1]).toMatchObject({
-      vintage_id: null,
-    });
+    const search = await screen.findByRole("textbox", { name: "Producer" });
+    fireEvent.change(search, { target: { value: "Park Wines" } });
+
+    // Nothing matches, so the inline "create producer" action appears.
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Create "Park Wines"/i }),
+    );
+
+    // The fresh producer is selected for the new wine.
+    expect(await screen.findByText(/Park Wines/)).toBeInTheDocument();
+
+    const name = await screen.findByLabelText(/wine name/i);
+    fireEvent.change(name, { target: { value: "Park Shiraz" } });
+    fireEvent.submit(enclosingForm(name));
+
+    await waitFor(() => expect(mockProducersCreate).toHaveBeenCalled());
+    expect(mockProducersCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Park Wines" }),
+    );
+    await waitFor(() => expect(mockWineCreate).toHaveBeenCalled());
+    const payload = mockWineCreate.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload).toMatchObject({ name: "Park Shiraz", producer_id: 9 });
   });
 
-  it("requires and submits proposed wine details in producer mode", async () => {
+  it("auto-generates the wine name from producer and designation", async () => {
+    renderForm();
+
+    await screen.findByRole("option", { name: /Grange/i });
+    fireEvent.click(await screen.findByRole("button", { name: /add a new wine/i }));
+
+    const search = await screen.findByRole("textbox", { name: "Producer" });
+    fireEvent.change(search, { target: { value: "Other" } });
+    fireEvent.click(await screen.findByRole("button", { name: /Other Winery/ }));
+
+    // With no submitted name to preserve, the flag starts on and fills the
+    // field from the producer (read-only until unticked).
+    const name = (await screen.findByLabelText(/wine name/i)) as HTMLInputElement;
+    expect(name).toHaveValue("Other Winery");
+    expect(name).toHaveAttribute("readonly");
+
+    fireEvent.change(screen.getByLabelText(/designation/i), {
+      target: { value: "Estate" },
+    });
+    expect(await screen.findByLabelText(/wine name/i)).toHaveValue(
+      "Other Winery Estate",
+    );
+
+    // Unticking frees the field for manual edits.
+    fireEvent.click(screen.getByLabelText(/auto-generate name/i));
+    expect(screen.getByLabelText(/wine name/i)).not.toHaveAttribute("readonly");
+  });
+
+  it("saves a proposed wine in producer mode", async () => {
     renderForm({ producerMode: true });
     await screen.findByRole("option", { name: /Grange/i });
-    expect(screen.getByRole("button", { name: /add a new wine/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByLabelText(/not in the catalogue yet/i));
-    fireEvent.change(screen.getByLabelText("Wine name"), { target: { value: "Estate Shiraz" } });
+    fireEvent.change(screen.getByLabelText(/Wine name \*/i), { target: { value: "Estate Shiraz" } });
     fireEvent.change(screen.getByLabelText(/Vintage year/i), { target: { value: "2022" } });
-    fireEvent.submit(enclosingForm(screen.getByRole("button", { name: /add line/i })));
+    fireEvent.submit(await screen.findByRole("button", { name: /add line/i }));
 
     await waitFor(() => expect(mockItemCreate).toHaveBeenCalled());
-    expect(mockItemCreate.mock.calls[0]?.[1]).toMatchObject({
-      vintage_id: null,
+    const call = mockItemCreate.mock.calls[0];
+    const payload = (call?.[1] ?? {}) as Record<string, unknown>;
+    expect(payload).toMatchObject({
       proposed_wine_name: "Estate Shiraz",
       proposed_vintage_year: 2022,
     });
+    expect(payload.vintage_id).toBeUndefined();
   });
 
-  it("lets a producer owner add a vintage to a catalogue wine", async () => {
-    mockVintageCreate.mockResolvedValue({ id: 99, year: 2024, no_vintage: false });
+  it("producer mode: selects existing vintage from catalogue (no inline create)", async () => {
     renderForm({ producerMode: true });
 
     await screen.findByRole("option", { name: /Grange/i });
-    fireEvent.change(screen.getByLabelText(/^wine$/i), { target: { value: "1" } });
-    fireEvent.click(await screen.findByRole("button", { name: /add a vintage/i }));
-    fireEvent.change(await screen.findByLabelText(/^year$/i), { target: { value: "2024" } });
-    fireEvent.submit(enclosingForm(screen.getByRole("button", { name: /^add vintage$/i })));
+    fireEvent.change(screen.getByLabelText("Wine (package producer)"), { target: { value: "1" } });
+    await screen.findByRole("option", { name: /2018/i });
+    fireEvent.change(screen.getByLabelText("Vintage"), { target: { value: "11" } });
+    fireEvent.submit(await screen.findByRole("button", { name: /add line/i }));
 
-    await waitFor(() => expect(mockVintageCreate).toHaveBeenCalledWith("grange", {
-      year: 2024,
-      no_vintage: false,
-    }));
+    await waitFor(() => expect(mockItemCreate).toHaveBeenCalled());
+    expect(mockItemCreate.mock.calls[0]?.[1]).toMatchObject({
+      vintage_id: 11,
+      review_requested: false,
+    });
+  });
+
+  it("displays submitted wine name as reference when a catalogue wine is selected", async () => {
+    renderForm({
+      item: {
+        id: 5,
+        vintage_id: 11,
+        quantity: 1,
+        review_requested: false,
+        proposed_wine_name: "Original Submission",
+        proposed_vintage_year: 2020,
+      },
+    });
+
+    await screen.findByRole("option", { name: /Grange/i });
+    fireEvent.change(screen.getByLabelText("Wine"), { target: { value: "1" } });
+    await screen.findByRole("option", { name: /2018/i });
+    fireEvent.change(screen.getByLabelText("Vintage"), { target: { value: "11" } });
+
+    const wineInfo = await screen.findByText("Selected:");
+    const container = wineInfo.closest("._wineInfo_e6fa18");
+    expect(container).toBeInTheDocument();
+    expect(container).toHaveTextContent(/Submitted wine:.*Original Submission/);
+    expect(container).toHaveTextContent(/Selected:.*Grange/);
+  });
+
+  it("keeps the wine search input enabled so typing does not lose focus", async () => {
+    renderForm();
+
+    const input = await screen.findByLabelText("Search wines (all producers)");
+    expect(input).not.toBeDisabled();
+
+    fireEvent.change(input, { target: { value: "Nepen" } });
+    expect(input).not.toBeDisabled();
+    expect(input).toHaveValue("Nepen");
+  });
+
+  it("shows a newly created vintage immediately and selects it", async () => {
+    mockVintageCreate.mockResolvedValue({ id: 77, year: 2021, no_vintage: false });
+    renderForm();
+
+    await screen.findByRole("option", { name: /Grange/i });
+    fireEvent.change(screen.getByLabelText("Wine"), { target: { value: "1" } });
+    await screen.findByRole("option", { name: /2018/i });
+
+    fireEvent.click(screen.getByRole("button", { name: /add a vintage/i }));
+    fireEvent.change(await screen.findByLabelText(/^year$/i), { target: { value: "2021" } });
+    fireEvent.click(screen.getByRole("button", { name: /^add vintage$/i }));
+
+    await waitFor(() => expect(mockVintageCreate).toHaveBeenCalled());
+    expect(await screen.findByRole("option", { name: "2021" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Vintage")).toHaveValue("77");
   });
 });

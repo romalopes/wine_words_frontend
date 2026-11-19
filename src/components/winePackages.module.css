@@ -154,6 +154,43 @@
   color: #766963;
 }
 
+/* Selected / submitted reference blocks for a package line. */
+.wineInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e3ddd6;
+  border-radius: 8px;
+  background: #faf8f5;
+}
+
+.wineInfoLabel {
+  font-size: 0.9rem;
+  color: #4a403a;
+}
+
+.unmatchedInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed #d9b48f;
+  border-radius: 8px;
+  background: #fdf6ee;
+}
+
+.unmatchedLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #8a5a1f;
+}
+
+.referenceValue {
+  font-size: 0.85rem;
+  color: #766963;
+}
+
 .overdue {
   color: #8a2238;
   font-weight: 700;
@@ -256,6 +293,77 @@
   align-items: center;
   gap: 0.5rem;
   padding-bottom: 0.1rem;
+}
+
+/* --- Package line form grid ---------------------------------------------
+   The line form lays its fields out in a 12-column grid so a search row,
+   a wine/vintage row and a bottles/condition/notes row share lines instead
+   of each field taking a full row. */
+.lineForm {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: end;
+  gap: 0.6rem 0.75rem;
+}
+
+.lineForm .filterField {
+  min-width: 0;
+}
+
+.lineForm .inlineFormActions {
+  padding-bottom: 0;
+  flex-wrap: wrap;
+  align-self: end;
+}
+
+.spanSearch {
+  grid-column: span 8;
+}
+
+.spanActions {
+  grid-column: span 4;
+}
+
+.spanWine {
+  grid-column: span 7;
+}
+
+.spanVintage {
+  grid-column: span 5;
+}
+
+.spanProposedName {
+  grid-column: span 7;
+}
+
+.spanProposedYear {
+  grid-column: span 5;
+}
+
+.spanBottles {
+  grid-column: span 3;
+}
+
+.spanCondition {
+  grid-column: span 4;
+}
+
+.spanNotes {
+  grid-column: span 5;
+}
+
+.spanFull {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .lineForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lineForm > * {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 768px) {

@@ -16,6 +16,8 @@ export default function TradePackageDetail({
   const [pkg, setPkg] = useState<TradePackage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // One automatic "claim by email" attempt per mount (see the load effect).
+  const [claimAttempted, setClaimAttempted] = useState(false);
   useEffect(() => {
     (async () => {
       try {
@@ -25,10 +27,24 @@ export default function TradePackageDetail({
             : await tradeApi.getPackage(id || ""),
         );
       } catch (err) {
+        // A submission made as a guest has no owner until it is claimed, so a
+        // logged-in viewer (e.g. redirected here right after signing in from
+        // the confirmation screen) gets a 404. Claim it once by the account
+        // email — the backend only allows this when the submitted contact
+        // email matches — and retry the load.
+        if (!guestToken && isAuthenticated && !claimAttempted) {
+          setClaimAttempted(true);
+          try {
+            setPkg(await tradeApi.claimPackage(id || ""));
+            return;
+          } catch {
+            // Fall through and surface the original load error.
+          }
+        }
         setError(err instanceof Error ? err.message : "Unable to load package");
       }
     })();
-  }, [id, guestToken]);
+  }, [id, guestToken, isAuthenticated, claimAttempted]);
   async function claim() {
     if (!guestToken) return;
     setBusy(true);
@@ -134,7 +150,18 @@ export default function TradePackageDetail({
             <tbody>
               {pkg.items.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.wine_name}</td>
+                  <td>
+                    {item.wine_name}
+                    {item.submitted && item.catalogue_wine_name && (
+                      <div className={styles.muted}>
+                        Being reviewed as <strong>{item.catalogue_wine_name}</strong>
+                        {item.catalogue_producer_name
+                          ? ` — ${item.catalogue_producer_name}`
+                          : ""}
+                        {item.vintage_label ? ` (${item.vintage_label})` : ""}
+                      </div>
+                    )}
+                  </td>
                   <td>{item.vintage || "—"}</td>
                   <td>
                     <span className={styles.status}>{item.item_status}</span>
