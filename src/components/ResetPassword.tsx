@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { errorMessage } from "../utils/errors";
+import Turnstile from "./Turnstile";
 
 // Password reset page — reached from the "reset password" email link
 // (/reset-password?reset_password_token=…). Sets the new password, is signed
@@ -17,6 +18,9 @@ function ResetPassword() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -41,11 +45,13 @@ function ResetPassword() {
         reset_password_token: resetPasswordToken,
         password,
         password_confirmation: passwordConfirmation,
+        turnstile_token: turnstileToken ?? undefined,
       });
       navigate("/wines", { replace: true });
     } catch (err) {
       setError(errorMessage(err, "Failed to reset password"));
       setSubmitting(false);
+      setTurnstileReset((r) => r + 1);
     }
   }
 
@@ -81,6 +87,16 @@ function ResetPassword() {
               value={passwordConfirmation}
             />
           </label>
+
+          {/* Turnstile verification */}
+          <div className="auth-form__turnstile">
+            <Turnstile
+              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+              action="password_reset"
+              resetKey={turnstileReset}
+              onToken={setTurnstileToken}
+            />
+          </div>
 
           {error ? (
             <p className="auth-form__error" role="alert">

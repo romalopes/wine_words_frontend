@@ -47314,8 +47314,8 @@ function VX() {
               }),
         r.jsx(Ne, {
           className: "text-link",
-          to: "/wines",
-          children: "Back to wine list",
+          to: "/",
+          children: "Back to home",
         }),
       ],
     }),
@@ -85933,8 +85933,8 @@ function Woe() {
           }),
         r.jsx(Ne, {
           className: "text-link",
-          to: "/wines",
-          children: "Back to wine list",
+          to: "/",
+          children: "Back to home",
         }),
       ],
     }),

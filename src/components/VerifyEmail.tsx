@@ -3,7 +3,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { emailVerificationsApi } from "../services/api";
 import { errorData, errorMessage } from "../utils/errors";
 
-type VerificationResult = Awaited<ReturnType<typeof emailVerificationsApi.verify>>;
+type VerificationResult = Awaited<
+  ReturnType<typeof emailVerificationsApi.verify>
+>;
 
 // A verification URL consumes a one-time token. React Strict Mode deliberately
 // recreates effects in development, so mounts for the same token must share the
@@ -24,12 +26,20 @@ function verifyOnce(token: string): Promise<VerificationResult> {
 // (with a fresh 24-hour window) when the link can no longer be used.
 function VerifyEmail() {
   const [searchParams] = useSearchParams();
-  const [state, setState] = useState<{ status: string; message: string | null }>({
+  const [state, setState] = useState<{
+    status: string;
+    message: string | null;
+  }>({
     status: "verifying",
     message: null,
   });
-  const [resendEmail, setResendEmail] = useState(searchParams.get("email") || "");
-  const [resendState, setResendState] = useState<{ status: string; message: string | null }>({
+  const [resendEmail, setResendEmail] = useState(
+    searchParams.get("email") || "",
+  );
+  const [resendState, setResendState] = useState<{
+    status: string;
+    message: string | null;
+  }>({
     status: "idle",
     message: null,
   });
@@ -38,7 +48,10 @@ function VerifyEmail() {
 
   useEffect(() => {
     if (!token) {
-      setState({ status: "invalid", message: "No verification token in the link." });
+      setState({
+        status: "invalid",
+        message: "No verification token in the link.",
+      });
       return;
     }
     let cancelled = false;
@@ -47,7 +60,9 @@ function VerifyEmail() {
         if (cancelled) return;
         setState({
           status: "verified",
-          message: result.message || "Your email address is verified. You can sign in now.",
+          message:
+            result.message ||
+            "Your email address is verified. You can sign in now.",
         });
       })
       .catch((err: unknown) => {
@@ -61,7 +76,9 @@ function VerifyEmail() {
           ),
         });
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   async function handleResend(event: React.FormEvent<HTMLFormElement>) {
@@ -72,7 +89,9 @@ function VerifyEmail() {
       const result = await emailVerificationsApi.resend(resendEmail.trim());
       setResendState({
         status: "sent",
-        message: result.message || "If an unverified account exists, a new verification email has been sent.",
+        message:
+          result.message ||
+          "If an unverified account exists, a new verification email has been sent.",
       });
     } catch (err) {
       setResendState({
@@ -100,9 +119,9 @@ function VerifyEmail() {
         {(state.status === "expired" || state.status === "invalid") && (
           <>
             <p>
-              The link no longer works (it may have expired or already been used).
-              Request a new verification email below — you then have 24 hours to
-              click it.
+              The link no longer works (it may have expired or already been
+              used). Request a new verification email below — you then have 24
+              hours to click it.
             </p>
             <form onSubmit={handleResend}>
               <label>
@@ -114,11 +133,24 @@ function VerifyEmail() {
                   required
                 />
               </label>
-              <button className="auth-form__submit" disabled={resendState.status === "sending"} type="submit">
-                {resendState.status === "sending" ? "Sending..." : "Resend verification email"}
+              <button
+                className="auth-form__submit"
+                disabled={resendState.status === "sending"}
+                type="submit"
+              >
+                {resendState.status === "sending"
+                  ? "Sending..."
+                  : "Resend verification email"}
               </button>
               {resendState.message && (
-                <p className={resendState.status === "sent" ? "auth-card__status" : "auth-form__error"} role={resendState.status === "sent" ? "status" : "alert"}>
+                <p
+                  className={
+                    resendState.status === "sent"
+                      ? "auth-card__status"
+                      : "auth-form__error"
+                  }
+                  role={resendState.status === "sent" ? "status" : "alert"}
+                >
                   {resendState.message}
                 </p>
               )}
@@ -128,11 +160,15 @@ function VerifyEmail() {
 
         {state.status === "verified" && (
           <p className="auth-card__switch">
-            <Link className="text-link" to="/login">Go to sign in</Link>
+            <Link className="text-link" to="/login">
+              Go to sign in
+            </Link>
           </p>
         )}
 
-        <Link className="text-link" to="/wines">Back to wine list</Link>
+        <Link className="text-link" to="/">
+          Back to home
+        </Link>
       </section>
     </main>
   );

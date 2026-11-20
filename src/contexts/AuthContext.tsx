@@ -165,11 +165,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       reset_password_token,
       password,
       password_confirmation,
+      turnstile_token,
     }: ResetPasswordPayload): Promise<unknown> => {
       const result = await authApi.resetPassword({
         reset_password_token,
         password,
         password_confirmation,
+        turnstile_token,
       });
       const nextToken = extractToken(result);
       persistToken(nextToken);

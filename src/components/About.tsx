@@ -12,8 +12,8 @@ function About() {
           can be stored per wine style, grape, producer, region, or bottle when
           the app grows into a database-backed project.
         </p>
-        <Link className="text-link" to="/wines">
-          Back to wine list
+        <Link className="text-link" to="/">
+          Back to Home
         </Link>
       </section>
     </main>

@@ -1,4 +1,4 @@
-import type { ApiRequester } from "./apiClient"
+import type { ApiRequester, RequestBody as ApiRequestBody } from "./apiClient"
 import type {
   AuthApi,
   IdentitiesApi,
@@ -8,6 +8,7 @@ import type {
 } from "../types/api"
 import type {
   AuthResponse,
+  ForgotPasswordPayload,
   MessageResponse,
   ResetPasswordPayload,
   SignInPayload,
@@ -16,6 +17,9 @@ import type {
   SocialSignInInput,
 } from "../types/authentication"
 
+// Type helper to satisfy exactOptionalPropertyTypes while passing dynamic bodies
+const toBody = (obj: Record<string, unknown>): ApiRequestBody => obj as ApiRequestBody
+
 export type { ApiRequester } from "./apiClient"
 
 export function createAuthApi(request: ApiRequester): AuthApi {
@@ -23,25 +27,25 @@ export function createAuthApi(request: ApiRequester): AuthApi {
     signIn(payload: SignInPayload): Promise<AuthResponse> {
       return request<AuthResponse>("/auth/sign_in", {
         method: "POST",
-        body: { user: { email: payload.email, password: payload.password } },
+        body: toBody({ user: {
+          email: payload.email,
+          password: payload.password,
+          turnstile_token: payload.turnstile_token,
+        } }),
       })
     },
 
     signUp(payload: SignUpPayload): Promise<SignUpResponse> {
-      const user = {
-        email: payload.email,
-        password: payload.password,
-        password_confirmation: payload.password_confirmation,
-        first_name: payload.first_name,
-        last_name: payload.last_name,
-      }
-
-      // The response is a session *or* a pending-verification notice, so this
-      // must be SignUpResponse — `email_verification` drives the "check your
-      // inbox" banner on the client.
       return request<SignUpResponse>("/auth/sign_up", {
         method: "POST",
-        body: { user },
+        body: toBody({ user: {
+          email: payload.email,
+          password: payload.password,
+          password_confirmation: payload.password_confirmation,
+          first_name: payload.first_name,
+          last_name: payload.last_name,
+          turnstile_token: payload.turnstile_token,
+        } }),
       })
     },
 
@@ -49,23 +53,25 @@ export function createAuthApi(request: ApiRequester): AuthApi {
       return request("/auth/sign_out", { method: "DELETE", auth: true })
     },
 
-    forgotPassword(email: string): Promise<MessageResponse> {
+    forgotPassword(payload: ForgotPasswordPayload): Promise<MessageResponse> {
       return request<MessageResponse>("/auth/password", {
         method: "POST",
-        body: { user: { email } },
+        body: toBody({ user: {
+          email: payload.email,
+          turnstile_token: payload.turnstile_token,
+        } }),
       })
     },
 
     resetPassword(payload: ResetPasswordPayload): Promise<AuthResponse> {
       return request<AuthResponse>("/auth/password", {
         method: "PATCH",
-        body: {
-          user: {
-            reset_password_token: payload.reset_password_token,
-            password: payload.password,
-            password_confirmation: payload.password_confirmation,
-          },
-        },
+        body: toBody({ user: {
+          reset_password_token: payload.reset_password_token,
+          password: payload.password,
+          password_confirmation: payload.password_confirmation,
+          turnstile_token: payload.turnstile_token,
+        } }),
       })
     },
 

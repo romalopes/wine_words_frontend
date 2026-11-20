@@ -77,6 +77,7 @@ export interface ProducerMembership {
 export interface SignInPayload {
   email: string
   password: string
+  turnstile_token?: string | undefined
 }
 
 export interface SignUpPayload {
@@ -85,16 +86,19 @@ export interface SignUpPayload {
   password_confirmation: string
   first_name: string
   last_name: string
+  turnstile_token?: string | undefined
 }
 
 export interface ForgotPasswordPayload {
   email: string
+  turnstile_token?: string | undefined
 }
 
 export interface ResetPasswordPayload {
   reset_password_token: string
   password: string
   password_confirmation: string
+  turnstile_token?: string | undefined
 }
 
 export interface SocialSignInInput {

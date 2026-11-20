@@ -17,6 +17,7 @@ import {
   availableProviders,
   signInWith,
 } from "../services/socialProviders";
+import Turnstile from "./Turnstile";
 
 /** Which set of fields the card is showing. */
 type AuthMode = "signIn" | "signUp" | "forgot";
@@ -137,6 +138,9 @@ function Login() {
   const [pendingProvider, setPendingProvider] = useState<SocialProvider | null>(
     null,
   );
+  // Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   const isSignUp = mode === "signUp";
   const isForgot = mode === "forgot";
@@ -186,9 +190,13 @@ function Login() {
           setFormError("Enter your account email.");
           return;
         }
-        const result = await authApi.forgotPassword(email);
+        const result = await authApi.forgotPassword({
+          email,
+          turnstile_token: turnstileToken ?? undefined,
+        });
         setSuccess(result.message || "Reset instructions sent.");
         setForm(initialForm);
+        setTurnstileReset((r) => r + 1);
         return;
       }
 
@@ -225,6 +233,7 @@ function Login() {
           password_confirmation,
           first_name: first_name.trim(),
           last_name: last_name.trim(),
+          turnstile_token: turnstileToken ?? undefined,
         });
         // Email verification required: the account exists but has no session.
         // Show the "check your inbox" banner with the verification deadline.
@@ -239,10 +248,15 @@ function Login() {
             deadline: verification.email_verification_deadline ?? null,
           });
           setResendState({ status: "idle", message: null });
+          setTurnstileReset((r) => r + 1);
           return;
         }
       } else {
-        await signIn({ email, password });
+        await signIn({
+          email,
+          password,
+          turnstile_token: turnstileToken ?? undefined,
+        });
       }
 
       navigate(returnTo, { replace: true });
@@ -258,9 +272,11 @@ function Login() {
           deadline: typeof deadline === "string" ? deadline : null,
         });
         setResendState({ status: "idle", message: null });
+        setTurnstileReset((r) => r + 1);
         return;
       }
       setFormError(errorMessage(error, "Could not sign you in."));
+      setTurnstileReset((r) => r + 1);
     } finally {
       setIsSubmitting(false);
     }
@@ -503,6 +519,22 @@ function Login() {
                   </label>
                 ) : null}
 
+                {/* Turnstile verification */}
+                <div className="auth-form__turnstile">
+                  <Turnstile
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                    action={
+                      isSignUp
+                        ? "signup"
+                        : isForgot
+                          ? "password_reset"
+                          : "login"
+                    }
+                    resetKey={turnstileReset}
+                    onToken={setTurnstileToken}
+                  />
+                </div>
+
                 {formError ? (
                   <p className="auth-form__error" role="alert">
                     {formError}
@@ -586,8 +618,8 @@ function Login() {
           </>
         )}
 
-        <Link className="text-link" to="/wines">
-          Back to wine list
+        <Link className="text-link" to="/">
+          Back to Home
         </Link>
       </section>
     </main>

@@ -17,7 +17,7 @@ export interface AuthApi {
   signIn(payload: SignInPayload): Promise<AuthResponse>
   signUp(payload: SignUpPayload): Promise<SignUpResponse>
   signOut(): Promise<unknown>
-  forgotPassword(email: string): Promise<MessageResponse>
+  forgotPassword(payload: ForgotPasswordPayload): Promise<MessageResponse>
   resetPassword(payload: ResetPasswordPayload): Promise<AuthResponse>
   me(): Promise<AuthResponse>
   socialSignIn(
