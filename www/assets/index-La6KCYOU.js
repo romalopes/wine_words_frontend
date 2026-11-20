@@ -85064,7 +85064,7 @@ function Ooe() {
     className: "wine-app following-page notifications-page",
     children: [
       r.jsx(nn, {
-        kicker: "Your cellar",
+        kicker: "",
         title: "Notifications",
         intro:
           "Package requests, editorial decisions, arrivals and review deadlines, plus updates on the producers, wines, reviews and articles you follow.",
@@ -85563,7 +85563,7 @@ function Hoe() {
       className: "wine-app following-page",
       children: [
         r.jsx(nn, {
-          kicker: "Your cellar",
+          kicker: "",
           title: "Following",
           intro:
             "Keep the producers, wines, reviews and stories that inspire you close at hand.",
@@ -85604,7 +85604,7 @@ function Hoe() {
     className: "wine-app following-page",
     children: [
       r.jsx(nn, {
-        kicker: "Your cellar",
+        kicker: "",
         title: "Following",
         intro:
           "A personal collection of the producers, wines and stories you want to revisit.",

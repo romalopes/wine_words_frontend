@@ -127,12 +127,11 @@ describe("AnalyticsDashboard", () => {
     renderDashboard();
 
     expect(
-      screen.getByRole("heading", { name: "Analytics Access Required" }),
+      screen.getByRole("heading", { name: "Analytics" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("You need Reviewer, Editor, or Admin role to view analytics."),
+      screen.getByText("You don't have permission to view analytics."),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Content Analytics" })).not.toBeInTheDocument();
     expect(analyticsApi.reports.summary).not.toHaveBeenCalled();
     expect(analyticsApi.reports.topContent).not.toHaveBeenCalled();
     expect(analyticsApi.reports.timeseries).not.toHaveBeenCalled();
@@ -142,7 +141,7 @@ describe("AnalyticsDashboard", () => {
     renderDashboard();
 
     expect(await screen.findByText("Australian Shiraz Today")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Content Analytics" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Analytics" })).toBeInTheDocument();
     expect(screen.getByText("1,234")).toBeInTheDocument();
     expect(screen.getByText("987")).toBeInTheDocument();
     expect(screen.getByText("6.2")).toBeInTheDocument();
@@ -176,21 +175,21 @@ describe("AnalyticsDashboard", () => {
     renderDashboard();
     await screen.findByText("Australian Shiraz Today");
 
-    await user.selectOptions(screen.getByLabelText("Reporting period"), "7d");
+    await user.selectOptions(screen.getByLabelText("Period"), "7d");
     await waitFor(() =>
       expect(analyticsApi.reports.summary).toHaveBeenLastCalledWith(
         expect.objectContaining({ period: "7d" }),
       ),
     );
 
-    await user.selectOptions(screen.getByLabelText("Content type filter"), "article");
+    await user.selectOptions(screen.getByLabelText("Content Type"), "article");
     await waitFor(() =>
       expect(analyticsApi.reports.topContent).toHaveBeenLastCalledWith(
         expect.objectContaining({ period: "7d", content_type: "article" }),
       ),
     );
 
-    await user.click(screen.getByRole("checkbox", { name: "Include zero-view content" }));
+    await user.click(screen.getByRole("checkbox", { name: "Include items with zero views" }));
     await waitFor(() =>
       expect(analyticsApi.reports.summary).toHaveBeenLastCalledWith(
         expect.objectContaining({
@@ -210,9 +209,7 @@ describe("AnalyticsDashboard", () => {
 
     const view = renderDashboard();
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Analytics service unavailable",
-    );
+    expect(await screen.findByText("Analytics service unavailable")).toBeInTheDocument();
     expect(consoleError).toHaveBeenCalled();
 
     mockSuccessfulReports();

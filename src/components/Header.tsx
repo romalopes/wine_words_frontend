@@ -344,18 +344,6 @@ function Header() {
             </button>
             {extrasOpen && (
               <div className="settings-menu__dropdown">
-                {canSeeAnalytics && (
-                  <NavLink
-                    to="/analytics"
-                    onClick={() => {
-                      setExtrasOpen(false);
-                      handleCloseMenu();
-                    }}
-                  >
-                    Analytics
-                  </NavLink>
-                )}
-
                 {user && (
                   <NavLink
                     onClick={() => {
@@ -431,35 +419,26 @@ function Header() {
             </button>
             {settingsOpen && (
               <div className="settings-menu__dropdown">
-                <NavLink
-                  to="/settings/wines"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Wines
-                </NavLink>
-                <NavLink
-                  to="/producers"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Producers
-                </NavLink>
-                {canSeePackages && (
+                {canSeeAnalytics && (
                   <NavLink
-                    to="/wine-packages"
+                    to="/analytics"
                     onClick={() => {
                       setSettingsOpen(false);
                       handleCloseMenu();
                     }}
                   >
-                    Wine Packages
+                    Analytics
                   </NavLink>
                 )}
+                <NavLink
+                  to="/settings/articles"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Articles
+                </NavLink>
                 {canSeeArticleProjects && (
                   <NavLink
                     to="/article-projects"
@@ -472,42 +451,6 @@ function Header() {
                   </NavLink>
                 )}
                 <NavLink
-                  to="/admin/trade/packages"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Admin Trade Packages
-                </NavLink>
-                <NavLink
-                  to="/settings/reviews"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Reviews
-                </NavLink>
-                <NavLink
-                  to="/settings/articles"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Articles
-                </NavLink>
-                <NavLink
-                  to="/sources"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Sources
-                </NavLink>
-                <NavLink
                   to="/categories"
                   onClick={() => {
                     setSettingsOpen(false);
@@ -515,42 +458,6 @@ function Header() {
                   }}
                 >
                   Categories
-                </NavLink>
-                <NavLink
-                  to="/grapes"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Grapes
-                </NavLink>
-                <NavLink
-                  to="/countries"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Countries
-                </NavLink>
-                <NavLink
-                  to="/regions"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Regions
-                </NavLink>
-                <NavLink
-                  to="/wine-profiles"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    handleCloseMenu();
-                  }}
-                >
-                  Wine Profiles
                 </NavLink>
                 {canManageContactMessages(effectiveIdentity) && (
                   <NavLink
@@ -563,6 +470,100 @@ function Header() {
                     Contact Messages
                   </NavLink>
                 )}
+                <NavLink
+                  to="/countries"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Countries
+                </NavLink>
+                <NavLink
+                  to="/grapes"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Grapes
+                </NavLink>
+
+                <NavLink
+                  to="/producers"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Producers
+                </NavLink>
+                <NavLink
+                  to="/regions"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Regions
+                </NavLink>
+                <NavLink
+                  to="/settings/reviews"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Reviews
+                </NavLink>
+                <NavLink
+                  to="/sources"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Sources
+                </NavLink>
+
+                <NavLink
+                  to="/settings/wines"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Wines
+                </NavLink>
+                {canSeePackages && (
+                  <NavLink
+                    to="/wine-packages"
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      handleCloseMenu();
+                    }}
+                  >
+                    Wine Packages
+                  </NavLink>
+                )}
+                <NavLink
+                  to="/admin/trade/packages"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Admin Trade Packages
+                </NavLink>
+                <NavLink
+                  to="/wine-profiles"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    handleCloseMenu();
+                  }}
+                >
+                  Wine Profiles
+                </NavLink>
               </div>
             )}
           </div>

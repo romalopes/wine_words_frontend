@@ -1,0 +1,232 @@
+/* Analytics Dashboard – visual identity aligned with DetailHero + contact / wine-packages pages.
+   Colours: cream surfaces #fffaf4, borders #e4d9cd / #d7c8bb, text #241b19. */
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+.contentWrapper {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* KPI grid */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.kpiCard {
+  background: #fffaf4;
+  border: 1px solid #e4d9cd;
+  border-radius: 12px;
+  padding: 1.25rem 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.kpiCardWarning {
+  border-color: #f4c48d;
+  background: #fffaf4;
+}
+
+.kpiTitle {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #766963;
+  font-weight: 600;
+}
+
+.kpiValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #241b19;
+  line-height: 1.2;
+}
+
+.kpiSubtitle {
+  font-size: 0.8rem;
+  color: #766963;
+}
+
+.kpiCardWarning .kpiSubtitle,
+.kpiCardWarning .kpiValue {
+  color: #7a4a0a;
+}
+
+/* Dashboard sections */
+.dashboardSection {
+  background: #fffaf4;
+  border: 1px solid #e4d9cd;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #eee4db;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3e1520;
+  margin: 0;
+}
+
+/* Controls in hero actions */
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.controlGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 140px;
+}
+
+.controlLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #766963;
+  font-weight: 600;
+}
+
+.select {
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #d7c8bb;
+  background: #fff;
+  color: #241b19;
+  font: inherit;
+  font-size: 0.9rem;
+  min-width: 140px;
+}
+
+.select:focus {
+  border-color: #27615e;
+  outline: 2px solid rgba(39, 97, 94, 0.22);
+  outline-offset: 1px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.2rem;
+  font-size: 0.85rem;
+  color: #4f4440;
+}
+
+.checkbox input {
+  accent-color: #27615e;
+}
+
+/* Chart & table wrappers */
+.chartWrapper {
+  min-height: 280px;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e4d9cd;
+  background: #fffaf4;
+}
+
+.tableControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Footer */
+.dashboardFooter {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee4db;
+  color: #766963;
+  font-size: 0.85rem;
+}
+
+.dashboardFooter summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #4f4440;
+}
+
+.dashboardFooter pre {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: #f8f3ed;
+  border: 1px solid #e4d9cd;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Error state */
+.error {
+  background: #fff0f0;
+  color: #8a2238;
+  border: 1px solid #e1aab5;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page {
+    padding: 0 1rem 2rem;
+  }
+
+  .heroActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controlGroup {
+    width: 100%;
+  }
+
+  .select {
+    width: 100%;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboardSection {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+}

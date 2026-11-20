@@ -53,7 +53,9 @@ function typeLabel(notification: Notification): string {
 // Monogram letter for the row avatar, mirroring the /following rows.
 function monogramChar(notification: Notification): string {
   const text =
-    notification.producer_name || notification.target_label || notification.message;
+    notification.producer_name ||
+    notification.target_label ||
+    notification.message;
   return (text ?? "N").trim().charAt(0).toUpperCase() || "N";
 }
 
@@ -128,11 +130,14 @@ function Notifications() {
   return (
     <main className="wine-app following-page notifications-page">
       <DetailHero
-        kicker="Your cellar"
+        kicker=""
         title="Notifications"
         intro="Package requests, editorial decisions, arrivals and review deadlines, plus updates on the producers, wines, reviews and articles you follow."
       >
-        <div className="following-page__summary" aria-label="Notifications summary">
+        <div
+          className="following-page__summary"
+          aria-label="Notifications summary"
+        >
           <div className="wine-detail__spec">
             <span className="wine-detail__spec-label">Notifications</span>
             <span className="wine-detail__spec-value">{list.totalCount}</span>
@@ -165,7 +170,9 @@ function Notifications() {
                   role="tab"
                   aria-selected={currentFilter === value}
                   className={`following-page__filter${
-                    currentFilter === value ? " following-page__filter--active" : ""
+                    currentFilter === value
+                      ? " following-page__filter--active"
+                      : ""
                   }`}
                   onClick={() => setFilter(value)}
                 >
@@ -190,7 +197,10 @@ function Notifications() {
             role="alert"
           >
             {list.error}{" "}
-            <button className="wine-btn wine-btn--primary" onClick={list.reload}>
+            <button
+              className="wine-btn wine-btn--primary"
+              onClick={list.reload}
+            >
               Retry
             </button>
           </p>

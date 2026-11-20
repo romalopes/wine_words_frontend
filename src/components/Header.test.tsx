@@ -60,39 +60,39 @@ function renderHeader() {
 }
 
 describe("Header Analytics link", () => {
-  function openExtrasMenu() {
-    fireEvent.click(screen.getByRole("button", { name: "Extras" }));
+  function openSettingsMenu() {
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
   }
 
   it.each([["Reviewer"], ["Editor"], ["Admin"]])(
-    "shows Analytics in Extras for %s role",
+    "shows Analytics in Settings for %s role",
     (role) => {
       authState.user = makeUserWithRoles([role]);
       renderHeader();
-      openExtrasMenu();
+      openSettingsMenu();
       expect(screen.getByRole("link", { name: "Analytics" })).toBeInTheDocument();
     },
   );
 
   it.each([[[]], [["Reader"]], [["Guest"]]])(
-    "hides Extras menu for non-privileged roles %s",
+    "hides Settings menu for non-privileged roles %s",
     (roles) => {
       authState.user = makeUserWithRoles(roles);
       renderHeader();
-      expect(screen.queryByRole("button", { name: "Extras" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
     },
   );
 
-  it("hides Extras menu for logged-out visitors", () => {
+  it("hides Settings menu for logged-out visitors", () => {
     authState.user = null;
     renderHeader();
-    expect(screen.queryByRole("button", { name: "Extras" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
   });
 });
 
 describe("Header Extras links", () => {
-  function openExtrasMenu() {
-    fireEvent.click(screen.getByRole("button", { name: "Extras" }));
+  function openSettingsMenu() {
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
   }
 
   it("hidden for logged-out visitors (content stays gated)", () => {
@@ -101,10 +101,10 @@ describe("Header Extras links", () => {
     expect(screen.queryByRole("button", { name: "Extras" })).not.toBeInTheDocument();
   });
 
-  it("shows Analytics in Extras for Reviewer", () => {
+  it("shows Analytics in Settings for Reviewer", () => {
     authState.user = makeUserWithRoles(["Reviewer"]);
     renderHeader();
-    openExtrasMenu();
+    openSettingsMenu();
     expect(screen.getByRole("link", { name: "Analytics" })).toBeInTheDocument();
   });
 

@@ -30,25 +30,28 @@ export default function Following() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (nextFilter: FollowableType | null, nextPage: number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await followsApi.list({
-        page: nextPage,
-        per_page: PER_PAGE,
-        ...(nextFilter ? { type: nextFilter } : {}),
-      });
-      setItems(result.items);
-      setTotalCount(result.total_count);
-      setTotalPages(result.total_pages);
-      setPage(nextPage);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load follows");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const load = useCallback(
+    async (nextFilter: FollowableType | null, nextPage: number) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await followsApi.list({
+          page: nextPage,
+          per_page: PER_PAGE,
+          ...(nextFilter ? { type: nextFilter } : {}),
+        });
+        setItems(result.items);
+        setTotalCount(result.total_count);
+        setTotalPages(result.total_pages);
+        setPage(nextPage);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load follows");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -67,7 +70,7 @@ export default function Following() {
     return (
       <main className="wine-app following-page">
         <DetailHero
-          kicker="Your cellar"
+          kicker=""
           title="Following"
           intro="Keep the producers, wines, reviews and stories that inspire you close at hand."
         />
@@ -76,8 +79,8 @@ export default function Following() {
             <p className="wine-kicker">A personal collection</p>
             <h2>Sign in to start following</h2>
             <p>
-              Follow producers, wines, reviews and articles to build a curated feed of the
-              people and bottles you care about.
+              Follow producers, wines, reviews and articles to build a curated
+              feed of the people and bottles you care about.
             </p>
             <Link to="/login" className="following-page__sign-in">
               Sign in
@@ -105,7 +108,7 @@ export default function Following() {
   return (
     <main className="wine-app following-page">
       <DetailHero
-        kicker="Your cellar"
+        kicker=""
         title="Following"
         intro="A personal collection of the producers, wines and stories you want to revisit."
       >
@@ -117,7 +120,8 @@ export default function Following() {
           <div className="wine-detail__spec">
             <span className="wine-detail__spec-label">Viewing</span>
             <span className="wine-detail__spec-value">
-              {TYPE_FILTERS.find(({ value }) => value === filter)?.label ?? "All"}
+              {TYPE_FILTERS.find(({ value }) => value === filter)?.label ??
+                "All"}
             </span>
           </div>
         </div>
@@ -129,7 +133,11 @@ export default function Following() {
             <p className="wine-kicker">Saved discoveries</p>
             <h2>Followed content</h2>
           </div>
-          <div className="following-page__filters" role="tablist" aria-label="Follow type filter">
+          <div
+            className="following-page__filters"
+            role="tablist"
+            aria-label="Follow type filter"
+          >
             {TYPE_FILTERS.map(({ label, value }) => (
               <button
                 key={label}
@@ -146,7 +154,10 @@ export default function Following() {
         </div>
 
         {error && (
-          <p className="following-page__status following-page__status--error" role="alert">
+          <p
+            className="following-page__status following-page__status--error"
+            role="alert"
+          >
             {error}
           </p>
         )}
@@ -156,23 +167,34 @@ export default function Following() {
         ) : items.length === 0 ? (
           <div className="following-page__empty following-page__empty--compact">
             <h3>No follows yet.</h3>
-            <p>Explore Wine Words and follow something that catches your eye.</p>
+            <p>
+              Explore Wine Words and follow something that catches your eye.
+            </p>
           </div>
         ) : (
           <ul className="following-page__list" aria-label="Followed content">
             {items.map((follow) => (
               <li key={follow.id} className="following-page__row">
                 <span className="following-page__monogram" aria-hidden="true">
-                  {(follow.target_label || follow.followable_type).charAt(0).toUpperCase()}
+                  {(follow.target_label || follow.followable_type)
+                    .charAt(0)
+                    .toUpperCase()}
                 </span>
                 <div className="following-page__item-copy">
-                  <span className="following-page__type">{follow.followable_type}</span>
+                  <span className="following-page__type">
+                    {follow.followable_type}
+                  </span>
                   {follow.target_path ? (
-                    <Link to={follow.target_path} className="following-page__label">
+                    <Link
+                      to={follow.target_path}
+                      className="following-page__label"
+                    >
                       {follow.target_label || "(deleted)"}
                     </Link>
                   ) : (
-                    <span className="following-page__label">{follow.target_label || "(deleted)"}</span>
+                    <span className="following-page__label">
+                      {follow.target_label || "(deleted)"}
+                    </span>
                   )}
                 </div>
                 <button
@@ -189,7 +211,10 @@ export default function Following() {
         )}
 
         {totalPages > 1 && (
-          <nav className="following-page__pagination" aria-label="Following pagination">
+          <nav
+            className="following-page__pagination"
+            aria-label="Following pagination"
+          >
             <button
               type="button"
               disabled={page <= 1 || loading}
