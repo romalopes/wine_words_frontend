@@ -16,9 +16,13 @@ import styles from "./trade.module.css";
 export default function WinePackageBillingPanel({
   packageId,
   onChanged,
+  readOnly = false,
 }: {
   packageId: number
   onChanged?: () => void
+  /** When true, hides all mutating actions (confirm billable, create invoice,
+   *  email, mark paid, cancel) so owners/guests can only view billing state. */
+  readOnly?: boolean
 }) {
   const [summary, setSummary] = useState<TradeBillingSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,6 +34,7 @@ export default function WinePackageBillingPanel({
   const [markingPaid, setMarkingPaid] = useState<Record<number, boolean>>({});
   const [cancellingInvoice, setCancellingInvoice] = useState<Record<number, boolean>>({});
   const [cancellationReason, setCancellationReason] = useState<Record<number, string>>({});
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,6 +53,18 @@ export default function WinePackageBillingPanel({
   useEffect(() => {
     load();
   }, [load]);
+
+  // Pre-fill the billable count with the submitted total whenever new bottles
+  // have arrived since the last confirmation, so the follow-up-invoice flow
+  // is one click: "Update billable count" → "Invoice N additional bottle(s)".
+  useEffect(() => {
+    if (
+      summary &&
+      (summary.bottles_submitted ?? 0) > (summary.billable_to_date || 0)
+    ) {
+      setConfirmBillableCount(String(summary.bottles_submitted));
+    }
+  }, [summary]);
 
   async function handleConfirmBillable() {
     const count = parseInt(confirmBillableCount, 10);
@@ -68,14 +85,21 @@ export default function WinePackageBillingPanel({
     }
   }
 
-  async function handleCreateInvoice() {
+  async function handleCreateInvoice(coverage: "difference" | "full" = "difference") {
     setCreatingInvoice(true);
     setError(null);
+    setNotice(null);
     try {
       await tradeApi.createInvoice(packageId, {
         due_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        coverage,
       });
       await load();
+      setNotice(
+        coverage === "full"
+          ? "Invoice created covering the full billable amount."
+          : "Invoice created for the uninvoiced bottles.",
+      );
       if (onChanged) onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to create invoice");
@@ -87,9 +111,11 @@ export default function WinePackageBillingPanel({
   async function handleSendInvoiceEmail(invoiceId: number) {
     setSendingEmail((prev) => ({ ...prev, [invoiceId]: true }));
     setError(null);
+    setNotice(null);
     try {
-      await tradeApi.sendInvoiceEmail(packageId, invoiceId);
+      const result = await tradeApi.sendInvoiceEmail(packageId, invoiceId);
       await load();
+      setNotice(result.message || "Invoice email sent to the owner.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to send invoice email");
     } finally {
@@ -186,6 +212,7 @@ export default function WinePackageBillingPanel({
     <section className={styles.card}>
       <h2>Billing</h2>
       {error && <div className={styles.error} role="alert">{error}</div>}
+      {notice && <div className={styles.success} role="status">{notice}</div>}
       {loading && <p className={styles.muted}>Loading billing…</p>}
 
       {summary && (
@@ -247,9 +274,16 @@ export default function WinePackageBillingPanel({
               </div>
             </div>
 
-            {(!summary.billable_to_date || summary.billable_to_date === 0) && (
+            {!readOnly &&
+              (!summary.billable_to_date ||
+                summary.billable_to_date === 0 ||
+                (summary.bottles_submitted ?? 0) > summary.billable_to_date) && (
               <div className={styles.billingAction}>
-                <h3>Confirm billable bottle count</h3>
+                <h3>
+                  {summary.billable_to_date
+                    ? "Update billable count"
+                    : "Confirm billable bottle count"}
+                </h3>
                 <div className={styles.field}>
                   <label htmlFor="confirm-billable-count">Billable bottles</label>
                   <input
@@ -263,6 +297,9 @@ export default function WinePackageBillingPanel({
                   {summary.bottles_submitted > 0 && (
                     <span className={styles.muted}>
                       Submitted: {summary.bottles_submitted} bottle(s)
+                      {summary.billable_to_date > 0 &&
+                        summary.bottles_submitted > summary.billable_to_date &&
+                        ` — ${summary.bottles_submitted - summary.billable_to_date} new bottle(s) arrived since the count was last confirmed`}
                     </span>
                   )}
                 </div>
@@ -272,31 +309,65 @@ export default function WinePackageBillingPanel({
                   disabled={confirmingBillable || !confirmBillableCount.trim()}
                   onClick={handleConfirmBillable}
                 >
-                  {confirmingBillable ? "Confirming…" : "Confirm billable count"}
+                  {confirmingBillable
+                    ? "Confirming…"
+                    : summary.billable_to_date
+                      ? "Update billable count"
+                      : "Confirm billable count"}
                 </button>
               </div>
             )}
 
-            {summary.billable_to_date > 0 && (
+            {!readOnly &&
+              summary.billable_to_date > 0 &&
+              (summary.billable_uninvoiced ?? 0) > 0 && (
               <div className={styles.billingAction}>
                 <h3>Create invoice</h3>
-                <p className={styles.muted}>
-                  Create an invoice for{" "}
-                  {summary.billable_to_date -
-                    summary.invoices.reduce(
-                      (sum, inv) => sum + (inv.billable_bottle_count || 0),
-                      0,
-                    )}{" "}
-                  additional billable bottle(s).
-                </p>
-                <button
-                  type="button"
-                  className="wine-btn wine-btn--primary"
-                  disabled={creatingInvoice}
-                  onClick={handleCreateInvoice}
-                >
-                  {creatingInvoice ? "Creating invoice…" : "Create invoice"}
-                </button>
+                {(summary.invoices.filter((inv) => inv.status === "sent" || inv.status === "paid").length > 0) ? (
+                  <>
+                    <p className={styles.muted}>
+                      {summary.billable_uninvoiced} billable bottle(s) are not covered by an
+                      active invoice yet. Invoice just the difference, or re-issue one
+                      consolidated invoice for the whole billable amount.
+                    </p>
+                    <div className={styles.rowActions}>
+                      <button
+                        type="button"
+                        className="wine-btn wine-btn--primary"
+                        disabled={creatingInvoice}
+                        onClick={() => handleCreateInvoice("difference")}
+                      >
+                        {creatingInvoice
+                          ? "Creating invoice…"
+                          : `Invoice ${summary.billable_uninvoiced} additional bottle(s)`}
+                      </button>
+                      <button
+                        type="button"
+                        className="wine-btn wine-btn--secondary"
+                        disabled={creatingInvoice}
+                        onClick={() => handleCreateInvoice("full")}
+                      >
+                        {creatingInvoice
+                          ? "Creating invoice…"
+                          : `Invoice all ${summary.billable_to_date} bottles (full)`}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className={styles.muted}>
+                      Create an invoice for {summary.billable_uninvoiced} billable bottle(s).
+                    </p>
+                    <button
+                      type="button"
+                      className="wine-btn wine-btn--primary"
+                      disabled={creatingInvoice}
+                      onClick={() => handleCreateInvoice("difference")}
+                    >
+                      {creatingInvoice ? "Creating invoice…" : "Create invoice"}
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
@@ -360,7 +431,8 @@ export default function WinePackageBillingPanel({
                       >
                         Download PDF
                       </button>
-                      {(invoice.status === "sent" || invoice.status === "draft") && (
+                      {!readOnly &&
+                        (invoice.status === "sent" || invoice.status === "draft") && (
                         <button
                           type="button"
                           className="wine-btn wine-btn--primary"
@@ -370,7 +442,7 @@ export default function WinePackageBillingPanel({
                           {sendingEmail[invoice.id] ? "Sending…" : "Email invoice"}
                         </button>
                       )}
-                      {invoice.status === "sent" && (
+                      {!readOnly && invoice.status === "sent" && (
                         <button
                           type="button"
                           className="wine-btn wine-btn--success"
@@ -380,13 +452,15 @@ export default function WinePackageBillingPanel({
                           {markingPaid[invoice.id] ? "Marking paid…" : "Mark paid"}
                         </button>
                       )}
-                      {(invoice.status === "sent" || invoice.status === "draft") &&
+                      {!readOnly &&
+                        (invoice.status === "sent" || invoice.status === "draft") &&
                         (cancellingInvoice[invoice.id] ? (
                           <span className={styles.cancelInline}>
                             <input
                               type="text"
                               placeholder="Reason (required)"
                               value={cancellationReason[invoice.id] || ""}
+                              autoFocus
                               onChange={(e) =>
                                 setCancellationReason((prev) => ({
                                   ...prev,
@@ -405,26 +479,34 @@ export default function WinePackageBillingPanel({
                             <button
                               type="button"
                               className="wine-btn wine-btn--ghost"
-                              onClick={() =>
+                              onClick={() => {
+                                setCancellingInvoice((prev) => ({
+                                  ...prev,
+                                  [invoice.id]: false,
+                                }));
                                 setCancellationReason((prev) => ({
                                   ...prev,
                                   [invoice.id]: "",
-                                }))
-                              }
+                                }));
+                              }}
                             >
-                              Cancel
+                              Dismiss
                             </button>
                           </span>
                         ) : (
                           <button
                             type="button"
                             className="wine-btn wine-btn--danger"
-                            onClick={() =>
+                            onClick={() => {
+                              setCancellingInvoice((prev) => ({
+                                ...prev,
+                                [invoice.id]: true,
+                              }));
                               setCancellationReason((prev) => ({
                                 ...prev,
-                                [invoice.id]: " ",
-                              }))
-                            }
+                                [invoice.id]: "",
+                              }));
+                            }}
                           >
                             Cancel invoice
                           </button>

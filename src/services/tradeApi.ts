@@ -6,6 +6,7 @@ import type {
   TradeSubmissionResponse,
   TradeBillingSummary,
   TradeInvoice,
+  InvoiceListItem,
 } from "../types/trade"
 
 export function createTradeApi(request: ApiRequester) {
@@ -26,6 +27,11 @@ export function createTradeApi(request: ApiRequester) {
       return request<TradeBillingSummary>(`/wine_packages/${packageId}/billing`, { auth: true })
     },
 
+    // Staff-wide invoice overview (Settings → Invoices)
+    listInvoices() {
+      return request<InvoiceListItem[]>("/invoices", { auth: true })
+    },
+
     confirmBillableQuantity(packageId: string | number, count: number) {
       return request<TradeBillingSummary>(`/wine_packages/${packageId}/billing`, {
         method: "PATCH",
@@ -34,7 +40,10 @@ export function createTradeApi(request: ApiRequester) {
       })
     },
 
-    createInvoice(packageId: string | number, payload: { due_at?: string; notes?: string }) {
+    createInvoice(
+      packageId: string | number,
+      payload: { due_at?: string; notes?: string; coverage?: "difference" | "full" },
+    ) {
       return request<TradeInvoice>(`/wine_packages/${packageId}/invoices`, {
         method: "POST",
         auth: true,

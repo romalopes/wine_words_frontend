@@ -120,6 +120,8 @@ export interface TradeInvoice {
 export interface TradeBillingSummary {
   bottles_submitted: number
   billable_to_date: number
+  /** Billable bottles not covered by an active (sent/paid) invoice yet. */
+  billable_uninvoiced?: number
   total_invoiced: string
   total_paid: string
   total_cancelled: string
@@ -127,6 +129,38 @@ export interface TradeBillingSummary {
   payment_state: string
   overdue: boolean
   invoices: TradeInvoice[]
+}
+
+/** One row of the staff-wide invoice overview (GET /api/v1/invoices). */
+export interface InvoiceListItem {
+  id: number
+  invoice_number: string
+  status: string
+  payment_source?: string
+  overdue: boolean
+  billable_bottle_count?: number
+  unit_fee?: string | null
+  currency: string
+  subtotal?: string | null
+  tax?: string | null
+  total?: string | null
+  issued_at?: string | null
+  due_at?: string | null
+  paid_at?: string | null
+  email_sent_at?: string | null
+  email_send_count?: number
+  client: {
+    company_name?: string | null
+    contact_name?: string | null
+    email?: string | null
+  }
+  wine_package: {
+    id: number
+    status: string
+    source?: string | null
+    producer_name?: string | null
+    item_count: number
+  }
 }
 
 export interface TradePackage {

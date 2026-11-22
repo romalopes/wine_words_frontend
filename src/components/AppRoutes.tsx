@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import AboutPage from "./about/AboutPage";
 import Contact from "./Contact";
 import ContactMessages from "./ContactMessages";
+import InvoicesList from "./InvoicesList";
 import ContactMessageDetail from "./ContactMessageDetail";
 import AccountSettings from "./AccountSettings";
 import Archive from "./Archive";
@@ -106,6 +107,8 @@ function AppRoutes() {
           element={<ContactMessageDetail />}
           path="/settings/contact-messages/:id"
         />
+        {/* Invoice overview (IDENTITY_214) — Editors/Admins only. */}
+        <Route element={<InvoicesList />} path="/settings/invoices" />
         <Route element={<WineSearch />} path="/search" />
         <Route element={<WineList />} path="/wines" />
         <Route element={<WineDetail />} path="/wines/:slug" />

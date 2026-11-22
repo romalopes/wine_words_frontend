@@ -8,6 +8,7 @@ import {
   canAccessArticleProjects,
   canAccessAnalytics,
   canManageContactMessages,
+  canManageAllPackages,
 } from "../constants/roles";
 import { categoriesApi } from "../services/api";
 import { useTestAccess } from "../contexts/TestAccessContext";
@@ -489,6 +490,17 @@ function Header() {
                   Grapes
                 </NavLink>
 
+                {canManageAllPackages(effectiveIdentity) && (
+                  <NavLink
+                    to="/settings/invoices"
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      handleCloseMenu();
+                    }}
+                  >
+                    Invoices
+                  </NavLink>
+                )}
                 <NavLink
                   to="/producers"
                   onClick={() => {

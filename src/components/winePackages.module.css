@@ -84,6 +84,50 @@
   color: #4f4440;
 }
 
+/* "Review requested" callout — a requested line blocks package completion
+   until a published review covers it, so it must not read as a minor toggle
+   buried at the bottom of the line form. Maroon accent + cream surface match
+   the app's highlight language. */
+.reviewRequestBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #e4d9cd;
+  border-left: 4px solid #8a2238;
+  border-radius: 8px;
+  background: #fff8f2;
+}
+
+.reviewRequestBox input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-top: 0.1rem;
+  accent-color: #8a2238;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.reviewRequestBox label {
+  display: block;
+  cursor: pointer;
+}
+
+.reviewRequestTitle {
+  display: block;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #241b19;
+}
+
+.reviewRequestHint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #766963;
+}
+
 /* --- Table ------------------------------------------------------------- */
 
 .tableWrap {

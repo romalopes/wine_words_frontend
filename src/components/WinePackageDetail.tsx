@@ -224,6 +224,7 @@ function WinePackageDetail() {
   const canManageItems = Boolean(can.manage_items);
   const canManageImages = Boolean(can.manage_attachments);
   const canCreateReview = Boolean(can.create_review);
+  const canViewBilling = Boolean(can.view_billing);
   const producerMode = pkg.source === "producer_request" && !canCreateReview;
 
   // Trade submissions move through the trade chain (assess → quote → …). The
@@ -745,7 +746,13 @@ function WinePackageDetail() {
       )}
 
       <div className={tradeStyles.card}>
-        <h2>Wines in this package</h2>
+        <h2>
+          Wines in this package
+          {" "}
+          <span className={tradeStyles.muted}>
+            ({pkg.items?.length ?? 0} {pkg.items?.length === 1 ? "wine" : "wines"})
+          </span>
+        </h2>
 
         {(pkg.items?.length ?? 0) > 0 ? (
           <div className={tradeStyles.table}>
@@ -911,6 +918,10 @@ function WinePackageDetail() {
                 packageProducerId={pkg.producer_id ?? null}
                 packageProducerName={pkg.producer_name ?? null}
                 producerMode={producerMode}
+                defaultReviewRequested={
+                  pkg.source === "trade_submission" &&
+                  ["arrived", "reviewing", "completed"].includes(pkg.status)
+                }
                 onSaved={() => {
                   setShowAddItem(false);
                   load();
@@ -940,11 +951,18 @@ function WinePackageDetail() {
         onChanged={load}
       />
 
-      {/* Billing — staff-only panel (Admin/Editor): confirm billable bottles,
-          create manual invoices, download/email PDFs, record payments. */}
-      {can.manage_billing && (
+      {/* Billing panel — full for staff (Admin/Editor): confirm billable bottles,
+          create invoices, email, mark paid, cancel. Read-only for owners/guests
+          (IDENTITY_214 Phase 7): summary, invoice history, download PDF only. */}
+      {can.manage_billing ? (
         <WinePackageBillingPanel packageId={pkg.id} onChanged={load} />
-      )}
+      ) : canViewBilling ? (
+        <WinePackageBillingPanel
+          packageId={pkg.id}
+          onChanged={load}
+          readOnly
+        />
+      ) : null}
 
       {/* Conversation — trade submissions only. */}
       {canChat && (

@@ -41,6 +41,8 @@ interface WinePackageItemFormProps {
   onSaved: (saved: Awaited<ReturnType<typeof winePackageItemsApi.create>>) => void;
   onCancel: () => void;
   producerMode?: boolean;
+  /** Initial "Review requested" value for NEW lines (editing uses the line's own flag). */
+  defaultReviewRequested?: boolean;
 }
 
 function WinePackageItemForm({
@@ -53,6 +55,7 @@ function WinePackageItemForm({
   onSaved,
   onCancel,
   producerMode = false,
+  defaultReviewRequested = false,
 }: WinePackageItemFormProps) {
   // Accept either the new or legacy prop names for the package producer.
   const ownerProducerId = packageProducerId ?? producerId ?? null;
@@ -79,7 +82,9 @@ function WinePackageItemForm({
   const [proposedYear, setProposedYear] = useState(originalProposedYear);
   const [form, setForm] = useState<ItemFormState>({
     quantity: item?.quantity ? String(item.quantity) : "1",
-    review_requested: item?.review_requested ?? false,
+    // Editing wins over the caller's default; new lines in review-scoped
+    // trade packages start requested so the badge and billing stay consistent.
+    review_requested: item ? (item.review_requested ?? false) : defaultReviewRequested,
     condition: item?.condition || "",
     notes: item?.notes || "",
   });
@@ -438,18 +443,22 @@ function WinePackageItemForm({
           />
         </div>
 
-        <label
-          className={`${styles.checkboxField} ${styles.spanFull}`}
-          htmlFor="item-review-requested"
-        >
+        <div className={`${styles.reviewRequestBox} ${styles.spanFull}`}>
           <input
             id="item-review-requested"
             type="checkbox"
             checked={form.review_requested}
             onChange={(event) => updateField("review_requested", event.target.checked)}
           />
-          Review requested
-        </label>
+          <label htmlFor="item-review-requested">
+            <span className={styles.reviewRequestTitle}>Review requested</span>
+            <span className={styles.reviewRequestHint}>
+              A requested line must be reviewed before the package can be completed.
+              Trade packages are billed per bottle — keep this on for every line;
+              it is set automatically once the samples arrive.
+            </span>
+          </label>
+        </div>
 
         <div className={`${styles.inlineFormActions} ${styles.spanFull}`}>
           <button
