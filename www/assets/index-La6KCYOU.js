@@ -78639,7 +78639,7 @@ async function Gie(e, { getAuthToken: t, timeoutMs: n } = {}) {
     o = Date.now(),
     c = `Health Check Temp ${o}`,
     d = JSON.stringify({
-      producer: { name: c, email: `health-check-${o}@winewords.com.au` },
+      producer: { name: c, email: `health-check-${o}@winewords.com` },
     }),
     f = { Accept: "application/json" };
   if (t) {

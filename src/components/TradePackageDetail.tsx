@@ -4,6 +4,7 @@ import { tradeApi } from "../services/api";
 import type { TradePackage } from "../types/trade";
 import { useAuth } from "../contexts/AuthContext";
 import TradeMessages from "./TradeMessages";
+import ShipmentTrackingPanel from "./ShipmentTrackingPanel";
 import styles from "./trade.module.css";
 
 export default function TradePackageDetail({
@@ -58,6 +59,15 @@ export default function TradePackageDetail({
   }
   function packageStatusLabel(status: string) {
     return status.replaceAll("_", " ");
+  }
+  // Reload the package after tracking changes so the hero status stays fresh.
+  async function reload() {
+    if (guestToken || !id) return;
+    try {
+      setPkg(await tradeApi.getPackage(id));
+    } catch {
+      // Keep the current view; the tracking panel already surfaced errors.
+    }
   }
   async function pay(invoiceId: number) {
     try {
@@ -173,6 +183,17 @@ export default function TradePackageDetail({
           </table>
         </div>
       </section>
+      {/* Shipment tracking — the submitter sets carrier/consignment/ETA; the
+          Wine Words team sees and can edit everything from the package page. */}
+      {!guestToken && (
+        <ShipmentTrackingPanel
+          packageId={pkg.id}
+          canManage
+          canRefresh={false}
+          restricted
+          onChanged={reload}
+        />
+      )}
       {pkg.contact_snapshot && (
         <section className={styles.card}>
           <h2>Contact</h2>

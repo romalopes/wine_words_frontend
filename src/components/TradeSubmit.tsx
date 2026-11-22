@@ -101,11 +101,45 @@ export default function TradeSubmit() {
   // Country dropdown options — loaded once from the public countries endpoint.
   const [countries, setCountries] = useState<CountryListItem[]>([]);
 
+  // Pricing state (IDENTITY_214)
+  const [pricing, setPricing] = useState<{ amount: string; currency: string; unit: string } | null>(null);
+  const [pricingLoading, setPricingLoading] = useState(true);
+  const [pricingError, setPricingError] = useState<string | null>(null);
+
   useEffect(() => {
     countriesApi
       .list()
       .then((data) => setCountries(Array.isArray(data) ? data : []))
       .catch(() => setCountries([])); // dropdown falls back to just Australia
+  }, []);
+
+  // Fetch pricing on mount (IDENTITY_214)
+  useEffect(() => {
+    let mounted = true;
+    setPricingLoading(true);
+    setPricingError(null);
+    tradeApi
+      .getPricing()
+      .then((data) => {
+        if (mounted) {
+          setPricing(data.wine_review_fee);
+        }
+      })
+      .catch((err) => {
+        if (mounted) {
+          setPricingError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load pricing information",
+          );
+        }
+      })
+      .finally(() => {
+        if (mounted) setPricingLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -158,6 +192,22 @@ export default function TradeSubmit() {
       ).size !== wines.length,
     [wines],
   );
+
+  // Calculate total bottle count for pricing estimate (IDENTITY_214)
+  const bottleCount = useMemo(() => {
+    if (wineEntryMode === "quantity") {
+      return Number(wineQuantity);
+    }
+    return wines.reduce((sum, wine) => sum + (wine.quantity ? Number(wine.quantity) : 1), 0);
+  }, [wineEntryMode, wineQuantity, wines]);
+
+  // Calculate estimated total (IDENTITY_214)
+  const estimatedTotal = useMemo(() => {
+    if (!pricing || !bottleCount) return null;
+    const amount = Number(pricing.amount);
+    const count = Number(bottleCount);
+    return (amount * count).toFixed(2);
+  }, [pricing, bottleCount]);
 
   function updateContact(key: keyof TradeContactInput, value: string) {
     setContact((current) => ({ ...current, [key]: value }));
@@ -912,6 +962,47 @@ export default function TradeSubmit() {
               </ul>
             </>
           )}
+
+          {/* Pricing panel (IDENTITY_214) */}
+          <div className={styles.pricingPanel}>
+            <h3>Pricing</h3>
+            {pricingLoading ? (
+              <p className={styles.muted}>Loading pricing…</p>
+            ) : pricingError ? (
+              <p className={styles.error} role="alert">
+                {pricingError}
+              </p>
+            ) : pricing && estimatedTotal !== null ? (
+              <>
+                <dl className={styles.pricingDetails}>
+                  <dt>Fee per bottle</dt>
+                  <dd>
+                    {pricing.currency} {Number(pricing.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </dd>
+                  <dt>Bottles submitted</dt>
+                  <dd>{bottleCount}</dd>
+                  <dt>Estimated total</dt>
+                  <dd>
+                    <strong>
+                      {pricing.currency} {Number(estimatedTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </strong>
+                  </dd>
+                </dl>
+                <p className={styles.pricingNote}>
+                  <strong>No payment is collected at submission.</strong> This is an
+                  estimate based on the current fee and the number of bottles in
+                  your submission. Wine Words confirms the final billable bottle
+                  count after review and will send a separate invoice for the
+                  confirmed amount.
+                </p>
+              </>
+            ) : (
+              <p className={styles.muted}>
+                Pricing information will appear once loaded.
+              </p>
+            )}
+          </div>
+
           <p className={styles.muted}>
             By submitting, you will receive a private guest link. Keep it safe;
             it is scoped to this package.

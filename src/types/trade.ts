@@ -104,6 +104,29 @@ export interface TradeInvoice {
   issued_at?: string | null
   due_at?: string | null
   paid_at?: string | null
+  payment_source?: string
+  billable_bottle_count?: number
+  unit_fee?: string | number
+  recorded_by_id?: number
+  recorded_at?: string | null
+  cancellation_reason?: string | null
+  notes?: string | null
+  email_sent_at?: string | null
+  email_send_count?: number
+  reminder_sent_at?: string | null
+  overdue?: boolean
+}
+
+export interface TradeBillingSummary {
+  bottles_submitted: number
+  billable_to_date: number
+  total_invoiced: string
+  total_paid: string
+  total_cancelled: string
+  outstanding: string
+  payment_state: string
+  overdue: boolean
+  invoices: TradeInvoice[]
 }
 
 export interface TradePackage {

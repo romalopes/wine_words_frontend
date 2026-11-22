@@ -4,10 +4,72 @@ import type {
   TradeMessage,
   TradePackage,
   TradeSubmissionResponse,
+  TradeBillingSummary,
+  TradeInvoice,
 } from "../types/trade"
 
 export function createTradeApi(request: ApiRequester) {
   return {
+    // Public pricing endpoint (IDENTITY_214)
+    getPricing() {
+      return request<{
+        wine_review_fee: {
+          amount: string
+          currency: string
+          unit: string
+        }
+      }>("/trade/pricing")
+    },
+
+    // Billing endpoints (IDENTITY_214 Phase 6)
+    getBillingSummary(packageId: string | number) {
+      return request<TradeBillingSummary>(`/wine_packages/${packageId}/billing`, { auth: true })
+    },
+
+    confirmBillableQuantity(packageId: string | number, count: number) {
+      return request<TradeBillingSummary>(`/wine_packages/${packageId}/billing`, {
+        method: "PATCH",
+        auth: true,
+        body: { billable_bottle_count: count },
+      })
+    },
+
+    createInvoice(packageId: string | number, payload: { due_at?: string; notes?: string }) {
+      return request<TradeInvoice>(`/wine_packages/${packageId}/invoices`, {
+        method: "POST",
+        auth: true,
+        body: payload,
+      })
+    },
+
+    sendInvoiceEmail(packageId: string | number, invoiceId: string | number) {
+      return request<{ queued: boolean; message: string }>(`/wine_packages/${packageId}/invoices/${invoiceId}/send_email`, {
+        method: "POST",
+        auth: true,
+      })
+    },
+
+    markInvoicePaid(packageId: string | number, invoiceId: string | number) {
+      return request<TradeInvoice>(`/wine_packages/${packageId}/invoices/${invoiceId}/mark_paid`, {
+        method: "POST",
+        auth: true,
+      })
+    },
+
+    cancelInvoice(packageId: string | number, invoiceId: string | number, reason: string) {
+      return request<TradeInvoice>(`/wine_packages/${packageId}/invoices/${invoiceId}/cancel`, {
+        method: "POST",
+        auth: true,
+        body: { cancellation_reason: reason },
+      })
+    },
+
+    downloadInvoicePdf(packageId: string | number, invoiceId: string | number) {
+      return request<Blob>(`/wine_packages/${packageId}/invoices/${invoiceId}/pdf`, {
+        auth: true,
+      })
+    },
+
     checkEmail(email: string) {
       // `request()` has no `query` option — query strings are built into the
       // path, as every other namespace does. Dropping the email here made the

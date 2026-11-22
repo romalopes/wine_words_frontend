@@ -82,6 +82,9 @@ function errorMessageFromPayload(data: unknown, status: number): string {
 async function parseResponseBody(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type") ?? ""
   if (!contentType.includes("application/json")) {
+    if (contentType.includes("application/pdf") || contentType.includes("application/octet-stream")) {
+      return response.blob()
+    }
     return response.text()
   }
 

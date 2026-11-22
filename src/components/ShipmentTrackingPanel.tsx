@@ -21,6 +21,13 @@ interface ShipmentTrackingPanelProps {
   canManage: boolean
   canRefresh?: boolean
   producerMode?: boolean
+  /**
+   * Submitter/owner mode (IDENTITY_214 Phase 13): the server only accepts
+   * carrier, consignment number, URL and ETA — the Status field is hidden
+   * because delivery status is maintained by the Wine Words team and the
+   * carrier refresh.
+   */
+  restricted?: boolean
   /** Lets the package page refresh itself after a tracking change. */
   onChanged?: () => void
 }
@@ -37,6 +44,7 @@ function ShipmentTrackingPanel({
   canManage,
   canRefresh = canManage,
   producerMode = false,
+  restricted = false,
   onChanged,
 }: ShipmentTrackingPanelProps) {
   const [tracking, setTracking] = useState<ShipmentTracking | null>(null);
@@ -98,7 +106,7 @@ function ShipmentTrackingPanel({
       const payload: ShipmentTrackingWritePayload = {
         carrier: form.carrier,
         number: form.number,
-        ...(producerMode ? {} : { status: form.status }),
+        ...(producerMode || restricted ? {} : { status: form.status }),
         url: form.url || null,
         estimated_delivery_at: form.estimated_delivery_at || null,
       };
@@ -240,18 +248,20 @@ function ShipmentTrackingPanel({
                   }
                 />
               </div>
-              <div className={styles.filterField}>
-                <label htmlFor="tracking-status">Status</label>
-                <input
-                  id="tracking-status"
-                  type="text"
-                  placeholder="In transit"
-                  value={form.status}
-                  onChange={(event) =>
-                    updateField("status", event.target.value)
-                  }
-                />
-              </div>
+              {!restricted && (
+                <div className={styles.filterField}>
+                  <label htmlFor="tracking-status">Status</label>
+                  <input
+                    id="tracking-status"
+                    type="text"
+                    placeholder="In transit"
+                    value={form.status}
+                    onChange={(event) =>
+                      updateField("status", event.target.value)
+                    }
+                  />
+                </div>
+              )}
               <div className={styles.filterField}>
                 <label htmlFor="tracking-eta">Estimated delivery</label>
                 <input
@@ -264,21 +274,23 @@ function ShipmentTrackingPanel({
                 />
               </div>
               <div className={styles.inlineFormActions}>
-                {canRefresh && <button
+                <button
                   type="submit"
                   className="wine-btn wine-btn--primary wine-btn--lg"
                   disabled={saving}
                 >
                   {saving ? "Saving…" : "Save tracking"}
-                </button>}
-                <button
-                  type="button"
-                  className="wine-btn wine-btn--secondary"
-                  onClick={handleRefresh}
-                  disabled={refreshing || !tracking?.number}
-                >
-                  {refreshing ? "Refreshing…" : "Refresh from carrier"}
                 </button>
+                {canRefresh && (
+                  <button
+                    type="button"
+                    className="wine-btn wine-btn--secondary"
+                    onClick={handleRefresh}
+                    disabled={refreshing || !tracking?.number}
+                  >
+                    {refreshing ? "Refreshing…" : "Refresh from carrier"}
+                  </button>
+                )}
               </div>
             </form>
           )}

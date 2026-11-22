@@ -19,6 +19,7 @@ import WinePackageItemForm from "./WinePackageItemForm";
 import WinePackageForm from "./WinePackageForm";
 import ReviewForm from "./ReviewForm";
 import ShipmentTrackingPanel from "./ShipmentTrackingPanel";
+import WinePackageBillingPanel from "./WinePackageBillingPanel";
 import ImageManager from "./ImageManager";
 import styles from "./winePackages.module.css";
 import type {
@@ -938,6 +939,12 @@ function WinePackageDetail() {
         producerMode={producerMode}
         onChanged={load}
       />
+
+      {/* Billing — staff-only panel (Admin/Editor): confirm billable bottles,
+          create manual invoices, download/email PDFs, record payments. */}
+      {can.manage_billing && (
+        <WinePackageBillingPanel packageId={pkg.id} onChanged={load} />
+      )}
 
       {/* Conversation — trade submissions only. */}
       {canChat && (

@@ -7,6 +7,7 @@ import PackageStatusBadge from "./PackageStatusBadge";
 import DetailHero from "./DetailHero";
 import TradeMessages from "./TradeMessages";
 import { formatDateTime } from "../utils/dates";
+import WinePackageBillingPanel from "./WinePackageBillingPanel";
 import type { TradePackage } from "../types/trade";
 import styles from "./trade.module.css";
 
@@ -55,7 +56,7 @@ export default function TradeAdminPackageDetail() {
   }, [allowed, id]);
 
   async function handleAssess() {
-    if (!id || !packageDecision) return;
+    if (!pkg || !id || !packageDecision) return;
     setAssessing(true);
     setAssessError(null);
     try {
@@ -79,6 +80,16 @@ export default function TradeAdminPackageDetail() {
       );
     } finally {
       setAssessing(false);
+    }
+  }
+
+  // Reload the package after billing changes so status badges stay fresh.
+  async function reload() {
+    if (!id) return;
+    try {
+      setPkg(await tradeApi.getStaffPackage(id));
+    } catch {
+      // Keep the current view; the billing panel already surfaced errors.
     }
   }
 
@@ -123,7 +134,6 @@ export default function TradeAdminPackageDetail() {
 
   const contact = pkg.contact_snapshot;
   const quotes = pkg.quotes ?? [];
-  const invoices = pkg.invoices ?? [];
 
   return (
     <div className={styles.page}>
@@ -248,24 +258,19 @@ export default function TradeAdminPackageDetail() {
         </div>
       </section>
 
-      {(quotes.length > 0 || invoices.length > 0) && (
+      <WinePackageBillingPanel packageId={pkg.id} onChanged={reload} />
+
+      {quotes.length > 0 && (
         <section className={styles.card}>
-          <h2>Commercial</h2>
+          <h2>Quotes</h2>
           {quotes.map((quote) => (
-            <p key={`quote-${quote.id}`}>
+            <p key={`quote-${quote.id}`} className={styles.quoteItem}>
               Quote #{quote.id}: {quote.status} · {quote.total} {quote.currency}
-            </p>
-          ))}
-          {invoices.map((invoice) => (
-            <p key={`invoice-${invoice.id}`}>
-              Invoice {invoice.invoice_number}: {invoice.status} ·{" "}
-              {invoice.total} {invoice.currency}
             </p>
           ))}
         </section>
       )}
 
-      {/* Editorial assessment — shown while the submission is awaiting review. */}
       {pkg.status === "editorial_pending" && (
         <section className={styles.card}>
           <h2>Editorial decision</h2>

@@ -185,7 +185,7 @@ export async function runWriteFlow(
   const createBody = JSON.stringify({
     producer: {
       name: producerName,
-      email: `health-check-${suffix}@winewords.com.au`,
+      email: `health-check-${suffix}@winewords.com`,
     },
   });
   const headers: HealthHeaders = {
@@ -211,9 +211,9 @@ export async function runWriteFlow(
       signal: controller.signal,
     });
     createStatus = createResponse.status;
-    const createPayload = await createResponse.json().catch(
-      (): unknown => ({}),
-    );
+    const createPayload = await createResponse
+      .json()
+      .catch((): unknown => ({}));
     if (
       typeof createPayload === "object" &&
       createPayload !== null &&
