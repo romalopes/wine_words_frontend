@@ -1,6 +1,7 @@
 import type { ImageDetail } from "./image"
 import type { Review } from "./review"
 import type { Wine } from "./wine"
+import type { TradeContactInput } from "./trade"
 
 export interface WinePackageItem {
   id: number
@@ -88,6 +89,8 @@ export interface WinePackage {
   producer_reference?: string | null
   producer_notes?: string | null
   shipping_notes?: string | null
+  /** Trade submitter contact details (editorial viewers only). */
+  contact_snapshot?: TradeContactInput | null
   internal_notes?: string | null
   /** How the package entered the workflow — see `sourceLabel`. */
   source?: string | null

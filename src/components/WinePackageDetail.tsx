@@ -226,6 +226,8 @@ function WinePackageDetail() {
   const canCreateReview = Boolean(can.create_review);
   const canViewBilling = Boolean(can.view_billing);
   const producerMode = pkg.source === "producer_request" && !canCreateReview;
+  // Trade submitter contact details (editorial viewers only).
+  const contact = pkg.contact_snapshot ?? null;
 
   // Trade submissions move through the trade chain (assess → quote → …). The
   // editorial buttons above do not apply, so surface the same assessment
@@ -954,6 +956,61 @@ function WinePackageDetail() {
       {/* Billing panel — full for staff (Admin/Editor): confirm billable bottles,
           create invoices, email, mark paid, cancel. Read-only for owners/guests
           (IDENTITY_214 Phase 7): summary, invoice history, download PDF only. */}
+      {/* Submitter contact (editorial viewers only). */}
+      {contact && (
+        <section className={tradeStyles.card}>
+          <h2>Submitter contact</h2>
+          <div className={tradeStyles.grid}>
+            <div className={tradeStyles.field}>
+              <span className={tradeStyles.muted}>Company</span>
+              <strong>{contact.company_name || "—"}</strong>
+            </div>
+            <div className={tradeStyles.field}>
+              <span className={tradeStyles.muted}>Contact name</span>
+              <strong>{contact.contact_name || "—"}</strong>
+            </div>
+            <div className={tradeStyles.field}>
+              <span className={tradeStyles.muted}>Email</span>
+              <strong>
+                {contact.email ? (
+                  <a href={"mailto:" + contact.email}>{contact.email}</a>
+                ) : (
+                  "—"
+                )}
+              </strong>
+            </div>
+            <div className={tradeStyles.field}>
+              <span className={tradeStyles.muted}>Phone</span>
+              <strong>{contact.phone || "—"}</strong>
+            </div>
+            <div className={tradeStyles.field}>
+              <span className={tradeStyles.muted}>Country</span>
+              <strong>{contact.country || "—"}</strong>
+            </div>
+            <div className={tradeStyles.field}>
+              <span className={tradeStyles.muted}>Role</span>
+              <strong>{contact.role || "—"}</strong>
+            </div>
+            <div className={tradeStyles.field}>
+              <span className={tradeStyles.muted}>Website</span>
+              <strong>
+                {contact.website ? (
+                  <a href={contact.website} target="_blank" rel="noreferrer">
+                    {contact.website}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </strong>
+            </div>
+            <div className={tradeStyles.field}>
+              <span className={tradeStyles.muted}>Address</span>
+              <strong>{contact.address || "—"}</strong>
+            </div>
+          </div>
+        </section>
+      )}
+
       {can.manage_billing ? (
         <WinePackageBillingPanel packageId={pkg.id} onChanged={load} />
       ) : canViewBilling ? (

@@ -28,8 +28,8 @@ export function createTradeApi(request: ApiRequester) {
     },
 
     // Staff-wide invoice overview (Settings → Invoices)
-    listInvoices() {
-      return request<InvoiceListItem[]>("/invoices", { auth: true })
+    listInvoices(params?: { status?: string; email_sent?: string; start_date?: string; end_date?: string }) {
+      return request<InvoiceListItem[]>("/invoices", { auth: true, query: params })
     },
 
     confirmBillableQuantity(packageId: string | number, count: number) {

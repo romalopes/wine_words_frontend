@@ -79,6 +79,17 @@ const packageDetail = {
   created_by_id: 1,
   status: "arrived",
   source: "unexpected",
+  contact_snapshot: {
+    company_name: "Chardonnay Co",
+    contact_name: "Alice Owner",
+    email: "alice@example.com",
+    phone: "+61 400 000 000",
+    address: "1 Vine St",
+    country: "Australia",
+    website: "https://example.com",
+    role: "winery",
+    notes: "",
+  },
   arrived_at: "2026-09-01T09:00:00Z",
   review_deadline: isoDaysFromNow(5),
   reviewed_at: null,
@@ -205,6 +216,24 @@ describe("WinePackageDetail", () => {
     expect(screen.getByText(/Reviewer: Reviewer/)).toBeInTheDocument();
     expect(screen.getByText(/Due in 5 days/)).toBeInTheDocument();
     expect(screen.getByText("Left at reception")).toBeInTheDocument();
+  });
+
+  it("shows the submitter contact details when the API exposes a snapshot", async () => {
+    renderDetail();
+
+    expect(await screen.findByText("Submitter contact")).toBeInTheDocument();
+    expect(screen.getByText("Chardonnay Co")).toBeInTheDocument();
+    expect(screen.getByText("Alice Owner")).toBeInTheDocument();
+    const email = screen.getByRole("link", { name: "alice@example.com" });
+    expect(email).toHaveAttribute("href", "mailto:alice@example.com");
+  });
+
+  it("hides the submitter contact when no snapshot is exposed (producer view)", async () => {
+    mockShow.mockResolvedValue({ ...packageDetail, contact_snapshot: null });
+    renderDetail();
+
+    await screen.findByRole("heading", { name: "Penfolds" });
+    expect(screen.queryByText("Submitter contact")).not.toBeInTheDocument();
   });
 
   it("shows the image gallery when the package has images (view-only for non-managers)", async () => {
