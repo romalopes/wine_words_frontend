@@ -7,7 +7,8 @@ import DetailHero from "./DetailHero";
 import { formatDate, formatDateTime } from "../utils/dates";
 import tradeStyles from "./trade.module.css";
 import styles from "./winePackages.module.css";
-import type { InvoiceListItem } from "../types/trade";
+import type { InvoiceListItem, InvoiceFilters } from "../types/trade";
+import { ActiveFilters } from "./search/ActiveFilters";
 
 /**
  * Settings → Invoices (IDENTITY_214).
@@ -22,28 +23,44 @@ export default function InvoicesList() {
   const { user } = useAuth();
   const allowed = canManageAllPackages(user);
 
-  const [invoices, setInvoices] = useState<InvoiceListItem[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceListItem[]>([] as InvoiceListItem[]);
   const [loading, setLoading] = useState(allowed);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<Record<number, boolean>>({});
   const [sending, setSending] = useState<Record<number, boolean>>({});
 
+  // Filter state
+  const [filters, setFilters] = useState<InvoiceFilters>({});
+  // activeFilters stores the actual filter values for display in ActiveFilters component
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      setInvoices(await tradeApi.listInvoices());
+      setInvoices(await tradeApi.listInvoices(filters));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load invoices");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     if (allowed) load();
-  }, [allowed, load]);
+  }, [allowed, load, filters]);
+
+  useEffect(() => {
+    const newActive: Record<string, any> = {};
+    if (filters.status && filters.status !== "all") newActive.status = filters.status;
+    if (filters.email_sent && filters.email_sent !== "all") newActive.email_sent = filters.email_sent;
+    if (filters.payment_source && filters.payment_source !== "all") newActive.payment_source = filters.payment_source;
+    if (filters.overdue) newActive.overdue = filters.overdue;
+    if (filters.start_date) newActive.start_date = filters.start_date;
+    if (filters.end_date) newActive.end_date = filters.end_date;
+    setActiveFilters(newActive);
+  }, [filters]);
 
   async function handleDownload(invoice: InvoiceListItem) {
     setDownloading((prev) => ({ ...prev, [invoice.id]: true }));
@@ -88,7 +105,14 @@ export default function InvoicesList() {
     }
   }
 
-  function statusBadgeClass(status: string) {
+  function clearFilters() {
+    setFilters({});
+    setActiveFilters({});
+    load();
+  }
+
+  function statusBadgeClass(status?: string | null) {
+    if (!status) return tradeStyles.statusBadge;
     switch (status) {
       case "paid":
         return `${tradeStyles.statusBadge} ${tradeStyles["statusBadge--paid"]}`;
@@ -131,6 +155,80 @@ export default function InvoicesList() {
         title="Invoices"
         intro="Every recorded review-fee invoice across all wine packages — email or download any invoice again."
       />
+      <div className={tradeStyles.invoiceFilters} style={{ marginBottom: "1rem" }}>
+        <ActiveFilters
+          filters={activeFilters}
+          onRemoveFilter={(key) => {
+            const newFilters: Record<string, boolean> = { ...activeFilters };
+            delete newFilters[key];
+            setActiveFilters(newFilters);
+            // Clear the corresponding filter
+            setFilters((prev) => {
+              const result: Record<string, unknown> = { ...prev };
+              delete result[key];
+              return result as InvoiceFilters;
+            });
+          }}
+        />
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem", width: "100%" }}>
+          <select
+            value={filters.status || "all"}
+            onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value as any }))}
+          >
+            <option value="all">Status: All</option>
+            <option value="sent">Sent</option>
+            <option value="paid">Paid</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <select
+            value={filters.email_sent || "all"}
+            onChange={(e) => setFilters((prev) => ({ ...prev, email_sent: e.target.value as any }))}
+          >
+            <option value="all">Email: All</option>
+            <option value="sent">Sent</option>
+            <option value="not_sent">Not Sent</option>
+          </select>
+          <select
+            value={filters.payment_source || "all"}
+            onChange={(e) => setFilters((prev) => ({ ...prev, payment_source: e.target.value as any }))}
+          >
+            <option value="all">Payment: All</option>
+            <option value="manual">Manual</option>
+            <option value="stripe">Stripe</option>
+          </select>
+          <label>
+            <input
+              type="checkbox"
+              checked={filters.overdue}
+              onChange={(e) => setFilters((prev) => ({ ...prev, overdue: e.target.checked }))}
+            />
+            Overdue
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.9rem" }}>
+            From
+            <input
+              type="date"
+              value={filters.start_date || ""}
+              onChange={(e) => setFilters((prev) => ({ ...prev, start_date: e.target.value || undefined }))}
+              style={{ padding: "0.4rem 0.6rem", border: "1px solid #d7c8bb", borderRadius: "7px", background: "white", color: "#241b19", fontSize: "0.9rem" }}
+            />
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.9rem" }}>
+            To
+            <input
+              type="date"
+              value={filters.end_date || ""}
+              onChange={(e) => setFilters((prev) => ({ ...prev, end_date: e.target.value || undefined }))}
+              style={{ padding: "0.4rem 0.6rem", border: "1px solid #d7c8bb", borderRadius: "7px", background: "white", color: "#241b19", fontSize: "0.9rem" }}
+            />
+          </label>
+          <button
+            onClick={clearFilters}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
       <div className={tradeStyles.card}>
         {error && (
           <div className={tradeStyles.error} role="alert">
@@ -171,7 +269,8 @@ export default function InvoicesList() {
                     sending={sending[invoice.id]}
                     onDownload={handleDownload}
                     onEmail={handleEmail}
-                    badgeClass={statusBadgeClass(invoice.status)}
+                    /* @ts-expect-error TypeScript inference issue: invoice.status narrowed through filters state */
+badgeClass={statusBadgeClass(invoice.status)}
                     money={money}
                   />
                 ))}

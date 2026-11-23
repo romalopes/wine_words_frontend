@@ -93,6 +93,21 @@ export interface TradeQuote {
   valid_until?: string | null
 }
 
+export interface InvoiceFilters {
+  status?:
+    | "sent" | "paid" | "cancelled"
+    | "all"
+  email_sent?:
+    | "sent" | "not_sent"
+    | "all"
+  start_date?: string
+  end_date?: string
+  payment_source?:
+    | "manual" | "stripe"
+    | "all"
+  overdue?: boolean
+}
+
 export interface TradeInvoice {
   id: number
   invoice_number: string
