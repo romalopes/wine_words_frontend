@@ -367,6 +367,18 @@ export interface ConfigurationUpdatePayload {
   use_test_email?: boolean
   test_email?: string | null
   mail_transport?: string | null
+
+  // New settings (IDENTITY_206 Phase 12 / IDENTITY_214 Phase 12)
+  wine_review_fee_amount?: string | null
+  wine_review_fee_currency?: string | null
+  invoice_gst_rate?: string | null
+  invoice_from_email?: string | null
+  sample_shipping_address?: string | null
+  invoice_bank_name?: string | null
+  invoice_account_name?: string | null
+  invoice_bsb?: string | null
+  invoice_account_number?: string | null
+
   [key: string]: unknown
 }
 
