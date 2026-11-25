@@ -123,8 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(
-    async ({ email, password }: SignInPayload): Promise<User> => {
-      const result = await authApi.signIn({ email, password });
+    async ({ email, password, turnstile_token }: SignInPayload): Promise<User> => {
+      const result = await authApi.signIn({ email, password, turnstile_token });
       const nextToken = extractToken(result);
       persistToken(nextToken);
       setUser(result.user ?? null);
@@ -140,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password_confirmation,
       first_name,
       last_name,
+      turnstile_token,
     }: SignUpPayload): Promise<User | SignUpResponse> => {
       const result = await authApi.signUp({
         email,
@@ -147,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password_confirmation,
         first_name,
         last_name,
+        turnstile_token,
       });
       // Email verification required: the backend created the account but
       // issued NO session. Do not set auth state - Login shows the

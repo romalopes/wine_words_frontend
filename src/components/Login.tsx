@@ -19,6 +19,8 @@ import {
 } from "../services/socialProviders";
 import Turnstile from "./Turnstile";
 
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY
+
 /** Which set of fields the card is showing. */
 type AuthMode = "signIn" | "signUp" | "forgot";
 
@@ -196,6 +198,13 @@ function Login() {
         });
         setSuccess(result.message || "Reset instructions sent.");
         setForm(initialForm);
+        setTurnstileReset((r) => r + 1);
+        return;
+      }
+
+      // Turnstile verification required when site key is configured
+      if (TURNSTILE_SITE_KEY && !turnstileToken) {
+        setFormError("Please complete the human verification before continuing.");
         setTurnstileReset((r) => r + 1);
         return;
       }

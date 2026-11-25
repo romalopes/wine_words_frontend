@@ -9,6 +9,7 @@ import type {
 import type { CountryListItem } from "../types/reference";
 import { useAuth } from "../contexts/AuthContext";
 import type { SignInPayload, SignUpPayload } from "../types/authentication";
+import Turnstile from "./Turnstile";
 import styles from "./trade.module.css";
 
 const draftKey = "wine_words_trade_submission_draft";
@@ -81,6 +82,9 @@ export default function TradeSubmit() {
   const [authEmail, setAuthEmail] = useState("");
   // Busy flag shared by the login/signup dialogs and the pre-submit email lookup.
   const [authBusy, setAuthBusy] = useState(false);
+  // Turnstile state for the auth dialogs
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileReset, setTurnstileReset] = useState(0);
   // The dialogs are rendered at the end of the page, so they are opened with
   // showModal() (below) to land in the top layer instead of below the fold.
   const authDialogRef = useRef<HTMLDialogElement>(null);
@@ -347,8 +351,16 @@ export default function TradeSubmit() {
   async function handleLogin(password: string) {
     setAuthBusy(true);
     setError(null);
+    // Turnstile verification required when site key is configured
+    const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError("Please complete the human verification before continuing.");
+      setTurnstileReset((r) => r + 1);
+      setAuthBusy(false);
+      return;
+    }
     try {
-      const payload: SignInPayload = { email: authEmail, password };
+      const payload: SignInPayload = { email: authEmail, password, turnstile_token: turnstileToken ?? undefined };
       await signIn(payload);
       // Linked to the account now, so submit straight away — the redirect
       // effect sends the user to the package detail page.
@@ -394,6 +406,14 @@ export default function TradeSubmit() {
   }) {
     setAuthBusy(true);
     setError(null);
+    // Turnstile verification required when site key is configured
+    const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError("Please complete the human verification before continuing.");
+      setTurnstileReset((r) => r + 1);
+      setAuthBusy(false);
+      return;
+    }
     try {
       const payload: SignUpPayload = {
         email: authEmail,
@@ -401,6 +421,7 @@ export default function TradeSubmit() {
         password_confirmation: data.password,
         first_name: data.firstName,
         last_name: data.lastName,
+        turnstile_token: turnstileToken ?? undefined,
       };
       await signUp(payload);
       setAuthDialog("none");
